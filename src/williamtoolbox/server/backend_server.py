@@ -17,6 +17,17 @@ import json
 
 app = FastAPI()
 
+class AddModelRequest(BaseModel):
+    name: str
+    pretrained_model_type: str
+    cpus_per_worker: float = Field(default=0.001)
+    gpus_per_worker: int = Field(default=0)
+    num_workers: int = Field(default=1)
+    worker_concurrency: Optional[int] = Field(default=None)
+    infer_params: dict = Field(default_factory=dict)
+    model_path: Optional[str] = Field(default=None)
+    infer_backend: Optional[str] = Field(default=None)
+
 # Path to the models.json file
 MODELS_JSON_PATH = "models.json"
 
@@ -117,6 +128,32 @@ class ModelInfo(BaseModel):
 async def list_models():
     """List all supported models and their current status."""
     return [ModelInfo(name=name, status=info["status"]) for name, info in supported_models.items()]
+
+@app.post("/models/add")
+async def add_model(model: AddModelRequest):
+    """Add a new model to the supported models list."""
+    if model.name in supported_models:
+        raise HTTPException(status_code=400, detail=f"Model {model.name} already exists")
+    
+    new_model = {
+        "status": "stopped",
+        "deploy_command": DeployCommand(
+            pretrained_model_type=model.pretrained_model_type,
+            cpus_per_worker=model.cpus_per_worker,
+            gpus_per_worker=model.gpus_per_worker,
+            num_workers=model.num_workers,
+            worker_concurrency=model.worker_concurrency,
+            infer_params=model.infer_params,
+            model=model.name,
+            model_path=model.model_path,
+            infer_backend=model.infer_backend
+        ).model_dump(),
+        "undeploy_command": f"byzerllm undeploy {model.name}"
+    }
+    
+    supported_models[model.name] = new_model
+    save_models_to_json(supported_models)
+    return {"message": f"Model {model.name} added successfully"}
 
 @app.post("/models/{model_name}/{action}")
 async def manage_model(model_name: str, action: str):
