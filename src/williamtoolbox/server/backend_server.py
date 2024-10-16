@@ -120,8 +120,8 @@ async def manage_model(model_name: str, action: str):
 
 def main():
     parser = argparse.ArgumentParser(description="Backend Server")
-    parser.add_argument('--port', type=int, default=8001,
-                        help='Port to run the backend server on (default: 8001)')
+    parser.add_argument('--port', type=int, default=8004,
+                        help='Port to run the backend server on (default: 8004)')
     parser.add_argument('--host', type=str, default="0.0.0.0",
                         help='Host to run the backend server on (default: 0.0.0.0)')
     args = parser.parse_args()
