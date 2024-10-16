@@ -205,6 +205,8 @@ async def get_model_status(model_name: str):
         # Check the result status        
         if result.returncode == 0:
             status_output = result.stdout.strip()
+            supported_models[model_name]["status"] = "running"
+            save_models_to_json(supported_models)
             return {"model": model_name, "status": status_output, "success": True}
         else:
             error_message = f"Command failed with return code {result.returncode}: {result.stderr.strip()}"
