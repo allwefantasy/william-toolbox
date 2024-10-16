@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Layout, Menu, Table, Button, message } from 'antd';
+import { PlayCircleOutlined, PauseCircleOutlined } from '@ant-design/icons';
 import './App.css';
+
+const { Header, Sider, Content } = Layout;
 
 // 定义模型类型
 interface Model {
@@ -21,6 +25,7 @@ function App() {
       setModels(response.data);
     } catch (error) {
       console.error('Error fetching models:', error);
+      message.error('获取模型列表失败');
     }
   };
 
@@ -28,48 +33,62 @@ function App() {
     try {
       await axios.post(`/models/${modelName}/${action}`);
       fetchModels(); // Refresh the model list after action
+      message.success(`${action === 'start' ? '启动' : '停止'}模型成功`);
     } catch (error) {
       console.error(`Error ${action}ing model:`, error);
+      message.error(`${action === 'start' ? '启动' : '停止'}模型失败`);
     }
   };
 
+  const columns = [
+    {
+      title: '模型名称',
+      dataIndex: 'name',
+      key: 'name',
+    },
+    {
+      title: '当前状态',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: string) => (
+        <span style={{ color: status === 'running' ? 'green' : 'red' }}>
+          {status === 'running' ? '运行中' : '已停止'}
+        </span>
+      ),
+    },
+    {
+      title: '操作',
+      key: 'action',
+      render: (_: any, record: Model) => (
+        <Button
+          type="primary"
+          icon={record.status === 'stopped' ? <PlayCircleOutlined /> : <PauseCircleOutlined />}
+          onClick={() => handleAction(record.name, record.status === 'stopped' ? 'start' : 'stop')}
+        >
+          {record.status === 'stopped' ? '启动' : '停止'}
+        </Button>
+      ),
+    },
+  ];
+
   return (
-    <div className="App">
-      <div className="sidebar">
-        <h2>菜单</h2>
-        <ul>
-          <li>模型管理</li>
-        </ul>
-      </div>
-      <div className="main-content">
-        <h1>模型管理</h1>
-        <table>
-          <thead>
-            <tr>
-              <th>模型名称</th>
-              <th>当前状态</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            {models.map(model => (
-              <tr key={model.name}>
-                <td>{model.name}</td>
-                <td>{model.status}</td>
-                <td>
-                  {model.status === 'stopped' && (
-                    <button onClick={() => handleAction(model.name, 'start')}>启动</button>
-                  )}
-                  {model.status === 'running' && (
-                    <button onClick={() => handleAction(model.name, 'stop')}>停止</button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <Layout style={{ minHeight: '100vh' }}>
+      <Sider>
+        <div className="logo" />
+        <Menu theme="dark" mode="inline" defaultSelectedKeys={['1']}>
+          <Menu.Item key="1">模型管理</Menu.Item>
+        </Menu>
+      </Sider>
+      <Layout className="site-layout">
+        <Header className="site-layout-background" style={{ padding: 0 }} />
+        <Content style={{ margin: '16px' }}>
+          <div className="site-layout-background" style={{ padding: 24, minHeight: 360 }}>
+            <h1>模型管理</h1>
+            <Table columns={columns} dataSource={models} rowKey="name" />
+          </div>
+        </Content>
+      </Layout>
+    </Layout>
   );
 }
 
