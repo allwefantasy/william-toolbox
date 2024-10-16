@@ -11,7 +11,8 @@ import argparse
 import aiofiles
 import subprocess
 from typing import List, Dict
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from typing import Optional
 
 app = FastAPI()
 
@@ -24,16 +25,42 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+class DeployCommand(BaseModel):
+    pretrained_model_type: str
+    cpus_per_worker: float = Field(default=0.001)
+    gpus_per_worker: int = Field(default=0)
+    num_workers: int = Field(default=1)
+    worker_concurrency: Optional[int] = Field(default=None)
+    infer_params: dict = Field(default_factory=dict)
+    model: str
+    model_path: Optional[str] = Field(default=None)
+    infer_backend: Optional[str] = Field(default=None)
+
 # Dictionary to store supported models
 supported_models = {
     "deepseek_chat": {
         "status": "stopped",
-        "deploy_command": "byzerllm deploy --pretrained_model_type saas/openai --cpus_per_worker 0.001 --gpus_per_worker 0 --num_workers 1 --worker_concurrency 10 --infer_params saas.base_url='https://api.deepseek.com/beta' saas.api_key=${MODEL_DEEPSEEK_TOKEN} saas.model=deepseek-chat --model deepseek_chat",
+        "deploy_command": DeployCommand(
+            pretrained_model_type="saas/openai",
+            worker_concurrency=10,
+            infer_params={
+                "saas.base_url": "https://api.deepseek.com/beta",
+                "saas.api_key": "${MODEL_DEEPSEEK_TOKEN}",
+                "saas.model": "deepseek-chat"
+            },
+            model="deepseek_chat"
+        ),
         "undeploy_command": "byzerllm undeploy deepseek_chat"
     },
     "emb": {
         "status": "stopped",
-        "deploy_command": "byzerllm deploy --pretrained_model_type custom/bge --cpus_per_worker 0.001 --gpus_per_worker 0 --worker_concurrency 10 --model_path /home/winubuntu/.auto-coder/storage/models/AI-ModelScope/bge-large-zh --infer_backend transformers --num_workers 1 --model emb",
+        "deploy_command": DeployCommand(
+            pretrained_model_type="custom/bge",
+            worker_concurrency=10,
+            model_path="/home/winubuntu/.auto-coder/storage/models/AI-ModelScope/bge-large-zh",
+            infer_backend="transformers",
+            model="emb"
+        ),
         "undeploy_command": "byzerllm undeploy emb"
     }
 }
