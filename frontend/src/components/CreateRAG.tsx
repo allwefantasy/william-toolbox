@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Button, Modal, Form, Input, InputNumber, Select, message } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
@@ -13,9 +13,29 @@ interface FormValues {
   rag_doc_filter_relevance: number;
 }
 
+interface Model {
+  name: string;
+  status: string;
+}
+
 const CreateRAG: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm<FormValues>();
+  const [models, setModels] = useState<Model[]>([]);
+
+  useEffect(() => {
+    fetchModels();
+  }, []);
+
+  const fetchModels = async () => {
+    try {
+      const response = await axios.get('/models');
+      setModels(response.data.filter((model: Model) => model.status === 'running'));
+    } catch (error) {
+      console.error('Error fetching models:', error);
+      message.error('获取模型列表失败');
+    }
+  };
 
   const showModal = () => {
     setIsModalVisible(true);
@@ -58,7 +78,11 @@ const CreateRAG: React.FC = () => {
             <Input />
           </Form.Item>
           <Form.Item name="model" label="模型" rules={[{ required: true }]}>
-            <Input />
+            <Select>
+              {models.map(model => (
+                <Option key={model.name} value={model.name}>{model.name}</Option>
+              ))}
+            </Select>
           </Form.Item>
           <Form.Item name="tokenizer_path" label="Tokenizer路径" rules={[{ required: true }]}>
             <Input />
