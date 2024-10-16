@@ -1,31 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Layout, Menu, Table, Button, message, Modal, Form, Input, InputNumber, Select } from 'antd';
-import { PlayCircleOutlined, PauseCircleOutlined, PoweroffOutlined, PlusOutlined } from '@ant-design/icons';
+import { PlayCircleOutlined, PauseCircleOutlined, PoweroffOutlined, PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
 import './App.css';
 
 const { Header, Sider, Content } = Layout;
 const { Option } = Select;
 
-// 定义模型类型
 interface Model {
   name: string;
   status: 'stopped' | 'running';
 }
 
-// 定义推理后端枚举
 enum InferBackend {
   Transformers = "transformers",
   VLLM = "ray/vllm",
   LLAMA_CPP = "llama_cpp",
-  DeepSpeed = "ray/deepspeed"
+  DeepSpeed = "ray/deepspeed",
+  SaaS = "saas/openai"
 }
 
 function App() {
   const [models, setModels] = useState<Model[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
-  const [showModelPath, setShowModelPath] = useState(false);
+  const [selectedBackend, setSelectedBackend] = useState<string>('');
 
   useEffect(() => {
     fetchModels();
@@ -44,7 +43,7 @@ function App() {
   const handleAction = async (modelName: string, action: 'start' | 'stop') => {
     try {
       await axios.post(`/models/${modelName}/${action}`);
-      fetchModels(); // Refresh the model list after action
+      fetchModels();
       message.success(`${action === 'start' ? '启动' : '停止'}模型成功`);
     } catch (error) {
       console.error(`Error ${action}ing model:`, error);
@@ -54,7 +53,7 @@ function App() {
 
   const showModal = () => {
     setIsModalVisible(true);
-    form.setFieldsValue({ pretrained_model_type: 'saas/openai' }); // 设置默认值
+    form.setFieldsValue({ pretrained_model_type: 'saas/openai' });
   };
 
   const handleOk = async () => {
@@ -77,7 +76,8 @@ function App() {
   };
 
   const handleInferBackendChange = (value: string) => {
-    setShowModelPath(value !== '');
+    setSelectedBackend(value);
+    form.setFieldsValue({ infer_params: {} });
   };
 
   const columns = [
@@ -168,22 +168,62 @@ function App() {
               ))}
             </Select>
           </Form.Item>
-          {showModelPath && (
+          {selectedBackend && selectedBackend !== InferBackend.SaaS && (
             <Form.Item name="model_path" label="模型路径">
               <Input />
             </Form.Item>
           )}
-          <Form.Item label="infer_params">
-            <Form.Item name={['infer_params', 'saas.base_url']} label="saas.base_url">
-              <Input />
-            </Form.Item>
-            <Form.Item name={['infer_params', 'saas.api_key']} label="saas.api_key">
-              <Input />
-            </Form.Item>
-            <Form.Item name={['infer_params', 'saas.model']} label="saas.model">
-              <Input />
-            </Form.Item>
-          </Form.Item>
+          <Form.List name="infer_params">
+            {(fields, { add, remove }) => (
+              <>
+                {fields.map(({ key, name, ...restField }) => (
+                  <Form.Item
+                    key={key}
+                    label={name === 0 ? "额外参数" : ""}
+                    required={false}
+                    style={{ marginBottom: 8 }}
+                  >
+                    <Form.Item
+                      {...restField}
+                      validateTrigger={['onChange', 'onBlur']}
+                      rules={[
+                        {
+                          required: true,
+                          whitespace: true,
+                          message: "请输入参数名称或删除此字段",
+                        },
+                      ]}
+                      noStyle
+                    >
+                      <Input placeholder="参数名称" style={{ width: '45%' }} />
+                    </Form.Item>
+                    <Input
+                      {...restField}
+                      style={{ width: '45%', marginLeft: 8 }}
+                      placeholder="参数值"
+                    />
+                    {fields.length > 0 ? (
+                      <MinusCircleOutlined
+                        className="dynamic-delete-button"
+                        onClick={() => remove(name)}
+                        style={{ margin: '0 8px' }}
+                      />
+                    ) : null}
+                  </Form.Item>
+                ))}
+                <Form.Item>
+                  <Button
+                    type="dashed"
+                    onClick={() => add()}
+                    block
+                    icon={<PlusOutlined />}
+                  >
+                    添加参数
+                  </Button>
+                </Form.Item>
+              </>
+            )}
+          </Form.List>
         </Form>
       </Modal>
     </Layout>
