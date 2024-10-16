@@ -65,6 +65,27 @@ supported_models = {
     }
 }
 
+def deploy_command_to_string(cmd: DeployCommand) -> str:
+    base_cmd = f"byzerllm deploy --pretrained_model_type {cmd.pretrained_model_type} "
+    base_cmd += f"--cpus_per_worker {cmd.cpus_per_worker} --gpus_per_worker {cmd.gpus_per_worker} "
+    base_cmd += f"--num_workers {cmd.num_workers} "
+    
+    if cmd.worker_concurrency:
+        base_cmd += f"--worker_concurrency {cmd.worker_concurrency} "
+    
+    for key, value in cmd.infer_params.items():
+        base_cmd += f"--infer_params {key}='{value}' "
+    
+    base_cmd += f"--model {cmd.model}"
+    
+    if cmd.model_path:
+        base_cmd += f" --model_path {cmd.model_path}"
+    
+    if cmd.infer_backend:
+        base_cmd += f" --infer_backend {cmd.infer_backend}"
+    
+    return base_cmd
+
 class ModelInfo(BaseModel):
     name: str
     status: str
@@ -84,7 +105,7 @@ async def manage_model(model_name: str, action: str):
         raise HTTPException(status_code=400, detail="Invalid action. Use 'start' or 'stop'")
     
     model_info = supported_models[model_name]
-    command = model_info["deploy_command"] if action == "start" else model_info["undeploy_command"]
+    command = deploy_command_to_string(model_info["deploy_command"]) if action == "start" else model_info["undeploy_command"]
     
     try:
         # Execute the command
