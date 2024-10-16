@@ -30,13 +30,25 @@ const CreateModel: React.FC = () => {
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
-      if (values.infer_backend === InferBackend.SaaS) {
-        values.infer_params = {
-          'saas.base_url': values['saas.base_url'],
-          'saas.api_key': values['saas.api_key'],
-          'saas.model': values['saas.model'],
-        };
+      const infer_params = {};
+      
+      // Collect all infer_params
+      if (values.infer_params) {
+        values.infer_params.forEach(param => {
+          infer_params[param.key] = param.value;
+        });
       }
+
+      // Add SaaS specific params if SaaS backend is selected
+      if (values.infer_backend === InferBackend.SaaS) {
+        infer_params['saas.base_url'] = values['saas.base_url'];
+        infer_params['saas.api_key'] = values['saas.api_key'];
+        infer_params['saas.model'] = values['saas.model'];
+      }
+
+      // Replace infer_params in values
+      values.infer_params = infer_params;
+
       await axios.post('/models/add', values);
       setIsModalVisible(false);
       form.resetFields();
@@ -54,7 +66,7 @@ const CreateModel: React.FC = () => {
 
   const handleInferBackendChange = (value: string) => {
     setSelectedBackend(value);
-    form.setFieldsValue({ infer_params: {} });
+    form.setFieldsValue({ infer_params: [] });
   };
 
   return (
@@ -94,7 +106,7 @@ const CreateModel: React.FC = () => {
               ))}
             </Select>
           </Form.Item>
-          {selectedBackend === InferBackend.SaaS ? (
+          {selectedBackend === InferBackend.SaaS && (
             <>
               <Form.Item name="saas.base_url" label="SaaS Base URL" rules={[{ required: true }]}>
                 <Input />
@@ -106,66 +118,72 @@ const CreateModel: React.FC = () => {
                 <Input />
               </Form.Item>
             </>
-          ) : (
-            <>
-              {selectedBackend && (
-                <Form.Item name="model_path" label="模型路径">
-                  <Input />
-                </Form.Item>
-              )}
-              <Form.List name="infer_params">
-                {(fields, { add, remove }) => (
-                  <>
-                    {fields.map(({ key, name, ...restField }) => (
-                      <Form.Item
-                        key={key}
-                        label={name === 0 ? "额外参数" : ""}
-                        required={false}
-                        style={{ marginBottom: 8 }}
-                      >
-                        <Form.Item
-                          {...restField}
-                          validateTrigger={['onChange', 'onBlur']}
-                          rules={[
-                            {
-                              required: true,
-                              whitespace: true,
-                              message: "请输入参数名称或删除此字段",
-                            },
-                          ]}
-                          noStyle
-                        >
-                          <Input placeholder="参数名称" style={{ width: '45%' }} />
-                        </Form.Item>
-                        <Input
-                          {...restField}
-                          style={{ width: '45%', marginLeft: 8 }}
-                          placeholder="参数值"
-                        />
-                        {fields.length > 0 ? (
-                          <MinusCircleOutlined
-                            className="dynamic-delete-button"
-                            onClick={() => remove(name)}
-                            style={{ margin: '0 8px' }}
-                          />
-                        ) : null}
-                      </Form.Item>
-                    ))}
-                    <Form.Item>
-                      <Button
-                        type="dashed"
-                        onClick={() => add()}
-                        block
-                        icon={<PlusOutlined />}
-                      >
-                        添加参数
-                      </Button>
-                    </Form.Item>
-                  </>
-                )}
-              </Form.List>
-            </>
           )}
+          {selectedBackend && selectedBackend !== InferBackend.SaaS && (
+            <Form.Item name="model_path" label="模型路径">
+              <Input />
+            </Form.Item>
+          )}
+          <Form.List name="infer_params">
+            {(fields, { add, remove }) => (
+              <>
+                {fields.map(({ key, name, ...restField }) => (
+                  <Form.Item
+                    key={key}
+                    label={name === 0 ? "额外参数" : ""}
+                    required={false}
+                    style={{ marginBottom: 8 }}
+                  >
+                    <Form.Item
+                      {...restField}
+                      name={[name, 'key']}
+                      validateTrigger={['onChange', 'onBlur']}
+                      rules={[
+                        {
+                          required: true,
+                          whitespace: true,
+                          message: "请输入参数名称或删除此字段",
+                        },
+                      ]}
+                      noStyle
+                    >
+                      <Input placeholder="参数名称" style={{ width: '45%' }} />
+                    </Form.Item>
+                    <Form.Item
+                      {...restField}
+                      name={[name, 'value']}
+                      validateTrigger={['onChange', 'onBlur']}
+                      rules={[
+                        {
+                          required: true,
+                          whitespace: true,
+                          message: "请输入参数值或删除此字段",
+                        },
+                      ]}
+                      noStyle
+                    >
+                      <Input style={{ width: '45%', marginLeft: 8 }} placeholder="参数值" />
+                    </Form.Item>
+                    <MinusCircleOutlined
+                      className="dynamic-delete-button"
+                      onClick={() => remove(name)}
+                      style={{ margin: '0 8px' }}
+                    />
+                  </Form.Item>
+                ))}
+                <Form.Item>
+                  <Button
+                    type="dashed"
+                    onClick={() => add()}
+                    block
+                    icon={<PlusOutlined />}
+                  >
+                    添加参数
+                  </Button>
+                </Form.Item>
+              </>
+            )}
+          </Form.List>
         </Form>
       </Modal>
     </div>
