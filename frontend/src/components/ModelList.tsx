@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Table, Button, message, Spin } from 'antd';
-import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined } from '@ant-design/icons';
+import { Table, Button, message, Card, Typography, Space, Tag } from 'antd';
+import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, RocketOutlined } from '@ant-design/icons';
+
+const { Title } = Typography;
 
 interface Model {
   name: string;
@@ -10,26 +12,30 @@ interface Model {
 
 const ModelList: React.FC = () => {
   const [models, setModels] = useState<Model[]>([]);
-  const [loading, setLoading] = useState<{ [key: string]: boolean }>({});
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState<{ [key: string]: boolean }>({});
 
   useEffect(() => {
     fetchModels();
   }, []);
 
   const fetchModels = async () => {
+    setLoading(true);
     try {
       const response = await axios.get('/models');
       setModels(response.data);
     } catch (error) {
       console.error('Error fetching models:', error);
       message.error('获取模型列表失败');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleAction = async (modelName: string, action: 'start' | 'stop') => {
     try {
       await axios.post(`/models/${modelName}/${action}`);
-      fetchModels();
+      await fetchModels();
       message.success(`${action === 'start' ? '启动' : '停止'}模型成功`);
     } catch (error) {
       console.error(`Error ${action}ing model:`, error);
@@ -38,7 +44,7 @@ const ModelList: React.FC = () => {
   };
 
   const refreshStatus = async (modelName: string) => {
-    setLoading(prev => ({ ...prev, [modelName]: true }));
+    setRefreshing(prev => ({ ...prev, [modelName]: true }));
     try {
       const response = await axios.get(`/models/${modelName}/status`);
       const newStatus = response.data.success ? 'running' : 'stopped';
@@ -52,7 +58,7 @@ const ModelList: React.FC = () => {
       console.error('Error refreshing status:', error);
       message.error('刷新状态失败');
     } finally {
-      setLoading(prev => ({ ...prev, [modelName]: false }));
+      setRefreshing(prev => ({ ...prev, [modelName]: false }));
     }
   };
 
@@ -61,51 +67,59 @@ const ModelList: React.FC = () => {
       title: '模型名称',
       dataIndex: 'name',
       key: 'name',
+      render: (text: string) => <Typography.Text strong>{text}</Typography.Text>,
     },
     {
       title: '当前状态',
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => (
-        <span style={{ color: status === 'running' ? 'green' : 'red' }}>
+        <Tag color={status === 'running' ? 'green' : 'red'}>
           {status === 'running' ? '运行中' : '已停止'}
-        </span>
+        </Tag>
       ),
     },
     {
       title: '操作',
       key: 'action',
       render: (_: any, record: Model) => (
-        <>
+        <Space size="middle">
           <Button
             type={record.status === 'stopped' ? 'primary' : 'default'}
-            icon={record.status === 'stopped' ? <PoweroffOutlined /> : <PauseCircleOutlined />}
+            icon={record.status === 'stopped' ? <RocketOutlined /> : <PauseCircleOutlined />}
             onClick={() => handleAction(record.name, record.status === 'stopped' ? 'start' : 'stop')}
-            style={{ 
-              backgroundColor: record.status === 'stopped' ? '#52c41a' : '#f5222d',
-              borderColor: record.status === 'stopped' ? '#52c41a' : '#f5222d',
-              marginRight: '8px'
-            }}
           >
             {record.status === 'stopped' ? '启动' : '停止'}
           </Button>
           <Button
-            icon={<SyncOutlined spin={loading[record.name]} />}
+            icon={<SyncOutlined spin={refreshing[record.name]} />}
             onClick={() => refreshStatus(record.name)}
-            disabled={loading[record.name]}
+            disabled={refreshing[record.name]}
           >
             刷新状态
           </Button>
-        </>
+        </Space>
       ),
     },
   ];
 
   return (
-    <div>
-      <h1>模型列表</h1>
-      <Table columns={columns} dataSource={models} rowKey="name" />
-    </div>
+    <Card>
+      <Title level={2}>
+        <Space>
+          <RocketOutlined />
+          模型列表
+        </Space>
+      </Title>
+      <Table 
+        columns={columns} 
+        dataSource={models} 
+        rowKey="name" 
+        loading={loading}
+        pagination={false}
+        bordered
+      />
+    </Card>
   );
 };
 
