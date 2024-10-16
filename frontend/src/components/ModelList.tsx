@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Table, Button, message } from 'antd';
-import { PoweroffOutlined, PauseCircleOutlined } from '@ant-design/icons';
+import { Table, Button, message, Spin } from 'antd';
+import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined } from '@ant-design/icons';
 
 interface Model {
   name: string;
@@ -10,6 +10,7 @@ interface Model {
 
 const ModelList: React.FC = () => {
   const [models, setModels] = useState<Model[]>([]);
+  const [loading, setLoading] = useState<{ [key: string]: boolean }>({});
 
   useEffect(() => {
     fetchModels();
@@ -36,6 +37,25 @@ const ModelList: React.FC = () => {
     }
   };
 
+  const refreshStatus = async (modelName: string) => {
+    setLoading(prev => ({ ...prev, [modelName]: true }));
+    try {
+      const response = await axios.get(`/models/${modelName}/status`);
+      const newStatus = response.data.success ? 'running' : 'stopped';
+      setModels(prevModels =>
+        prevModels.map(model =>
+          model.name === modelName ? { ...model, status: newStatus } : model
+        )
+      );
+      message.success(`刷新状态成功: ${newStatus}`);
+    } catch (error) {
+      console.error('Error refreshing status:', error);
+      message.error('刷新状态失败');
+    } finally {
+      setLoading(prev => ({ ...prev, [modelName]: false }));
+    }
+  };
+
   const columns = [
     {
       title: '模型名称',
@@ -56,17 +76,27 @@ const ModelList: React.FC = () => {
       title: '操作',
       key: 'action',
       render: (_: any, record: Model) => (
-        <Button
-          type={record.status === 'stopped' ? 'primary' : 'default'}
-          icon={record.status === 'stopped' ? <PoweroffOutlined /> : <PauseCircleOutlined />}
-          onClick={() => handleAction(record.name, record.status === 'stopped' ? 'start' : 'stop')}
-          style={{ 
-            backgroundColor: record.status === 'stopped' ? '#52c41a' : '#f5222d',
-            borderColor: record.status === 'stopped' ? '#52c41a' : '#f5222d',
-          }}
-        >
-          {record.status === 'stopped' ? '启动' : '停止'}
-        </Button>
+        <>
+          <Button
+            type={record.status === 'stopped' ? 'primary' : 'default'}
+            icon={record.status === 'stopped' ? <PoweroffOutlined /> : <PauseCircleOutlined />}
+            onClick={() => handleAction(record.name, record.status === 'stopped' ? 'start' : 'stop')}
+            style={{ 
+              backgroundColor: record.status === 'stopped' ? '#52c41a' : '#f5222d',
+              borderColor: record.status === 'stopped' ? '#52c41a' : '#f5222d',
+              marginRight: '8px'
+            }}
+          >
+            {record.status === 'stopped' ? '启动' : '停止'}
+          </Button>
+          <Button
+            icon={<SyncOutlined spin={loading[record.name]} />}
+            onClick={() => refreshStatus(record.name)}
+            disabled={loading[record.name]}
+          >
+            刷新状态
+          </Button>
+        </>
       ),
     },
   ];
