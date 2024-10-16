@@ -81,7 +81,8 @@ if not supported_models:
                 },
                 model="deepseek_chat"
             ).model_dump(),
-            "undeploy_command": "byzerllm undeploy deepseek_chat"
+            "undeploy_command": "byzerllm undeploy deepseek_chat",
+            "status_command": "byzerllm stat --model deepseek_chat"
         },
         "emb": {
             "status": "stopped",
@@ -92,7 +93,8 @@ if not supported_models:
                 infer_backend="transformers",
                 model="emb"
             ).model_dump(),
-            "undeploy_command": "byzerllm undeploy emb"
+            "undeploy_command": "byzerllm undeploy emb",
+            "status_command": "byzerllm stat --model emb"
         }
     }
     save_models_to_json(supported_models)
