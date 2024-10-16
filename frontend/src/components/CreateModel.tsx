@@ -67,7 +67,7 @@ const CreateModel: React.FC = () => {
       }
 
       // Replace infer_params in values
-      values.infer_params = infer_params;
+      values.infer_params = Object.entries(infer_params).map(([key, value]) => ({ key, value }));
 
       await axios.post('/models/add', values);
       setIsModalVisible(false);
@@ -85,7 +85,7 @@ const CreateModel: React.FC = () => {
   };
 
   const handleInferBackendChange = (value: string) => {
-    setSelectedBackend(value);
+    setSelectedBackend(value as InferBackend);
     form.setFieldsValue({ infer_params: [] });
   };
 

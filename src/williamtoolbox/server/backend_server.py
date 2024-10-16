@@ -199,10 +199,10 @@ async def get_model_status(model_name: str):
     
     try:
         # Execute the byzerllm stat command
-        command = supported_models[model_name]["status_command"] if model_name in supported_models else f"byzerllm stat --model {model_name}"
+        command = supported_models[model_name]["status_command"] if model_name in supported_models and "status_command" in supported_models[model_name] else f"byzerllm stat --model {model_name}"        
         result = subprocess.run(command, shell=True, capture_output=True, text=True)
         
-        # Check the result status
+        # Check the result status        
         if result.returncode == 0:
             status_output = result.stdout.strip()
             return {"model": model_name, "status": status_output, "success": True}
@@ -218,9 +218,8 @@ def main():
     parser.add_argument('--port', type=int, default=8005,
                         help='Port to run the backend server on (default: 8005)')
     parser.add_argument('--host', type=str, default="0.0.0.0",
-                        help='Host to run the backend server on (default: 0.0.0.0)')
-    args = parser.parse_args()
-
+                        help='Host to run the backend server on (default: 0.0.0.0)')    
+    args = parser.parse_args()        
     print(f"Starting backend server on {args.host}:{args.port}")
     uvicorn.run(app, host=args.host, port=args.port)
 

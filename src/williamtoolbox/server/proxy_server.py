@@ -50,10 +50,6 @@ async def read_root():
 async def get_backend_url():
     return {"backend_url": BACKEND_URL}
 
-@app.get("/get_file_upload_url")
-async def get_file_upload_url():
-    return {"file_upload_url": FILE_UPLOAD_URL}
-
 @app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"])
 async def proxy(request: Request, path: str):
     url = f"{BACKEND_URL}/{path}"
@@ -76,7 +72,8 @@ async def proxy(request: Request, path: str):
             url,
             headers=headers,
             params=params,
-            content=body,            
+            content=body, 
+            timeout=300           
         )
         print(f"Response Status Code: {response.status_code}")
         print(f"Response Headers: {response.headers}")
