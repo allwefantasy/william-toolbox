@@ -1,0 +1,4 @@
+[console_scripts]
+william.toolbox = williamtoolbox.williamtoolbox_command:main
+william.toolbox.backend = williamtoolbox.server.backend_server:main
+william.toolbox.frontend = williamtoolbox.server.proxy_server:main

@@ -1,0 +1,11 @@
+Metadata-Version: 2.1
+Name: williamtoolbox
+Version: 0.0.1
+Summary: williamtoolbox: William Toolbox
+Author: allwefantasy
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Description-Content-Type: text/markdown
+Requires-Dist: auto-coder

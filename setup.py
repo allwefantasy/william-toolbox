@@ -3,7 +3,7 @@ from setuptools import find_packages
 from setuptools import setup
 
 folder = os.path.dirname(__file__)
-version_path = os.path.join(folder, "src", "williamtoobox", "version.py")
+version_path = os.path.join(folder, "src", "williamtoolbox", "version.py")
 
 __version__ = None
 with open(version_path) as f:
@@ -31,6 +31,8 @@ setup(
     entry_points={
         'console_scripts': [
             'william.toolbox = williamtoolbox.williamtoolbox_command:main',
+            'william.toolbox.backend = williamtoolbox.server.backend_server:main',
+            'william.toolbox.frontend = williamtoolbox.server.proxy_server:main',
         ],
     },
     package_dir={"": "src"},

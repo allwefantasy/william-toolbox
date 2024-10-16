@@ -35,6 +35,7 @@ class DeployCommand(BaseModel):
     model: str
     model_path: Optional[str] = Field(default=None)
     infer_backend: Optional[str] = Field(default=None)
+    model_config = {"protected_namespaces": ()}
 
 # Dictionary to store supported models
 supported_models = {
@@ -120,8 +121,8 @@ async def manage_model(model_name: str, action: str):
 
 def main():
     parser = argparse.ArgumentParser(description="Backend Server")
-    parser.add_argument('--port', type=int, default=8004,
-                        help='Port to run the backend server on (default: 8004)')
+    parser.add_argument('--port', type=int, default=8005,
+                        help='Port to run the backend server on (default: 8005)')
     parser.add_argument('--host', type=str, default="0.0.0.0",
                         help='Host to run the backend server on (default: 0.0.0.0)')
     args = parser.parse_args()
