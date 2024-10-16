@@ -1,4 +1,3 @@
-
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -42,7 +41,6 @@ def load_models_from_json():
 def save_models_to_json(models):
     with open(MODELS_JSON_PATH, 'w') as f:
         json.dump(models, f, indent=2)
-
 
 # Add CORS middleware with restricted origins
 app.add_middleware(
@@ -189,6 +187,24 @@ async def manage_model(model_name: str, action: str):
     except subprocess.CalledProcessError as e:
         # If an exception occurred, don't update the model status
         error_message = f"Failed to {action} model: {e.stderr or e.stdout}"
+        raise HTTPException(status_code=500, detail=error_message)
+
+@app.get("/models/{model_name}/status")
+async def get_model_status(model_name: str):
+    """Get the status of a specified model."""
+    if model_name not in supported_models:
+        raise HTTPException(status_code=404, detail=f"Model {model_name} not found")
+    
+    try:
+        # Execute the byzerllm stat command
+        command = f"byzerllm stat --model {model_name}"
+        result = subprocess.run(command, shell=True, check=True, capture_output=True, text=True)
+        
+        # Parse the output and return the status
+        status_output = result.stdout.strip()
+        return {"model": model_name, "status": status_output}
+    except subprocess.CalledProcessError as e:
+        error_message = f"Failed to get status for model {model_name}: {e.stderr or e.stdout}"
         raise HTTPException(status_code=500, detail=error_message)
 
 def main():
