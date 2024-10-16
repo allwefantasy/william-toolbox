@@ -13,10 +13,30 @@ enum InferBackend {
   SaaS = "saas/openai"
 }
 
+interface InferParam {
+  key: string;
+  value: string;
+}
+
+interface FormValues {
+  name: string;
+  pretrained_model_type: string;
+  cpus_per_worker: number;
+  gpus_per_worker: number;
+  num_workers: number;
+  worker_concurrency: number;
+  infer_backend: InferBackend;
+  model_path?: string;
+  infer_params?: InferParam[];
+  'saas.base_url'?: string;
+  'saas.api_key'?: string;
+  'saas.model'?: string;
+}
+
 const CreateModel: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [form] = Form.useForm();
-  const [selectedBackend, setSelectedBackend] = useState<string>(InferBackend.SaaS);
+  const [form] = Form.useForm<FormValues>();
+  const [selectedBackend, setSelectedBackend] = useState<InferBackend>(InferBackend.SaaS);
 
   const showModal = () => {
     setIsModalVisible(true);
@@ -30,20 +50,20 @@ const CreateModel: React.FC = () => {
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
-      const infer_params = {};
+      const infer_params: Record<string, string> = {};
       
       // Collect all infer_params
       if (values.infer_params) {
-        values.infer_params.forEach(param => {
+        values.infer_params.forEach((param: InferParam) => {
           infer_params[param.key] = param.value;
         });
       }
 
       // Add SaaS specific params if SaaS backend is selected
       if (values.infer_backend === InferBackend.SaaS) {
-        infer_params['saas.base_url'] = values['saas.base_url'];
-        infer_params['saas.api_key'] = values['saas.api_key'];
-        infer_params['saas.model'] = values['saas.model'];
+        if (values['saas.base_url']) infer_params['saas.base_url'] = values['saas.base_url'];
+        if (values['saas.api_key']) infer_params['saas.api_key'] = values['saas.api_key'];
+        if (values['saas.model']) infer_params['saas.model'] = values['saas.model'];
       }
 
       // Replace infer_params in values
