@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Layout, Menu, Table, Button, message, Modal, Form, Input, InputNumber, Switch } from 'antd';
+import { Layout, Menu, Table, Button, message, Modal, Form, Input, InputNumber, Select } from 'antd';
 import { PlayCircleOutlined, PauseCircleOutlined, PoweroffOutlined, PlusOutlined } from '@ant-design/icons';
 import './App.css';
 
 const { Header, Sider, Content } = Layout;
+const { Option } = Select;
 
 // 定义模型类型
 interface Model {
@@ -12,10 +13,19 @@ interface Model {
   status: 'stopped' | 'running';
 }
 
+// 定义推理后端枚举
+enum InferBackend {
+  Transformers = "transformers",
+  VLLM = "ray/vllm",
+  LLAMA_CPP = "llama_cpp",
+  DeepSpeed = "ray/deepspeed"
+}
+
 function App() {
   const [models, setModels] = useState<Model[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
+  const [showModelPath, setShowModelPath] = useState(false);
 
   useEffect(() => {
     fetchModels();
@@ -44,6 +54,7 @@ function App() {
 
   const showModal = () => {
     setIsModalVisible(true);
+    form.setFieldsValue({ pretrained_model_type: 'saas/openai' }); // 设置默认值
   };
 
   const handleOk = async () => {
@@ -63,6 +74,10 @@ function App() {
   const handleCancel = () => {
     setIsModalVisible(false);
     form.resetFields();
+  };
+
+  const handleInferBackendChange = (value: string) => {
+    setShowModelPath(value !== '');
   };
 
   const columns = [
@@ -130,7 +145,7 @@ function App() {
           <Form.Item name="name" label="模型名称" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="pretrained_model_type" label="预训练模型类型" rules={[{ required: true }]}>
+          <Form.Item name="pretrained_model_type" label="预训练模型类型" initialValue="saas/openai" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
           <Form.Item name="cpus_per_worker" label="每个 Worker CPU" initialValue={0.001}>
@@ -145,11 +160,29 @@ function App() {
           <Form.Item name="worker_concurrency" label="Worker 并发数">
             <InputNumber min={1} />
           </Form.Item>
-          <Form.Item name="model_path" label="模型路径">
-            <Input />
-          </Form.Item>
           <Form.Item name="infer_backend" label="推理后端">
-            <Input />
+            <Select onChange={handleInferBackendChange}>
+              <Option value="">请选择</Option>
+              {Object.values(InferBackend).map((backend) => (
+                <Option key={backend} value={backend}>{backend}</Option>
+              ))}
+            </Select>
+          </Form.Item>
+          {showModelPath && (
+            <Form.Item name="model_path" label="模型路径">
+              <Input />
+            </Form.Item>
+          )}
+          <Form.Item label="infer_params">
+            <Form.Item name={['infer_params', 'saas.base_url']} label="saas.base_url">
+              <Input />
+            </Form.Item>
+            <Form.Item name={['infer_params', 'saas.api_key']} label="saas.api_key">
+              <Input />
+            </Form.Item>
+            <Form.Item name={['infer_params', 'saas.model']} label="saas.model">
+              <Input />
+            </Form.Item>
           </Form.Item>
         </Form>
       </Modal>
