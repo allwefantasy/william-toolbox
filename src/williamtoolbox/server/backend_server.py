@@ -75,7 +75,7 @@ if not supported_models:
             "status": "stopped",
             "deploy_command": DeployCommand(
                 pretrained_model_type="saas/openai",
-                worker_concurrency=10,
+                worker_concurrency=1000,
                 infer_params={
                     "saas.base_url": "https://api.deepseek.com/beta",
                     "saas.api_key": "${MODEL_DEEPSEEK_TOKEN}",
@@ -89,7 +89,7 @@ if not supported_models:
             "status": "stopped",
             "deploy_command": DeployCommand(
                 pretrained_model_type="custom/bge",
-                worker_concurrency=10,
+                worker_concurrency=1000,
                 model_path="/home/winubuntu/.auto-coder/storage/models/AI-ModelScope/bge-large-zh",
                 infer_backend="transformers",
                 model="emb"
@@ -107,8 +107,10 @@ def deploy_command_to_string(cmd: DeployCommand) -> str:
     if cmd.worker_concurrency:
         base_cmd += f"--worker_concurrency {cmd.worker_concurrency} "
     
-    for key, value in cmd.infer_params.items():
-        base_cmd += f"--infer_params {key}='{value}' "
+    if cmd.infer_params:
+        base_cmd += "--infer_params "
+        for key, value in cmd.infer_params.items():
+            base_cmd += f'''{key}="{value}" '''
     
     base_cmd += f"--model {cmd.model}"
     
