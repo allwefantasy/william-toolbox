@@ -67,7 +67,7 @@ const CreateRAG: React.FC = () => {
             <Input />
           </Form.Item>
           <Form.Item name="rag_doc_filter_relevance" label="文档过滤相关度" initialValue={2}>
-            <InputNumber min={0} step={0.1} />
+            <InputNumber min={0} step={1} max={10} />
           </Form.Item>
         </Form>
       </Modal>
