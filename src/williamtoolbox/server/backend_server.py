@@ -199,7 +199,7 @@ async def get_model_status(model_name: str):
     
     try:
         # Execute the byzerllm stat command
-        command = f"byzerllm stat --model {model_name}"
+        command = supported_models[model_name]["status_command"] if model_name in supported_models else f"byzerllm stat --model {model_name}"
         result = subprocess.run(command, shell=True, capture_output=True, text=True)
         
         # Check the result status
