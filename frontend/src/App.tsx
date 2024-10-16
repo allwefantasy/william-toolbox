@@ -1,40 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import './App.css';
 
-// 定义软件类型
-interface Software {
-  id: number;
+// 定义模型类型
+interface Model {
   name: string;
-  status: 'not installed' | 'stopped' | 'running';
+  status: 'stopped' | 'running';
 }
 
 function App() {
-  // 模拟软件列表
-  const [softwares, setSoftwares] = useState<Software[]>([
-    { id: 1, name: 'Software A', status: 'not installed' },
-    { id: 2, name: 'Software B', status: 'stopped' },
-    { id: 3, name: 'Software C', status: 'running' },
-  ]);
+  const [models, setModels] = useState<Model[]>([]);
 
-  // 处理安装
-  const handleInstall = (id: number) => {
-    setSoftwares(softwares.map(sw => 
-      sw.id === id ? { ...sw, status: 'stopped' } : sw
-    ));
+  useEffect(() => {
+    fetchModels();
+  }, []);
+
+  const fetchModels = async () => {
+    try {
+      const response = await axios.get('/models');
+      setModels(response.data);
+    } catch (error) {
+      console.error('Error fetching models:', error);
+    }
   };
 
-  // 处理启动
-  const handleStart = (id: number) => {
-    setSoftwares(softwares.map(sw => 
-      sw.id === id ? { ...sw, status: 'running' } : sw
-    ));
-  };
-
-  // 处理关闭
-  const handleStop = (id: number) => {
-    setSoftwares(softwares.map(sw => 
-      sw.id === id ? { ...sw, status: 'stopped' } : sw
-    ));
+  const handleAction = async (modelName: string, action: 'start' | 'stop') => {
+    try {
+      await axios.post(`/models/${modelName}/${action}`);
+      fetchModels(); // Refresh the model list after action
+    } catch (error) {
+      console.error(`Error ${action}ing model:`, error);
+    }
   };
 
   return (
@@ -42,34 +38,30 @@ function App() {
       <div className="sidebar">
         <h2>菜单</h2>
         <ul>
-          <li>软件管理</li>
-          {/* 可以添加更多菜单项 */}
+          <li>模型管理</li>
         </ul>
       </div>
       <div className="main-content">
-        <h1>软件管理</h1>
+        <h1>模型管理</h1>
         <table>
           <thead>
             <tr>
-              <th>软件名称</th>
+              <th>模型名称</th>
               <th>当前状态</th>
               <th>操作</th>
             </tr>
           </thead>
           <tbody>
-            {softwares.map(software => (
-              <tr key={software.id}>
-                <td>{software.name}</td>
-                <td>{software.status}</td>
+            {models.map(model => (
+              <tr key={model.name}>
+                <td>{model.name}</td>
+                <td>{model.status}</td>
                 <td>
-                  {software.status === 'not installed' && (
-                    <button onClick={() => handleInstall(software.id)}>安装</button>
+                  {model.status === 'stopped' && (
+                    <button onClick={() => handleAction(model.name, 'start')}>启动</button>
                   )}
-                  {software.status === 'stopped' && (
-                    <button onClick={() => handleStart(software.id)}>启动</button>
-                  )}
-                  {software.status === 'running' && (
-                    <button onClick={() => handleStop(software.id)}>关闭</button>
+                  {model.status === 'running' && (
+                    <button onClick={() => handleAction(model.name, 'stop')}>停止</button>
                   )}
                 </td>
               </tr>
