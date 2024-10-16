@@ -16,11 +16,15 @@ enum InferBackend {
 const CreateModel: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
-  const [selectedBackend, setSelectedBackend] = useState<string>('');
+  const [selectedBackend, setSelectedBackend] = useState<string>(InferBackend.SaaS);
 
   const showModal = () => {
     setIsModalVisible(true);
-    form.setFieldsValue({ pretrained_model_type: 'saas/openai' });
+    form.setFieldsValue({ 
+      pretrained_model_type: 'saas/openai',
+      worker_concurrency: 1000,
+      infer_backend: InferBackend.SaaS
+    });
   };
 
   const handleOk = async () => {
@@ -80,10 +84,10 @@ const CreateModel: React.FC = () => {
           <Form.Item name="num_workers" label="Worker 数量" initialValue={1}>
             <InputNumber min={1} />
           </Form.Item>
-          <Form.Item name="worker_concurrency" label="Worker 并发数">
+          <Form.Item name="worker_concurrency" label="Worker 并发数" initialValue={1000}>
             <InputNumber min={1} />
           </Form.Item>
-          <Form.Item name="infer_backend" label="推理后端" rules={[{ required: true }]}>
+          <Form.Item name="infer_backend" label="推理后端" initialValue={InferBackend.SaaS} rules={[{ required: true }]}>
             <Select onChange={handleInferBackendChange}>
               {Object.values(InferBackend).map((backend) => (
                 <Option key={backend} value={backend}>{backend}</Option>
