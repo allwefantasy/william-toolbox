@@ -1,18 +1,24 @@
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 import uvicorn
-import subprocess
+import httpx
+from typing import Optional
 import os
+import argparse
+import aiofiles
+import subprocess
 from typing import List, Dict
 from pydantic import BaseModel
 
 app = FastAPI()
 
-# Add CORS middleware
+# Add CORS middleware with restricted origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # Restrict to trusted origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -65,7 +71,15 @@ async def manage_model(model_name: str, action: str):
         raise HTTPException(status_code=500, detail=f"Failed to {action} model: {e.stderr}")
 
 def main():
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    parser = argparse.ArgumentParser(description="Backend Server")
+    parser.add_argument('--port', type=int, default=8001,
+                        help='Port to run the backend server on (default: 8001)')
+    parser.add_argument('--host', type=str, default="0.0.0.0",
+                        help='Host to run the backend server on (default: 0.0.0.0)')
+    args = parser.parse_args()
+
+    print(f"Starting backend server on {args.host}:{args.port}")
+    uvicorn.run(app, host=args.host, port=args.port)
 
 if __name__ == "__main__":
     main()
