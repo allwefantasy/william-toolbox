@@ -27,8 +27,16 @@ class AddModelRequest(BaseModel):
     model_path: Optional[str] = Field(default=None)
     infer_backend: Optional[str] = Field(default=None)
 
+class AddRAGRequest(BaseModel):
+    name: str
+    model: str
+    tokenizer_path: str
+    doc_dir: str
+    rag_doc_filter_relevance: float = Field(default=2.0)
+
 # Path to the models.json file
 MODELS_JSON_PATH = "models.json"
+RAGS_JSON_PATH = "rags.json"
 
 # Function to load models from JSON file
 def load_models_from_json():
@@ -41,6 +49,18 @@ def load_models_from_json():
 def save_models_to_json(models):
     with open(MODELS_JSON_PATH, 'w') as f:
         json.dump(models, f, indent=2)
+
+# Function to load RAGs from JSON file
+def load_rags_from_json():
+    if os.path.exists(RAGS_JSON_PATH):
+        with open(RAGS_JSON_PATH, 'r') as f:
+            return json.load(f)
+    return {}
+
+# Function to save RAGs to JSON file
+def save_rags_to_json(rags):
+    with open(RAGS_JSON_PATH, 'w') as f:
+        json.dump(rags, f, indent=2)
 
 # Add CORS middleware with restricted origins
 app.add_middleware(
@@ -156,6 +176,26 @@ async def add_model(model: AddModelRequest):
     supported_models[model.name] = new_model
     save_models_to_json(supported_models)
     return {"message": f"Model {model.name} added successfully"}
+
+@app.post("/rags/add")
+async def add_rag(rag: AddRAGRequest):
+    """Add a new RAG to the supported RAGs list."""
+    rags = load_rags_from_json()
+    if rag.name in rags:
+        raise HTTPException(status_code=400, detail=f"RAG {rag.name} already exists")
+    
+    new_rag = {
+        "name": rag.name,
+        "status": "stopped",
+        "model": rag.model,
+        "tokenizer_path": rag.tokenizer_path,
+        "doc_dir": rag.doc_dir,
+        "rag_doc_filter_relevance": rag.rag_doc_filter_relevance
+    }
+    
+    rags[rag.name] = new_rag
+    save_rags_to_json(rags)
+    return {"message": f"RAG {rag.name} added successfully"}
 
 @app.post("/models/{model_name}/{action}")
 async def manage_model(model_name: str, action: str):
