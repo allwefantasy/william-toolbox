@@ -200,14 +200,18 @@ async def get_model_status(model_name: str):
     try:
         # Execute the byzerllm stat command
         command = f"byzerllm stat --model {model_name}"
-        result = subprocess.run(command, shell=True, check=True, capture_output=True, text=True)
+        result = subprocess.run(command, shell=True, capture_output=True, text=True)
         
-        # Parse the output and return the status
-        status_output = result.stdout.strip()
-        return {"model": model_name, "status": status_output}
-    except subprocess.CalledProcessError as e:
-        error_message = f"Failed to get status for model {model_name}: {e.stderr or e.stdout}"
-        raise HTTPException(status_code=500, detail=error_message)
+        # Check the result status
+        if result.returncode == 0:
+            status_output = result.stdout.strip()
+            return {"model": model_name, "status": status_output, "success": True}
+        else:
+            error_message = f"Command failed with return code {result.returncode}: {result.stderr.strip()}"
+            return {"model": model_name, "status": "error", "error": error_message, "success": False}
+    except Exception as e:
+        error_message = f"Failed to get status for model {model_name}: {str(e)}"
+        return {"model": model_name, "status": "error", "error": error_message, "success": False}
 
 def main():
     parser = argparse.ArgumentParser(description="Backend Server")
