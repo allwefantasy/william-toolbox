@@ -62,6 +62,12 @@ def save_rags_to_json(rags):
     with open(RAGS_JSON_PATH, 'w') as f:
         json.dump(rags, f, indent=2)
 
+@app.get("/rags", response_model=List[Dict[str, str]])
+async def list_rags():
+    """List all RAGs and their current status."""
+    rags = load_rags_from_json()
+    return [{"name": name, "status": info.get("status", "unknown"), "model": info.get("model", ""), "doc_dir": info.get("doc_dir", "")} for name, info in rags.items()]
+
 # Add CORS middleware with restricted origins
 app.add_middleware(
     CORSMiddleware,
