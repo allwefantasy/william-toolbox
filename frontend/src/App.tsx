@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Layout, Menu, Table, Button, message } from 'antd';
-import { PlayCircleOutlined, PauseCircleOutlined } from '@ant-design/icons';
+import { PlayCircleOutlined, PauseCircleOutlined, PoweroffOutlined } from '@ant-design/icons';
 import './App.css';
 
 const { Header, Sider, Content } = Layout;
@@ -61,9 +61,13 @@ function App() {
       key: 'action',
       render: (_: any, record: Model) => (
         <Button
-          type="primary"
-          icon={record.status === 'stopped' ? <PlayCircleOutlined /> : <PauseCircleOutlined />}
+          type={record.status === 'stopped' ? 'primary' : 'danger'}
+          icon={record.status === 'stopped' ? <PoweroffOutlined /> : <PauseCircleOutlined />}
           onClick={() => handleAction(record.name, record.status === 'stopped' ? 'start' : 'stop')}
+          style={{ 
+            backgroundColor: record.status === 'stopped' ? '#52c41a' : '#f5222d',
+            borderColor: record.status === 'stopped' ? '#52c41a' : '#f5222d',
+          }}
         >
           {record.status === 'stopped' ? '启动' : '停止'}
         </Button>
