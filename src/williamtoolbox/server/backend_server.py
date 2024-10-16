@@ -134,16 +134,23 @@ async def manage_model(model_name: str, action: str):
         # Execute the command
         result = subprocess.run(command, shell=True, check=True, capture_output=True, text=True)
         
-        # Update model status
-        model_info["status"] = "running" if action == "start" else "stopped"
-        supported_models[model_name] = model_info
-        
-        # Save updated models to JSON file
-        save_models_to_json(supported_models)
-        
-        return {"message": f"Model {model_name} {action}ed successfully", "output": result.stdout}
+        # Check if the command was successful
+        if result.returncode == 0:
+            # Update model status only if the command was successful
+            model_info["status"] = "running" if action == "start" else "stopped"
+            supported_models[model_name] = model_info
+            
+            # Save updated models to JSON file
+            save_models_to_json(supported_models)
+            
+            return {"message": f"Model {model_name} {action}ed successfully", "output": result.stdout}
+        else:
+            # If the command failed, raise an exception
+            raise subprocess.CalledProcessError(result.returncode, command, result.stdout, result.stderr)
     except subprocess.CalledProcessError as e:
-        raise HTTPException(status_code=500, detail=f"Failed to {action} model: {e.stderr}")
+        # If an exception occurred, don't update the model status
+        error_message = f"Failed to {action} model: {e.stderr or e.stdout}"
+        raise HTTPException(status_code=500, detail=error_message)
 
 def main():
     parser = argparse.ArgumentParser(description="Backend Server")
