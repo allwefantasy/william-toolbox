@@ -61,7 +61,7 @@ function App() {
       key: 'action',
       render: (_: any, record: Model) => (
         <Button
-          type={record.status === 'stopped' ? 'primary' : 'danger'}
+          type={record.status === 'stopped' ? 'primary' : 'default'}
           icon={record.status === 'stopped' ? <PoweroffOutlined /> : <PauseCircleOutlined />}
           onClick={() => handleAction(record.name, record.status === 'stopped' ? 'start' : 'stop')}
           style={{ 
