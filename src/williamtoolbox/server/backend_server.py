@@ -71,7 +71,7 @@ if not supported_models:
                     "saas.model": "deepseek-chat"
                 },
                 model="deepseek_chat"
-            ).dict(),
+            ).model_dump(),
             "undeploy_command": "byzerllm undeploy deepseek_chat"
         },
         "emb": {
@@ -82,7 +82,7 @@ if not supported_models:
                 model_path="/home/winubuntu/.auto-coder/storage/models/AI-ModelScope/bge-large-zh",
                 infer_backend="transformers",
                 model="emb"
-            ).dict(),
+            ).model_dump(),
             "undeploy_command": "byzerllm undeploy emb"
         }
     }

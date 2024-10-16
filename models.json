@@ -1,0 +1,36 @@
+{
+  "deepseek_chat": {
+    "status": "stopped",
+    "deploy_command": {
+      "pretrained_model_type": "saas/openai",
+      "cpus_per_worker": 0.001,
+      "gpus_per_worker": 0,
+      "num_workers": 1,
+      "worker_concurrency": 10,
+      "infer_params": {
+        "saas.base_url": "https://api.deepseek.com/beta",
+        "saas.api_key": "${MODEL_DEEPSEEK_TOKEN}",
+        "saas.model": "deepseek-chat"
+      },
+      "model": "deepseek_chat",
+      "model_path": null,
+      "infer_backend": null
+    },
+    "undeploy_command": "byzerllm undeploy deepseek_chat"
+  },
+  "emb": {
+    "status": "stopped",
+    "deploy_command": {
+      "pretrained_model_type": "custom/bge",
+      "cpus_per_worker": 0.001,
+      "gpus_per_worker": 0,
+      "num_workers": 1,
+      "worker_concurrency": 10,
+      "infer_params": {},
+      "model": "emb",
+      "model_path": "/home/winubuntu/.auto-coder/storage/models/AI-ModelScope/bge-large-zh",
+      "infer_backend": "transformers"
+    },
+    "undeploy_command": "byzerllm undeploy emb"
+  }
+}
