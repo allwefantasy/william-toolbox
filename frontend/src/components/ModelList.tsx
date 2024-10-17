@@ -15,6 +15,7 @@ const ModelList: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState<{ [key: string]: boolean }>({});
   const [actionLoading, setActionLoading] = useState<{ [key: string]: boolean }>({});
+  const [countdowns, setCountdowns] = useState<{ [key: string]: number }>({});
 
   useEffect(() => {
     fetchModels();
@@ -35,6 +36,17 @@ const ModelList: React.FC = () => {
 
   const handleAction = async (modelName: string, action: 'start' | 'stop' | 'restart') => {
     setActionLoading(prev => ({ ...prev, [modelName]: true }));
+    setCountdowns(prev => ({ ...prev, [modelName]: 60 }));
+    
+    const countdownInterval = setInterval(() => {
+      setCountdowns(prev => {
+        const newCountdown = prev[modelName] - 1;
+        return newCountdown <= 0
+          ? { ...prev, [modelName]: undefined }
+          : { ...prev, [modelName]: newCountdown };
+      });
+    }, 1000);
+
     try {
       if (action === 'restart') {
         await axios.post(`/models/${modelName}/stop`);
@@ -49,6 +61,8 @@ const ModelList: React.FC = () => {
       message.error(`${action === 'start' ? '启动' : action === 'stop' ? '停止' : '重启'}模型失败`);
     } finally {
       setActionLoading(prev => ({ ...prev, [modelName]: false }));
+      clearInterval(countdownInterval);
+      setCountdowns(prev => ({ ...prev, [modelName]: undefined }));
     }
   };
 
@@ -98,15 +112,19 @@ const ModelList: React.FC = () => {
             icon={record.status === 'stopped' ? <RocketOutlined /> : <PauseCircleOutlined />}
             onClick={() => handleAction(record.name, record.status === 'stopped' ? 'start' : 'stop')}
             loading={actionLoading[record.name]}
+            disabled={countdowns[record.name] !== undefined}
           >
             {record.status === 'stopped' ? '启动' : '停止'}
+            {countdowns[record.name] !== undefined && ` (${countdowns[record.name]}s)`}
           </Button>
           <Button
             icon={<RedoOutlined />}
             onClick={() => handleAction(record.name, 'restart')}
             loading={actionLoading[record.name]}
+            disabled={countdowns[record.name] !== undefined}
           >
             重启
+            {countdowns[record.name] !== undefined && ` (${countdowns[record.name]}s)`}
           </Button>
           <Button
             icon={<SyncOutlined spin={refreshing[record.name]} />}
