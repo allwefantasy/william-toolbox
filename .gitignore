@@ -6,3 +6,4 @@ web/
 logs/
 rags.json
 models.json
+deploy.sh

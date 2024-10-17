@@ -26,7 +26,7 @@ This project is powered by [auto-coder.chat](https://auto-coder.chat). You can c
 ### Installation
 
 ```
-pip install williamtoolbox
+pip install -U williamtoolbox
 ```
 
 ### Running the Application
