@@ -225,14 +225,15 @@ async def manage_rag(rag_name: str, action: str):
         # Check if the port is already in use by another RAG
         port = rag_info['port'] or 8000
         for other_rag in rags.values():
-            if other_rag['name'] != rag_name and other_rag['status'] == 'running' and other_rag['port'] == port:
+            if other_rag['name'] != rag_name and other_rag['port'] == port:
                 raise HTTPException(status_code=400, detail=f"Port {port} is already in use by RAG {other_rag['name']}")
-
+         
+        rag_doc_filter_relevance = int(rag_info['rag_doc_filter_relevance'])
         command = "auto-coder.rag serve"
         command += f" --model {rag_info['model']}"        
         command += f" --tokenizer_path {rag_info['tokenizer_path']}"
         command += f" --doc_dir {rag_info['doc_dir']}"
-        command += f" --rag_doc_filter_relevance {int(rag_info['rag_doc_filter_relevance'])}"
+        command += f" --rag_doc_filter_relevance {rag_doc_filter_relevance}"
         command += f" --host {rag_info['host'] or '0.0.0.0'}"
         command += f" --port {port}"
 

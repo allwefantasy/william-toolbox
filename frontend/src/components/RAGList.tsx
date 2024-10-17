@@ -118,11 +118,7 @@ const RAGList: React.FC = () => {
             <Tag color={status === 'running' ? 'green' : 'red'}>
               {status === 'running' ? '运行中' : '已停止'}
             </Tag>
-            {record.process_id && (
-              <Typography.Text type={record.is_alive ? 'success' : 'danger'}>
-                PID: {record.process_id} ({record.is_alive ? '存活' : '已终止'})
-              </Typography.Text>
-            )}
+            PID: {record.process_id}
           </Space>
         ),
       },
