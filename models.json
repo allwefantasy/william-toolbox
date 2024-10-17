@@ -1,6 +1,6 @@
 {
   "deepseek_chat": {
-    "status": "stopped",
+    "status": "running",
     "deploy_command": {
       "pretrained_model_type": "saas/openai",
       "cpus_per_worker": 0.001,

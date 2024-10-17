@@ -48,7 +48,7 @@ def load_models_from_json():
 # Function to save models to JSON file
 def save_models_to_json(models):
     with open(MODELS_JSON_PATH, 'w') as f:
-        json.dump(models, f, indent=2)
+        json.dump(models, f, indent=2,ensure_ascii=False)
 
 # Function to load RAGs from JSON file
 def load_rags_from_json():
@@ -60,7 +60,7 @@ def load_rags_from_json():
 # Function to save RAGs to JSON file
 def save_rags_to_json(rags):
     with open(RAGS_JSON_PATH, 'w') as f:
-        json.dump(rags, f, indent=2)
+        json.dump(rags, f, indent=2,ensure_ascii=False)
 
 @app.get("/rags", response_model=List[Dict[str, str]])
 async def list_rags():

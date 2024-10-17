@@ -1,0 +1,10 @@
+{
+  "测试知识库": {
+    "name": "测试知识库",
+    "status": "stopped",
+    "model": "deepseek_chat",
+    "tokenizer_path": "/Users/allwefantasy/Downloads/tokenizer.json",
+    "doc_dir": "/Users/allwefantasy/Downloads/pdf_upload_ok_2",
+    "rag_doc_filter_relevance": 2.0
+  }
+}
