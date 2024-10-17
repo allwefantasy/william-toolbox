@@ -12,6 +12,8 @@ interface RAG {
   tokenizer_path: string;
   doc_dir: string;
   rag_doc_filter_relevance: number;
+  process_id?: number;
+  is_alive?: boolean;
 }
 
 const RAGList: React.FC = () => {
@@ -59,7 +61,7 @@ const RAGList: React.FC = () => {
             rag.name === ragName ? { ...rag, status: response.data.status } : rag
           )
         );
-        message.success(`刷新状态成功: ${response.data.status}`);
+        message.success(`刷新状态成功: ${response.data.status} (PID: ${response.data.process_id}, 存活: ${response.data.is_alive})`);
       }
     } catch (error) {
       console.error('Error refreshing status:', error);
@@ -96,16 +98,23 @@ const RAGList: React.FC = () => {
       dataIndex: 'rag_doc_filter_relevance',
       key: 'rag_doc_filter_relevance',
     },
-    {
-      title: '当前状态',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status: string) => (
-        <Tag color={status === 'running' ? 'green' : 'red'}>
-          {status === 'running' ? '运行中' : '已停止'}
-        </Tag>
-      ),
-    },
+      {
+        title: '当前状态',
+        dataIndex: 'status',
+        key: 'status',
+        render: (status: string, record: RAG) => (
+          <Space direction="vertical">
+            <Tag color={status === 'running' ? 'green' : 'red'}>
+              {status === 'running' ? '运行中' : '已停止'}
+            </Tag>
+            {record.process_id && (
+              <Typography.Text type={record.is_alive ? 'success' : 'danger'}>
+                PID: {record.process_id} ({record.is_alive ? '存活' : '已终止'})
+              </Typography.Text>
+            )}
+          </Space>
+        ),
+      },
     {
       title: '操作',
       key: 'action',

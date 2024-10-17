@@ -16,6 +16,7 @@ import json
 import subprocess
 import os
 import signal
+import psutil
 
 app = FastAPI()
 
@@ -256,7 +257,29 @@ async def get_rag_status(rag_name: str):
         raise HTTPException(status_code=404, detail=f"RAG {rag_name} not found")
     
     rag_info = rags[rag_name]
-    return {"rag": rag_name, "status": rag_info["status"], "success": True}
+    
+    # Check if the process is running
+    is_alive = False
+    if "process_id" in rag_info:
+        try:
+            process = psutil.Process(rag_info["process_id"])
+            is_alive = process.is_running()
+        except psutil.NoSuchProcess:
+            is_alive = False
+    
+    # Update the status based on whether the process is alive
+    status = "running" if is_alive else "stopped"
+    rag_info["status"] = status
+    rags[rag_name] = rag_info
+    save_rags_to_json(rags)
+    
+    return {
+        "rag": rag_name,
+        "status": status,
+        "process_id": rag_info.get("process_id"),
+        "is_alive": is_alive,
+        "success": True
+    }
 
 @app.post("/models/{model_name}/{action}")
 async def manage_model(model_name: str, action: str):
