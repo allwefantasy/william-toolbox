@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 import httpx
-from typing import Optional
+from typing import Optional,Any
 import os
 import argparse
 import aiofiles
@@ -65,11 +65,11 @@ def save_rags_to_json(rags):
     with open(RAGS_JSON_PATH, 'w') as f:
         json.dump(rags, f, indent=2,ensure_ascii=False)
 
-@app.get("/rags", response_model=List[Dict[str, str]])
+@app.get("/rags", response_model=List[Dict[str, Any]])
 async def list_rags():
     """List all RAGs and their current status."""
     rags = load_rags_from_json()
-    return [{"name": name, "status": info.get("status", "unknown"), "model": info.get("model", ""), "doc_dir": info.get("doc_dir", "")} for name, info in rags.items()]
+    return [{"name": name, **info} for name, info in rags.items()]
 
 # Add CORS middleware with restricted origins
 app.add_middleware(
