@@ -3,3 +3,6 @@
 actions/
 output.txt
 web/
+logs/
+rags.json
+models.json

@@ -222,26 +222,30 @@ async def manage_rag(rag_name: str, action: str):
     rag_info = rags[rag_name]
     
     if action == "start":
-        command = f"auto-coder.rag serve --model {rag_info['model']} --tokenizer_path {rag_info['tokenizer_path']} --doc_dir {rag_info['doc_dir']} --rag_doc_filter_relevance {rag_info['rag_doc_filter_relevance']}"        
+        command = "auto-coder.rag serve"
+        command += f" --model {rag_info['model']}"        
+        command += f" --tokenizer_path {rag_info['tokenizer_path']}"
+        command += f" --doc_dir {rag_info['doc_dir']}"
+        command += f" --rag_doc_filter_relevance {int(rag_info['rag_doc_filter_relevance'])}"
+        command += f" --host {rag_info['host'] or '0.0.0.0'}"
+        command += f" --port {rag_info['port'] or 8000}"
+
         logger.info(f"Starting RAG {rag_name} with command: {command}")
         try:
             # Create logs directory if it doesn't exist
             os.makedirs("logs", exist_ok=True)
             
             # Open log files for stdout and stderr
-            stdout_log = open(f"logs/{rag_info['process_id']}.out", "w")
-            stderr_log = open(f"logs/{rag_info['process_id']}.err", "w")
+            stdout_log = open(f"logs/{rag_info['name']}.out", "w")
+            stderr_log = open(f"logs/{rag_info['name']}.err", "w")
             
             # Use subprocess.Popen to start the process in the background
             process = subprocess.Popen(command, shell=True, stdout=stdout_log, stderr=stderr_log)
             rag_info["status"] = "running"
-            rag_info["process_id"] = process.pid
-            
-            # Close log files
-            stdout_log.close()
-            stderr_log.close()
-        except Exception as e:
-            logger.error(f"Failed to start RAG: {str(e)}")
+            rag_info["process_id"] = process.pid                        
+        except Exception as e:            
+            import traceback
+            traceback.print_exc()
             raise HTTPException(status_code=500, detail=f"Failed to start RAG: {str(e)}")
     else:  # action == "stop"
         if "process_id" in rag_info:
