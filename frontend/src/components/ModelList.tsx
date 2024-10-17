@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Table, Button, message, Card, Typography, Space, Tag } from 'antd';
-import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, RocketOutlined } from '@ant-design/icons';
+import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, RocketOutlined, RedoOutlined } from '@ant-design/icons';
 
 const { Title } = Typography;
 
@@ -14,6 +14,7 @@ const ModelList: React.FC = () => {
   const [models, setModels] = useState<Model[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState<{ [key: string]: boolean }>({});
+  const [actionLoading, setActionLoading] = useState<{ [key: string]: boolean }>({});
 
   useEffect(() => {
     fetchModels();
@@ -32,14 +33,22 @@ const ModelList: React.FC = () => {
     }
   };
 
-  const handleAction = async (modelName: string, action: 'start' | 'stop') => {
+  const handleAction = async (modelName: string, action: 'start' | 'stop' | 'restart') => {
+    setActionLoading(prev => ({ ...prev, [modelName]: true }));
     try {
-      await axios.post(`/models/${modelName}/${action}`);
+      if (action === 'restart') {
+        await axios.post(`/models/${modelName}/stop`);
+        await axios.post(`/models/${modelName}/start`);
+      } else {
+        await axios.post(`/models/${modelName}/${action}`);
+      }
       await fetchModels();
-      message.success(`${action === 'start' ? '启动' : '停止'}模型成功`);
+      message.success(`${action === 'start' ? '启动' : action === 'stop' ? '停止' : '重启'}模型成功`);
     } catch (error) {
       console.error(`Error ${action}ing model:`, error);
-      message.error(`${action === 'start' ? '启动' : '停止'}模型失败`);
+      message.error(`${action === 'start' ? '启动' : action === 'stop' ? '停止' : '重启'}模型失败`);
+    } finally {
+      setActionLoading(prev => ({ ...prev, [modelName]: false }));
     }
   };
 
@@ -88,8 +97,16 @@ const ModelList: React.FC = () => {
             type={record.status === 'stopped' ? 'primary' : 'default'}
             icon={record.status === 'stopped' ? <RocketOutlined /> : <PauseCircleOutlined />}
             onClick={() => handleAction(record.name, record.status === 'stopped' ? 'start' : 'stop')}
+            loading={actionLoading[record.name]}
           >
             {record.status === 'stopped' ? '启动' : '停止'}
+          </Button>
+          <Button
+            icon={<RedoOutlined />}
+            onClick={() => handleAction(record.name, 'restart')}
+            loading={actionLoading[record.name]}
+          >
+            重启
           </Button>
           <Button
             icon={<SyncOutlined spin={refreshing[record.name]} />}
