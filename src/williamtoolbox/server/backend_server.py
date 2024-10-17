@@ -17,6 +17,7 @@ import subprocess
 import os
 import signal
 import psutil
+from loguru import logger
 
 app = FastAPI()
 
@@ -220,14 +221,15 @@ async def manage_rag(rag_name: str, action: str):
     rag_info = rags[rag_name]
     
     if action == "start":
-        command = f"auto-coder.rag serve --model {rag_info['model']} --tokenizer_path {rag_info['tokenizer_path']} --doc_dir {rag_info['doc_dir']} --rag_doc_filter_relevance {rag_info['rag_doc_filter_relevance']}"
-        
+        command = f"auto-coder.rag serve --model {rag_info['model']} --tokenizer_path {rag_info['tokenizer_path']} --doc_dir {rag_info['doc_dir']} --rag_doc_filter_relevance {rag_info['rag_doc_filter_relevance']}"        
+        logger.info(f"Starting RAG {rag_name} with command: {command}")
         try:
             # Use subprocess.Popen to start the process in the background
             process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             rag_info["status"] = "running"
             rag_info["process_id"] = process.pid
         except Exception as e:
+            logger.error(f"Failed to start RAG: {str(e)}")
             raise HTTPException(status_code=500, detail=f"Failed to start RAG: {str(e)}")
     else:  # action == "stop"
         if "process_id" in rag_info:

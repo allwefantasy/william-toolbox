@@ -103,7 +103,7 @@ const RAGList: React.FC = () => {
     {
       title: '主机:端口',
       key: 'hostPort',
-      render: (_, record: RAG) => `${record.host}:${record.port}`,
+      render: (_: any, record: RAG) => `${record.host}:${record.port}`,
     },
     {
       title: '当前状态',
