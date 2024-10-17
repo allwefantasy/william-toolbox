@@ -7,3 +7,5 @@ logs/
 rags.json
 models.json
 deploy.sh
+dist/
+build/
