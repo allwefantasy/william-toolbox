@@ -13,6 +13,9 @@ from typing import List, Dict
 from pydantic import BaseModel, Field
 from typing import Optional
 import json
+import subprocess
+import os
+import signal
 
 app = FastAPI()
 
@@ -215,9 +218,31 @@ async def manage_rag(rag_name: str, action: str):
     
     rag_info = rags[rag_name]
     
-    # Here you would typically have the logic to actually start or stop the RAG
-    # For now, we'll just update the status
-    rag_info["status"] = "running" if action == "start" else "stopped"
+    if action == "start":
+        command = f"auto-coder.rag serve --tokenizer_path {rag_info['tokenizer_path']} --doc_dir {rag_info['doc_dir']} --rag_doc_filter_relevance {rag_info['rag_doc_filter_relevance']}"
+        
+        try:
+            # Use subprocess.Popen to start the process in the background
+            process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            rag_info["status"] = "running"
+            rag_info["process_id"] = process.pid
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to start RAG: {str(e)}")
+    else:  # action == "stop"
+        if "process_id" in rag_info:
+            try:
+                os.kill(rag_info["process_id"], signal.SIGTERM)
+                rag_info["status"] = "stopped"
+                del rag_info["process_id"]
+            except ProcessLookupError:
+                # Process already terminated
+                rag_info["status"] = "stopped"
+                del rag_info["process_id"]
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"Failed to stop RAG: {str(e)}")
+        else:
+            rag_info["status"] = "stopped"
+    
     rags[rag_name] = rag_info
     save_rags_to_json(rags)
     

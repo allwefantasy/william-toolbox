@@ -9,7 +9,9 @@ interface RAG {
   name: string;
   status: 'stopped' | 'running';
   model: string;
+  tokenizer_path: string;
   doc_dir: string;
+  rag_doc_filter_relevance: number;
 }
 
 const RAGList: React.FC = () => {
@@ -80,9 +82,19 @@ const RAGList: React.FC = () => {
       key: 'model',
     },
     {
+      title: 'Tokenizer路径',
+      dataIndex: 'tokenizer_path',
+      key: 'tokenizer_path',
+    },
+    {
       title: '文档目录',
       dataIndex: 'doc_dir',
       key: 'doc_dir',
+    },
+    {
+      title: '文档过滤相关度',
+      dataIndex: 'rag_doc_filter_relevance',
+      key: 'rag_doc_filter_relevance',
     },
     {
       title: '当前状态',
