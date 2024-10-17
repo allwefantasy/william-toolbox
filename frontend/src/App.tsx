@@ -13,9 +13,14 @@ const { Title } = Typography;
 function App() {
   const [selectedKey, setSelectedKey] = useState('1');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [refreshRAGTrigger, setRefreshRAGTrigger] = useState(0);
 
   const refreshModelList = useCallback(() => {
     setRefreshTrigger(prev => prev + 1);
+  }, []);
+
+  const refreshRAGList = useCallback(() => {
+    setRefreshRAGTrigger(prev => prev + 1);
   }, []);
 
   const renderContent = () => {
@@ -30,8 +35,8 @@ function App() {
       case '2':
         return (
           <>
-            <CreateRAG />
-            <RAGList />
+            <CreateRAG onRAGAdded={refreshRAGList} />
+            <RAGList refreshTrigger={refreshRAGTrigger} />
           </>
         );
       default:

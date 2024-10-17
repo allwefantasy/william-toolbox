@@ -18,14 +18,18 @@ interface RAG {
   port: number;
 }
 
-const RAGList: React.FC = () => {
+interface RAGListProps {
+  refreshTrigger: number;
+}
+
+const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
   const [rags, setRAGs] = useState<RAG[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState<{ [key: string]: boolean }>({});
 
   useEffect(() => {
     fetchRAGs();
-  }, []);
+  }, [refreshTrigger]);
 
   const fetchRAGs = async () => {
     setLoading(true);

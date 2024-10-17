@@ -20,7 +20,11 @@ interface Model {
   status: string;
 }
 
-const CreateRAG: React.FC = () => {
+interface CreateRAGProps {
+  onRAGAdded: () => void;
+}
+
+const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm<FormValues>();
   const [models, setModels] = useState<Model[]>([]);
@@ -55,6 +59,7 @@ const CreateRAG: React.FC = () => {
       setIsModalVisible(false);
       form.resetFields();
       message.success('RAG添加成功');
+      onRAGAdded(); // Call the callback to refresh the RAG list
     } catch (error) {
       console.error('Error adding RAG:', error);
       message.error('添加RAG失败');
