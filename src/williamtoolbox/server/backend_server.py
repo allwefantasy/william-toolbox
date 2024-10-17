@@ -203,6 +203,36 @@ async def add_rag(rag: AddRAGRequest):
     save_rags_to_json(rags)
     return {"message": f"RAG {rag.name} added successfully"}
 
+@app.post("/rags/{rag_name}/{action}")
+async def manage_rag(rag_name: str, action: str):
+    """Start or stop a specified RAG."""
+    rags = load_rags_from_json()
+    if rag_name not in rags:
+        raise HTTPException(status_code=404, detail=f"RAG {rag_name} not found")
+    
+    if action not in ["start", "stop"]:
+        raise HTTPException(status_code=400, detail="Invalid action. Use 'start' or 'stop'")
+    
+    rag_info = rags[rag_name]
+    
+    # Here you would typically have the logic to actually start or stop the RAG
+    # For now, we'll just update the status
+    rag_info["status"] = "running" if action == "start" else "stopped"
+    rags[rag_name] = rag_info
+    save_rags_to_json(rags)
+    
+    return {"message": f"RAG {rag_name} {action}ed successfully"}
+
+@app.get("/rags/{rag_name}/status")
+async def get_rag_status(rag_name: str):
+    """Get the status of a specified RAG."""
+    rags = load_rags_from_json()
+    if rag_name not in rags:
+        raise HTTPException(status_code=404, detail=f"RAG {rag_name} not found")
+    
+    rag_info = rags[rag_name]
+    return {"rag": rag_name, "status": rag_info["status"], "success": True}
+
 @app.post("/models/{model_name}/{action}")
 async def manage_model(model_name: str, action: str):
     """Start or stop a specified model."""

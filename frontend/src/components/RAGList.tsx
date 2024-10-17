@@ -36,9 +36,11 @@ const RAGList: React.FC = () => {
 
   const handleAction = async (ragName: string, action: 'start' | 'stop') => {
     try {
-      await axios.post(`/rags/${ragName}/${action}`);
-      await fetchRAGs();
-      message.success(`${action === 'start' ? '启动' : '停止'}RAG成功`);
+      const response = await axios.post(`/rags/${ragName}/${action}`);
+      if (response.data.message) {
+        message.success(response.data.message);
+        await fetchRAGs();
+      }
     } catch (error) {
       console.error(`Error ${action}ing RAG:`, error);
       message.error(`${action === 'start' ? '启动' : '停止'}RAG失败`);
@@ -49,13 +51,14 @@ const RAGList: React.FC = () => {
     setRefreshing(prev => ({ ...prev, [ragName]: true }));
     try {
       const response = await axios.get(`/rags/${ragName}/status`);
-      const newStatus = response.data.success ? 'running' : 'stopped';
-      setRAGs(prevRAGs =>
-        prevRAGs.map(rag =>
-          rag.name === ragName ? { ...rag, status: newStatus } : rag
-        )
-      );
-      message.success(`刷新状态成功: ${newStatus}`);
+      if (response.data.success) {
+        setRAGs(prevRAGs =>
+          prevRAGs.map(rag =>
+            rag.name === ragName ? { ...rag, status: response.data.status } : rag
+          )
+        );
+        message.success(`刷新状态成功: ${response.data.status}`);
+      }
     } catch (error) {
       console.error('Error refreshing status:', error);
       message.error('刷新状态失败');
