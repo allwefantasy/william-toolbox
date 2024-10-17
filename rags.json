@@ -1,13 +1,23 @@
 {
   "测试知识库": {
     "name": "测试知识库",
-    "status": "running",
+    "status": "stopped",
     "model": "deepseek_chat",
     "tokenizer_path": "/Users/allwefantasy/Downloads/tokenizer.json",
     "doc_dir": "/Users/allwefantasy/Downloads/pdf_upload_ok_2",
     "rag_doc_filter_relevance": 2.0,
     "host": "0.0.0.0",
-    "port": 8000,
-    "process_id": 87338
+    "port": 8000
+  },
+  "doc_repo": {
+    "name": "doc_repo",
+    "status": "running",
+    "model": "deepseek_chat",
+    "tokenizer_path": "/Users/allwefantasy/Downloads/tokenizer.json",
+    "doc_dir": "/Users/allwefantasy/projects/doc_repo/deploy_models",
+    "rag_doc_filter_relevance": 2.0,
+    "host": "0.0.0.0",
+    "port": 8009,
+    "process_id": 39831
   }
 }

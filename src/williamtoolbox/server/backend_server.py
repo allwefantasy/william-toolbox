@@ -185,13 +185,19 @@ async def add_rag(rag: AddRAGRequest):
     if rag.name in rags:
         raise HTTPException(status_code=400, detail=f"RAG {rag.name} already exists")
     
+    # Check if the port is already in use by another RAG    
+    for other_rag in rags.values():        
+        if other_rag['port'] == rag.port:
+            raise HTTPException(status_code=400, detail=f"Port {rag.port} is already in use by RAG {other_rag['name']}")
     new_rag = {
         "name": rag.name,
         "status": "stopped",
         "model": rag.model,
         "tokenizer_path": rag.tokenizer_path,
         "doc_dir": rag.doc_dir,
-        "rag_doc_filter_relevance": rag.rag_doc_filter_relevance
+        "rag_doc_filter_relevance": rag.rag_doc_filter_relevance,
+        "host": rag.host,
+        "port": rag.port
     }
     
     rags[rag.name] = new_rag
