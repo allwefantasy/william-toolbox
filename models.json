@@ -32,5 +32,53 @@
       "infer_backend": "saas/openai"
     },
     "undeploy_command": "byzerllm undeploy --model emb"
+  },
+  "qwen_128k_chat": {
+    "status": "stopped",
+    "deploy_command": {
+      "pretrained_model_type": "saas/openai",
+      "cpus_per_worker": 0.001,
+      "gpus_per_worker": 0,
+      "num_workers": 1,
+      "worker_concurrency": 1000,
+      "infer_params": {},
+      "model": "qwen_128k_chat",
+      "model_path": null,
+      "infer_backend": "saas/openai"
+    },
+    "undeploy_command": "byzerllm undeploy --model qwen_128k_chat"
+  },
+  "gpt4o_chat": {
+    "status": "stopped",
+    "deploy_command": {
+      "pretrained_model_type": "saas/openai",
+      "cpus_per_worker": 0.001,
+      "gpus_per_worker": 0,
+      "num_workers": 1,
+      "worker_concurrency": 1000,
+      "infer_params": {},
+      "model": "gpt4o_chat",
+      "model_path": null,
+      "infer_backend": "saas/openai"
+    },
+    "undeploy_command": "byzerllm undeploy --model gpt4o_chat"
+  },
+  "sonnet_3_5_chat": {
+    "status": "running",
+    "deploy_command": {
+      "pretrained_model_type": "saas/claude",
+      "cpus_per_worker": 0.001,
+      "gpus_per_worker": 0,
+      "num_workers": 1,
+      "worker_concurrency": 1000,
+      "infer_params": {
+        "saas.api_key": "${MODEL_CLAUDE_TOEKN}",
+        "saas.model": "claude-3-5-sonnet-20240620"
+      },
+      "model": "sonnet_3_5_chat",
+      "model_path": null,
+      "infer_backend": null
+    },
+    "undeploy_command": "byzerllm undeploy --model sonnet_3_5_chat"
   }
 }

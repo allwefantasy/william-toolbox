@@ -158,6 +158,9 @@ async def add_model(model: AddModelRequest):
     if model.name in supported_models:
         raise HTTPException(status_code=400, detail=f"Model {model.name} already exists")
     
+    if model.infer_backend == "saas":
+        model.infer_backend = None
+        
     new_model = {
         "status": "stopped",
         "deploy_command": DeployCommand(

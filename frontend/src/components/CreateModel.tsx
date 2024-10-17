@@ -10,7 +10,7 @@ enum InferBackend {
   VLLM = "ray/vllm",
   LLAMA_CPP = "llama_cpp",
   DeepSpeed = "ray/deepspeed",
-  SaaS = "saas/openai"
+  SaaS = "saas"
 }
 
 interface InferParam {
@@ -62,7 +62,17 @@ const CreateModel: React.FC<CreateModelProps> = ({ onModelAdded }) => {
           infer_params[param.key] = param.value;
         });
       }
-    
+
+      if (values["saas.base_url"]) {
+        infer_params["saas.base_url"] = values["saas.base_url"];
+      }
+      if (values["saas.api_key"]) {
+        infer_params["saas.api_key"] = values["saas.api_key"];
+      }
+      if (values["saas.model"]) {
+        infer_params["saas.model"] = values["saas.model"];
+      }
+  
       // Replace infer_params in values
       values.infer_params = infer_params
 
@@ -126,7 +136,7 @@ const CreateModel: React.FC<CreateModelProps> = ({ onModelAdded }) => {
           </Form.Item>
           {selectedBackend === InferBackend.SaaS && (
             <>
-              <Form.Item name="saas.base_url" label="SaaS Base URL" rules={[{ required: true }]}>
+              <Form.Item name="saas.base_url" label="SaaS Base URL">
                 <Input />
               </Form.Item>
               <Form.Item name="saas.api_key" label="SaaS API Key" rules={[{ required: true }]}>
