@@ -49,7 +49,11 @@ const RAGList: React.FC = () => {
       }
     } catch (error) {
       console.error(`Error ${action}ing RAG:`, error);
-      message.error(`${action === 'start' ? '启动' : '停止'}RAG失败`);
+      if (axios.isAxiosError(error) && error.response) {
+        message.error(`${action === 'start' ? '启动' : '停止'}RAG失败: ${error.response.data.detail}`);
+      } else {
+        message.error(`${action === 'start' ? '启动' : '停止'}RAG失败`);
+      }
     }
   };
 
