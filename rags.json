@@ -6,6 +6,6 @@
     "tokenizer_path": "/Users/allwefantasy/Downloads/tokenizer.json",
     "doc_dir": "/Users/allwefantasy/Downloads/pdf_upload_ok_2",
     "rag_doc_filter_relevance": 2.0,
-    "process_id": 54389
+    "process_id": 57327
   }
 }

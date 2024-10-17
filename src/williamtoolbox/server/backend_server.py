@@ -220,7 +220,7 @@ async def manage_rag(rag_name: str, action: str):
     rag_info = rags[rag_name]
     
     if action == "start":
-        command = f"auto-coder.rag serve --tokenizer_path {rag_info['tokenizer_path']} --doc_dir {rag_info['doc_dir']} --rag_doc_filter_relevance {rag_info['rag_doc_filter_relevance']}"
+        command = f"auto-coder.rag serve --model {rag_info['model']} --tokenizer_path {rag_info['tokenizer_path']} --doc_dir {rag_info['doc_dir']} --rag_doc_filter_relevance {rag_info['rag_doc_filter_relevance']}"
         
         try:
             # Use subprocess.Popen to start the process in the background
