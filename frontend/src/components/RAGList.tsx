@@ -14,6 +14,8 @@ interface RAG {
   rag_doc_filter_relevance: number;
   process_id?: number;
   is_alive?: boolean;
+  host: string;
+  port: number;
 }
 
 const RAGList: React.FC = () => {
@@ -98,10 +100,15 @@ const RAGList: React.FC = () => {
       dataIndex: 'rag_doc_filter_relevance',
       key: 'rag_doc_filter_relevance',
     },
-      {
-        title: '当前状态',
-        dataIndex: 'status',
-        key: 'status',
+    {
+      title: '主机:端口',
+      key: 'hostPort',
+      render: (_, record: RAG) => `${record.host}:${record.port}`,
+    },
+    {
+      title: '当前状态',
+      dataIndex: 'status',
+      key: 'status',
         render: (status: string, record: RAG) => (
           <Space direction="vertical">
             <Tag color={status === 'running' ? 'green' : 'red'}>

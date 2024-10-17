@@ -11,6 +11,8 @@ interface FormValues {
   tokenizer_path: string;
   doc_dir: string;
   rag_doc_filter_relevance: number;
+  host: string;
+  port: number;
 }
 
 interface Model {
@@ -40,7 +42,9 @@ const CreateRAG: React.FC = () => {
   const showModal = () => {
     setIsModalVisible(true);
     form.setFieldsValue({ 
-      rag_doc_filter_relevance: 2
+      rag_doc_filter_relevance: 2,
+      host: '0.0.0.0',
+      port: 8000
     });
   };
 
@@ -92,6 +96,12 @@ const CreateRAG: React.FC = () => {
           </Form.Item>
           <Form.Item name="rag_doc_filter_relevance" label="文档过滤相关度" initialValue={2}>
             <InputNumber min={0} step={0.1} max={10} />
+          </Form.Item>
+          <Form.Item name="host" label="主机" initialValue="0.0.0.0">
+            <Input />
+          </Form.Item>
+          <Form.Item name="port" label="端口" initialValue={8000}>
+            <InputNumber min={1024} max={65535} />
           </Form.Item>
         </Form>
       </Modal>
