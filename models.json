@@ -16,7 +16,7 @@
       "model_path": null,
       "infer_backend": null
     },
-    "undeploy_command": "byzerllm undeploy deepseek_chat"
+    "undeploy_command": "byzerllm undeploy --model deepseek_chat"
   },
   "emb": {
     "status": "running",
@@ -31,6 +31,6 @@
       "model_path": "/home/winubuntu/.auto-coder/storage/models/AI-ModelScope/bge-large-zh",
       "infer_backend": "transformers"
     },
-    "undeploy_command": "byzerllm undeploy emb"
+    "undeploy_command": "byzerllm undeploy --model emb"
   }
 }

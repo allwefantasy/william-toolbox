@@ -113,7 +113,7 @@ if not supported_models:
                 },
                 model="deepseek_chat"
             ).model_dump(),
-            "undeploy_command": "byzerllm undeploy deepseek_chat",
+            "undeploy_command": "byzerllm undeploy --model deepseek_chat",
             "status_command": "byzerllm stat --model deepseek_chat"
         },
         "emb": {
@@ -125,7 +125,7 @@ if not supported_models:
                 infer_backend="transformers",
                 model="emb"
             ).model_dump(),
-            "undeploy_command": "byzerllm undeploy emb",
+            "undeploy_command": "byzerllm undeploy --model emb",
             "status_command": "byzerllm stat --model emb"
         }
     }
@@ -182,7 +182,7 @@ async def add_model(model: AddModelRequest):
             model_path=model.model_path,
             infer_backend=model.infer_backend
         ).model_dump(),
-        "undeploy_command": f"byzerllm undeploy {model.name}"
+        "undeploy_command": f"byzerllm undeploy --model {model.name}"
     }
     
     supported_models[model.name] = new_model
@@ -242,9 +242,9 @@ async def manage_rag(rag_name: str, action: str):
             # Create logs directory if it doesn't exist
             os.makedirs("logs", exist_ok=True)
             
-            # Open log files for stdout and stderr
-            stdout_log = open(f"logs/{rag_info['name']}.out", "w")
-            stderr_log = open(f"logs/{rag_info['name']}.err", "w")
+            # Open log files for stdout and stderr using os.path.join
+            stdout_log = open(os.path.join("logs", f"{rag_info['name']}.out"), "w")
+            stderr_log = open(os.path.join("logs", f"{rag_info['name']}.err"), "w")
             
             # Use subprocess.Popen to start the process in the background
             process = subprocess.Popen(command, shell=True, stdout=stdout_log, stderr=stderr_log)
@@ -320,6 +320,7 @@ async def manage_model(model_name: str, action: str):
     
     try:
         # Execute the command
+        logger.info(f"manage model {model_name} with command: {command}")
         result = subprocess.run(command, shell=True, check=True, capture_output=True, text=True)
         
         # Check if the command was successful
@@ -332,7 +333,7 @@ async def manage_model(model_name: str, action: str):
             save_models_to_json(supported_models)
             
             return {"message": f"Model {model_name} {action}ed successfully", "output": result.stdout}
-        else:
+        else:            
             # If the command failed, raise an exception
             raise subprocess.CalledProcessError(result.returncode, command, result.stdout, result.stderr)
     except subprocess.CalledProcessError as e:
