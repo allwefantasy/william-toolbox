@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Layout, Menu, Typography, Space } from 'antd';
 import { RocketOutlined, AppstoreOutlined, DatabaseOutlined } from '@ant-design/icons';
 import ModelList from './components/ModelList';
@@ -12,14 +12,19 @@ const { Title } = Typography;
 
 function App() {
   const [selectedKey, setSelectedKey] = useState('1');
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const refreshModelList = useCallback(() => {
+    setRefreshTrigger(prev => prev + 1);
+  }, []);
 
   const renderContent = () => {
     switch (selectedKey) {
       case '1':
         return (
           <>
-            <CreateModel />
-            <ModelList />
+            <CreateModel onModelAdded={refreshModelList} />
+            <ModelList refreshTrigger={refreshTrigger} />
           </>
         );
       case '2':

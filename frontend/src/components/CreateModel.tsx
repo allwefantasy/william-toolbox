@@ -33,7 +33,11 @@ interface FormValues {
   'saas.model'?: string;
 }
 
-const CreateModel: React.FC = () => {
+interface CreateModelProps {
+  onModelAdded: () => void;
+}
+
+const CreateModel: React.FC<CreateModelProps> = ({ onModelAdded }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm<FormValues>();
   const [selectedBackend, setSelectedBackend] = useState<InferBackend>(InferBackend.SaaS);
@@ -66,6 +70,7 @@ const CreateModel: React.FC = () => {
       setIsModalVisible(false);
       form.resetFields();
       message.success('模型添加成功');
+      onModelAdded(); // Call the callback to refresh the model list
     } catch (error) {
       console.error('Error adding model:', error);
       message.error('添加模型失败');

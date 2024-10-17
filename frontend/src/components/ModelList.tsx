@@ -10,7 +10,11 @@ interface Model {
   status: 'stopped' | 'running';
 }
 
-const ModelList: React.FC = () => {
+interface ModelListProps {
+  refreshTrigger: number;
+}
+
+const ModelList: React.FC<ModelListProps> = ({ refreshTrigger }) => {
   const [models, setModels] = useState<Model[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState<{ [key: string]: boolean }>({});
@@ -19,7 +23,7 @@ const ModelList: React.FC = () => {
 
   useEffect(() => {
     fetchModels();
-  }, []);
+  }, [refreshTrigger]);
 
   const fetchModels = async () => {
     setLoading(true);
