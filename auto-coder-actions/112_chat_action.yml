@@ -1,0 +1,27 @@
+auto_merge: editblock
+context: '下面是对上面文件按分组给到的一些描述，当用户的需求正好匹配描述的时候，参考描述来做修改：
+
+
+  '
+human_as_model: true
+include_file:
+- ./base/base.yml
+include_project_structure: true
+project_type: py
+query: "(byzerllm) [w@me william-toolbox]$ william.toolbox backend\n/opt/miniconda3/envs/byzerllm/lib/python3.10/site-packages/pydantic/_internal/_fields.py:151:\
+  \ UserWarning: Field \"model_path\" has conflict with protected namespace \"model_\"\
+  .\n\nYou may be able to resolve this warning by setting `model_config['protected_namespaces']\
+  \ = ()`.\n  warnings.warn(\nusage: william.toolbox [-h] [--port PORT] [--host HOST]\n\
+  william.toolbox: error: unrecognized arguments: backend"
+silence: true
+skip_build_index: false
+skip_confirm: true
+skip_filter_index: true
+urls:
+- /Users/allwefantasy/projects/william-toolbox/setup.py
+- /Users/allwefantasy/projects/william-toolbox/src/williamtoolbox/server/proxy_server.py
+- /Users/allwefantasy/projects/william-toolbox/src/williamtoolbox/server/backend_server.py
+- /Users/allwefantasy/projects/william-toolbox/frontend/package.json
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/App.tsx
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/App.css
+- .auto-coder/libs/llm_friendly_packages/github.com/allwefantasy/byzer-llm/README.md

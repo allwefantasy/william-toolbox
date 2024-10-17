@@ -1,0 +1,17 @@
+auto_merge: editblock
+context: '下面是对上面文件按分组给到的一些描述，当用户的需求正好匹配描述的时候，参考描述来做修改：
+
+
+  '
+human_as_model: false
+include_file:
+- ./base/base.yml
+include_project_structure: true
+project_type: py
+query: 根据 @setup.py 实现入口类
+silence: true
+skip_build_index: false
+skip_confirm: true
+urls:
+- /Users/allwefantasy/projects/william-toolbox/setup.py
+- .auto-coder/libs/llm_friendly_packages/github.com/allwefantasy/byzer-llm/README.md

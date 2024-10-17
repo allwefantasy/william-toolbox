@@ -1,0 +1,27 @@
+auto_merge: editblock
+context: '下面是对上面文件按分组给到的一些描述，当用户的需求正好匹配描述的时候，参考描述来做修改：
+
+
+  '
+human_as_model: true
+include_file:
+- ./base/base.yml
+include_project_structure: true
+project_type: py
+query: '参考 @src/williamtoolbox/server/proxy_server.py 实现 backend_server.py ,提供一个接口,可以罗列当前的支持的模型列表(deepseek_chat,emb),提供另外一个接口,支持启动一个模型,启动方式为  byzerllm
+  deploy --pretrained_model_type saas/openai --cpus_per_worker 0.001 --gpus_per_worker
+  0 --num_workers 1 --worker_concurrency 10 --infer_params saas.base_url="https://api.deepseek.com/beta"
+  saas.api_key=${MODEL_DEEPSEEK_TOKEN} saas.model=deepseek-chat --model deepseek_chat  关闭模型则为:
+  byzerllm undeploy deepseek_chat'
+silence: true
+skip_build_index: false
+skip_confirm: true
+skip_filter_index: true
+urls:
+- /Users/allwefantasy/projects/william-toolbox/setup.py
+- /Users/allwefantasy/projects/william-toolbox/src/williamtoolbox/server/proxy_server.py
+- /Users/allwefantasy/projects/william-toolbox/src/williamtoolbox/server/backend_server.py
+- /Users/allwefantasy/projects/william-toolbox/frontend/package.json
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/App.tsx
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/App.css
+- .auto-coder/libs/llm_friendly_packages/github.com/allwefantasy/byzer-llm/README.md

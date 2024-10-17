@@ -1,0 +1,27 @@
+auto_merge: wholefile
+context: '下面是对上面文件按分组给到的一些描述，当用户的需求正好匹配描述的时候，参考描述来做修改：
+
+
+  '
+human_as_model: true
+include_file:
+- ./base/base.yml
+include_project_structure: true
+project_type: py
+query: 推理后端为 saas/openai, 当推理后端为saas/openai时,展示saas.base_url,saas.api_key,saas.model.
+  其他的则不展示这些参数.
+silence: true
+skip_build_index: false
+skip_confirm: true
+skip_filter_index: true
+urls:
+- /Users/allwefantasy/projects/william-toolbox/setup.py
+- /Users/allwefantasy/projects/william-toolbox/src/williamtoolbox/server/proxy_server.py
+- /Users/allwefantasy/projects/william-toolbox/src/williamtoolbox/server/backend_server.py
+- /Users/allwefantasy/projects/william-toolbox/frontend/package.json
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/App.tsx
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/App.css
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/App.test.tsx
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/components/ModelList.tsx
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/index.tsx
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/components/CreateModel.tsx

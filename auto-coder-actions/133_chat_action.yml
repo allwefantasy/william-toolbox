@@ -1,0 +1,35 @@
+auto_merge: editblock
+context: '下面是对上面文件按分组给到的一些描述，当用户的需求正好匹配描述的时候，参考描述来做修改：
+
+
+  '
+human_as_model: true
+include_file:
+- ./base/base.yml
+include_project_structure: true
+project_type: py
+query: '在 @frontend/src/App.tsx 新增一个RAG管理,然后新增一个RAG页面,和模型管理类似,需要分成列表和添加两个子页面. 启动一个
+  RAG 的命令类似这样: auto-coder.rag serve \
+
+  --model qwen_128k_chat \
+
+  --tokenizer_path /Users/allwefantasy/Downloads/tokenizer.json \
+
+  --doc_dir /Users/allwefantasy/Downloads/pdf_upload_ok \
+
+  --rag_doc_filter_relevance 2'
+silence: true
+skip_build_index: false
+skip_confirm: true
+skip_filter_index: true
+urls:
+- /Users/allwefantasy/projects/william-toolbox/setup.py
+- /Users/allwefantasy/projects/william-toolbox/src/williamtoolbox/server/proxy_server.py
+- /Users/allwefantasy/projects/william-toolbox/src/williamtoolbox/server/backend_server.py
+- /Users/allwefantasy/projects/william-toolbox/frontend/package.json
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/App.tsx
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/App.css
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/App.test.tsx
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/components/ModelList.tsx
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/index.tsx
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/components/CreateModel.tsx

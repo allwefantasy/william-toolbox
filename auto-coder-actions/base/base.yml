@@ -1,0 +1,16 @@
+
+project_type: py
+source_dir: /Users/allwefantasy/projects/william-toolbox
+target_file: /Users/allwefantasy/projects/william-toolbox/output.txt
+
+model: deepseek_chat
+model_max_input_length: 100000
+model_max_input_length: 120000
+enable_multi_round_generate: false
+index_filter_workers: 5
+index_build_workers: 20
+index_filter_level: 1
+
+execute: true
+auto_merge: true
+human_as_model: true

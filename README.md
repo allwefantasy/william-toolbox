@@ -1,7 +1,12 @@
 
 # William Toolbox 🧰
 
-William Toolbox is an open-source project designed to simplify the management of AI models and RAG (Retrieval-Augmented Generation) systems. It provides a user-friendly interface for deploying, monitoring, and controlling various AI models and RAG setups.
+William Toolbox is an open-source project designed to simplify the management of byzerllm models and auto-cder.RAG (Retrieval-Augmented Generation) systems. It provides a user-friendly interface for deploying, monitoring, and controlling various AI models and RAG setups.
+
+This project is powered by [auto-coder.chat](https://auto-coder.chat). You can check how we develop this project by reading yamls in directory `auto-coder-actions`.
+
+![image](./images/image.png)
+
 
 ## 🌟 Features
 
@@ -20,42 +25,26 @@ William Toolbox is an open-source project designed to simplify the management of
 
 ### Installation
 
-1. Clone the repository:
-   ```
-   git clone https://github.com/yourusername/william-toolbox.git
-   cd william-toolbox
-   ```
-
-2. Install backend dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
-
-3. Install frontend dependencies:
-   ```
-   cd frontend
-   npm install
-   ```
+```
+pip install williamtoolbox
+```
 
 ### Running the Application
 
 1. Start the backend server:
    ```
-   python src/williamtoolbox/server/backend_server.py
+   william.toolbox.backend
    ```
 
-2. Start the proxy server:
+2. Start the frontend server:
    ```
-   python src/williamtoolbox/server/proxy_server.py
-   ```
-
-3. Start the frontend development server:
-   ```
-   cd frontend
-   npm start
+   mkdir web && cd web
+   wget https://github.com/allwefantasy/william-toolbox/releases/download/v1.0.0/web.static.tar.gz
+   tar -zxvf web.static.tar.gz
+   william.toolbox.frontend
    ```
 
-4. Open your browser and navigate to `http://localhost:3000`
+3. Open your browser and navigate to `http://localhost:8006`
 
 ## 📖 Usage
 
