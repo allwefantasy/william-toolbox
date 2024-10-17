@@ -73,7 +73,7 @@ async def proxy(request: Request, path: str):
             headers=headers,
             params=params,
             content=body, 
-            timeout=300           
+            timeout=3000           
         )
         print(f"Response Status Code: {response.status_code}")
         print(f"Response Headers: {response.headers}")

@@ -15,7 +15,7 @@ const ModelList: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState<{ [key: string]: boolean }>({});
   const [actionLoading, setActionLoading] = useState<{ [key: string]: boolean }>({});
-  const [countdowns, setCountdowns] = useState<{ [key: string]: number }>({});
+  const [countdowns, setCountdowns] = useState<{ [key: string]: number | undefined }>({});
 
   useEffect(() => {
     fetchModels();
@@ -40,7 +40,9 @@ const ModelList: React.FC = () => {
     
     const countdownInterval = setInterval(() => {
       setCountdowns(prev => {
-        const newCountdown = prev[modelName] - 1;
+        const currentCountdown = prev[modelName];
+        if (currentCountdown === undefined) return prev;
+        const newCountdown = currentCountdown - 1;
         return newCountdown <= 0
           ? { ...prev, [modelName]: undefined }
           : { ...prev, [modelName]: newCountdown };

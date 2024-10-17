@@ -21,15 +21,15 @@
   "emb": {
     "status": "running",
     "deploy_command": {
-      "pretrained_model_type": "custom/bge",
+      "pretrained_model_type": "saas/openai",
       "cpus_per_worker": 0.001,
       "gpus_per_worker": 0,
       "num_workers": 1,
-      "worker_concurrency": 10,
+      "worker_concurrency": 1000,
       "infer_params": {},
       "model": "emb",
-      "model_path": "/home/winubuntu/.auto-coder/storage/models/AI-ModelScope/bge-large-zh",
-      "infer_backend": "transformers"
+      "model_path": null,
+      "infer_backend": "saas/openai"
     },
     "undeploy_command": "byzerllm undeploy --model emb"
   }

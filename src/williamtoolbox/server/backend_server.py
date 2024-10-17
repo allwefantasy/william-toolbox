@@ -19,6 +19,7 @@ import signal
 import psutil
 from loguru import logger
 import subprocess
+import traceback
 
 app = FastAPI()
 
@@ -115,19 +116,7 @@ if not supported_models:
             ).model_dump(),
             "undeploy_command": "byzerllm undeploy --model deepseek_chat",
             "status_command": "byzerllm stat --model deepseek_chat"
-        },
-        "emb": {
-            "status": "stopped",
-            "deploy_command": DeployCommand(
-                pretrained_model_type="custom/bge",
-                worker_concurrency=1000,
-                model_path="/home/winubuntu/.auto-coder/storage/models/AI-ModelScope/bge-large-zh",
-                infer_backend="transformers",
-                model="emb"
-            ).model_dump(),
-            "undeploy_command": "byzerllm undeploy --model emb",
-            "status_command": "byzerllm stat --model emb"
-        }
+        }        
     }
     save_models_to_json(supported_models)
 
@@ -237,7 +226,7 @@ async def manage_rag(rag_name: str, action: str):
         command += f" --host {rag_info['host'] or '0.0.0.0'}"
         command += f" --port {port}"
 
-        logger.info(f"Starting RAG {rag_name} with command: {command}")
+        logger.info(f"manage rag {rag_name} with command: {command}")
         try:
             # Create logs directory if it doesn't exist
             os.makedirs("logs", exist_ok=True)
@@ -251,8 +240,8 @@ async def manage_rag(rag_name: str, action: str):
             rag_info["status"] = "running"
             rag_info["process_id"] = process.pid                        
         except Exception as e:            
-            import traceback
-            traceback.print_exc()
+            logger.error(f"Failed to start RAG: {str(e)}")            
+            traceback.print_exc()            
             raise HTTPException(status_code=500, detail=f"Failed to start RAG: {str(e)}")
     else:  # action == "stop"
         if "process_id" in rag_info:
@@ -265,6 +254,8 @@ async def manage_rag(rag_name: str, action: str):
                 rag_info["status"] = "stopped"
                 del rag_info["process_id"]
             except Exception as e:
+                logger.error(f"Failed to stop RAG: {str(e)}")
+                traceback.print_exc()  
                 raise HTTPException(status_code=500, detail=f"Failed to stop RAG: {str(e)}")
         else:
             rag_info["status"] = "stopped"
@@ -335,10 +326,13 @@ async def manage_model(model_name: str, action: str):
             return {"message": f"Model {model_name} {action}ed successfully", "output": result.stdout}
         else:            
             # If the command failed, raise an exception
+            logger.error(f"Failed to {action} model: {result.stderr or result.stdout}")
+            traceback.print_exc()  
             raise subprocess.CalledProcessError(result.returncode, command, result.stdout, result.stderr)
     except subprocess.CalledProcessError as e:
         # If an exception occurred, don't update the model status
         error_message = f"Failed to {action} model: {e.stderr or e.stdout}"
+        traceback.print_exc()  
         raise HTTPException(status_code=500, detail=error_message)
 
 @app.get("/models/{model_name}/status")

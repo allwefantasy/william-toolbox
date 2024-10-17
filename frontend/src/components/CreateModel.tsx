@@ -27,7 +27,7 @@ interface FormValues {
   worker_concurrency: number;
   infer_backend: InferBackend;
   model_path?: string;
-  infer_params?: InferParam[];
+  infer_params?: InferParam[] | any;
   'saas.base_url'?: string;
   'saas.api_key'?: string;
   'saas.model'?: string;
@@ -58,16 +58,9 @@ const CreateModel: React.FC = () => {
           infer_params[param.key] = param.value;
         });
       }
-
-      // Add SaaS specific params if SaaS backend is selected
-      if (values.infer_backend === InferBackend.SaaS) {
-        if (values['saas.base_url']) infer_params['saas.base_url'] = values['saas.base_url'];
-        if (values['saas.api_key']) infer_params['saas.api_key'] = values['saas.api_key'];
-        if (values['saas.model']) infer_params['saas.model'] = values['saas.model'];
-      }
-
+    
       // Replace infer_params in values
-      values.infer_params = Object.entries(infer_params).map(([key, value]) => ({ key, value }));
+      values.infer_params = infer_params
 
       await axios.post('/models/add', values);
       setIsModalVisible(false);
