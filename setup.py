@@ -38,7 +38,7 @@ setup(
     package_dir={"": "src"},
     packages=find_packages("src"),    
     package_data={
-        
+        "williamtoolbox": ["web/**/*"],
     },
     install_requires=install_requires,
     classifiers=[        

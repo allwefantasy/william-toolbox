@@ -31,16 +31,18 @@ pip install -U williamtoolbox
 
 ### Running the Application
 
-1. Start the backend server:
+0. Create a work directory and cd into it:
    ```
+   mkdir william-toolbox && cd william-toolbox
+   ```
+
+1. Start the backend server:
+   ```   
    william.toolbox.backend
    ```
 
 2. Start the frontend server:
-   ```
-   mkdir web && cd web
-   wget https://github.com/allwefantasy/william-toolbox/releases/download/v1.0.0/web.static.tar.gz
-   tar -zxvf web.static.tar.gz
+   ```   
    william.toolbox.frontend
    ```
 

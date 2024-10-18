@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: williamtoolbox
-Version: 0.0.1
+Version: 0.0.3
 Summary: williamtoolbox: William Toolbox
 Author: allwefantasy
 Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
@@ -9,6 +9,8 @@ Classifier: Programming Language :: Python :: 3.10
 Classifier: Programming Language :: Python :: 3.11
 Description-Content-Type: text/markdown
 Requires-Dist: auto-coder
+Requires-Dist: aiofiles
+Requires-Dist: psutil
 
 # William Toolbox 🧰
 
@@ -48,10 +50,7 @@ pip install -U williamtoolbox
    ```
 
 2. Start the frontend server:
-   ```
-   mkdir web && cd web
-   wget https://github.com/allwefantasy/william-toolbox/releases/download/v1.0.0/web.static.tar.gz
-   tar -zxvf web.static.tar.gz
+   ```   
    william.toolbox.frontend
    ```
 

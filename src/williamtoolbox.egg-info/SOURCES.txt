@@ -12,3 +12,17 @@ src/williamtoolbox.egg-info/top_level.txt
 src/williamtoolbox/server/__init__.py
 src/williamtoolbox/server/backend_server.py
 src/williamtoolbox/server/proxy_server.py
+src/williamtoolbox/web/asset-manifest.json
+src/williamtoolbox/web/favicon.ico
+src/williamtoolbox/web/index.html
+src/williamtoolbox/web/logo192.png
+src/williamtoolbox/web/logo512.png
+src/williamtoolbox/web/manifest.json
+src/williamtoolbox/web/robots.txt
+src/williamtoolbox/web/static/css/main.5e7bc9c7.css
+src/williamtoolbox/web/static/css/main.5e7bc9c7.css.map
+src/williamtoolbox/web/static/js/453.8ab44547.chunk.js
+src/williamtoolbox/web/static/js/453.8ab44547.chunk.js.map
+src/williamtoolbox/web/static/js/main.59ee8fae.js
+src/williamtoolbox/web/static/js/main.59ee8fae.js.LICENSE.txt
+src/williamtoolbox/web/static/js/main.59ee8fae.js.map

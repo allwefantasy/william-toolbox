@@ -8,6 +8,7 @@ from typing import Optional
 import os
 import argparse
 import aiofiles
+import pkg_resources
 
 app = FastAPI()
 
@@ -20,14 +21,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Static files
-static_dir = os.path.join(".", "static")
+index_html_path = pkg_resources.resource_filename('williamtoolbox', 'web/index.html')
+resource_dir = os.path.dirname(index_html_path)
+static_dir = os.path.join(resource_dir, "static")
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 # Backend and File Upload URLs
-global BACKEND_URL, FILE_UPLOAD_URL
-BACKEND_URL = "http://localhost:8000"  # Default backend URL
-FILE_UPLOAD_URL = "http://localhost:8002"  # Default file upload URL
+global BACKEND_URL
+BACKEND_URL = "http://localhost:8005"  # Default backend URL
 
 # Use a session-wide HTTP client
 app.state.client = httpx.AsyncClient()
@@ -38,7 +39,7 @@ async def shutdown_event():
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
-    index_path = os.path.join(".", "index.html")    
+    index_path = index_html_path
     if os.path.exists(index_path):
         async with aiofiles.open(index_path, "r") as f:
             content = await f.read()

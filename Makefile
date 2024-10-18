@@ -1,11 +1,8 @@
-.PHONY: web
-web: ## Build and package web assets
-	mkdir -p web
+.PHONY: release
+release: ## Build and package web assets	
 	cd frontend && npm install && npm run build
 	tar -czf web.static.tar.gz -C frontend/build .
-	mv web.static.tar.gz web/
-
-.PHONY: web-test
-web-test: web
-	cd web && tar -xzf web.static.tar.gz && rm web.static.tar.gz
-	cd web && william.toolbox.frontend
+	rm -rf src/williamtoolbox/web && mkdir -p src/williamtoolbox/web	
+	mv web.static.tar.gz src/williamtoolbox/web/	
+	cd src/williamtoolbox/web/ && tar -xzf web.static.tar.gz && rm web.static.tar.gz
+	./deploy.sh && pip install -e .

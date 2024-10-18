@@ -1,1 +1,3 @@
 auto-coder
+aiofiles
+psutil
