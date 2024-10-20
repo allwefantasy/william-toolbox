@@ -9,3 +9,4 @@ models.json
 deploy.sh
 dist/
 build/
+pasted/

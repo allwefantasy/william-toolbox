@@ -104,8 +104,7 @@ def main():
 
     BACKEND_URL = args.backend_url    
 
-    print(f"Starting proxy server with backend URL: {BACKEND_URL}")
-    print(f"File upload URL: {FILE_UPLOAD_URL}")
+    print(f"Starting proxy server with backend URL: {BACKEND_URL}")    
     uvicorn.run(app, host=args.host, port=args.port)
 
 if __name__ == "__main__":

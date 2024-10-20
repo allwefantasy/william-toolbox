@@ -18,7 +18,6 @@
     },
     "undeploy_command": "byzerllm undeploy --model deepseek_chat"
   },
-   
   "sonnet_3_5_chat": {
     "status": "running",
     "deploy_command": {
@@ -36,5 +35,24 @@
       "infer_backend": null
     },
     "undeploy_command": "byzerllm undeploy --model sonnet_3_5_chat"
+  },
+  "qwen_vl": {
+    "status": "running",
+    "deploy_command": {
+      "pretrained_model_type": "saas/openai",
+      "cpus_per_worker": 0.001,
+      "gpus_per_worker": 0,
+      "num_workers": 1,
+      "worker_concurrency": 1000,
+      "infer_params": {
+        "saas.base_url": "https://api.siliconflow.cn/v1",
+        "saas.api_key": "$MODEL_silcon_flow_TOKEN",
+        "saas.model": "Qwen/Qwen2-VL-72B-Instruct"
+      },
+      "model": "qwen_vl",
+      "model_path": null,
+      "infer_backend": null
+    },
+    "undeploy_command": "byzerllm undeploy --model qwen_vl"
   }
 }

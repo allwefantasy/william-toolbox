@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: williamtoolbox
-Version: 0.0.3
+Version: 0.0.4
 Summary: williamtoolbox: William Toolbox
 Author: allwefantasy
 Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
@@ -44,8 +44,13 @@ pip install -U williamtoolbox
 
 ### Running the Application
 
-1. Start the backend server:
+0. Create a work directory and cd into it:
    ```
+   mkdir william-toolbox && cd william-toolbox
+   ```
+
+1. Start the backend server:
+   ```   
    william.toolbox.backend
    ```
 
