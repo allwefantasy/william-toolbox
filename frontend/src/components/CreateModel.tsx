@@ -2,12 +2,19 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { Button, Modal, Form, Input, InputNumber, Select, message, AutoComplete } from 'antd';
 import { PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
+import { PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
 
 const saasBaseUrls = [
   { value: 'https://api.siliconflow.cn/v1', label: '硅基流动' },
   { value: 'https://api.deepseek.com/beta', label: 'DeepSeek' },
+];
+
+const pretrainedModelTypes = [
+  { value: 'saas/openai', label: 'OpenAI' },
+  { value: 'saas/qianwen_vl', label: '通义千问' },
+  { value: 'saas/claude', label: 'Claude' },
 ];
 
 enum InferBackend {
@@ -55,6 +62,10 @@ const CreateModel: React.FC<CreateModelProps> = ({ onModelAdded }) => {
       worker_concurrency: 1000,
       infer_backend: InferBackend.SaaS
     });
+  };
+
+  const handlePretrainedModelTypeChange = (value: string) => {
+    form.setFieldsValue({ pretrained_model_type: value });
   };
 
   const handleOk = async () => {
@@ -126,7 +137,13 @@ const CreateModel: React.FC<CreateModelProps> = ({ onModelAdded }) => {
             <Input />
           </Form.Item>
           <Form.Item name="pretrained_model_type" label="预训练模型类型" initialValue="saas/openai" rules={[{ required: true }]}>
-            <Input />
+            <AutoComplete
+              options={pretrainedModelTypes}
+              onChange={handlePretrainedModelTypeChange}
+              placeholder="选择或输入预训练模型类型"
+            >
+              <Input />
+            </AutoComplete>
           </Form.Item>
           <Form.Item name="cpus_per_worker" label="每个 Worker CPU" initialValue={0.001}>
             <InputNumber min={0} step={0.001} />
