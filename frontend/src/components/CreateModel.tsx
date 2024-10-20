@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Button, Modal, Form, Input, InputNumber, Select, message } from 'antd';
+import { Button, Modal, Form, Input, InputNumber, Select, message, AutoComplete } from 'antd';
 import { PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
+
+const saasBaseUrls = [
+  { value: 'https://api.siliconflow.cn/v1', label: '硅基流动' },
+  { value: 'https://api.deepseek.com/beta', label: 'DeepSeek' },
+];
 
 enum InferBackend {
   Transformers = "transformers",
@@ -41,6 +46,7 @@ const CreateModel: React.FC<CreateModelProps> = ({ onModelAdded }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm<FormValues>();
   const [selectedBackend, setSelectedBackend] = useState<InferBackend>(InferBackend.SaaS);
+  const [selectedBaseUrl, setSelectedBaseUrl] = useState<string>('');
 
   const showModal = () => {
     setIsModalVisible(true);
@@ -97,6 +103,13 @@ const CreateModel: React.FC<CreateModelProps> = ({ onModelAdded }) => {
     form.setFieldsValue({ infer_params: [] });
   };
 
+  const handleBaseUrlChange = (value: string) => {
+    setSelectedBaseUrl(value);
+    if (value === 'https://api.deepseek.com/beta') {
+      form.setFieldsValue({ 'saas.model': 'deepseek-chat' });
+    }
+  };
+
   return (
     <div>
       <Button type="primary" icon={<PlusOutlined />} onClick={showModal}>
@@ -137,7 +150,13 @@ const CreateModel: React.FC<CreateModelProps> = ({ onModelAdded }) => {
           {selectedBackend === InferBackend.SaaS && (
             <>
               <Form.Item name="saas.base_url" label="SaaS Base URL">
-                <Input />
+                <AutoComplete
+                  options={saasBaseUrls}
+                  onChange={handleBaseUrlChange}
+                  placeholder="选择或输入 Base URL"
+                >
+                  <Input />
+                </AutoComplete>
               </Form.Item>
               <Form.Item name="saas.api_key" label="SaaS API Key" rules={[{ required: true }]}>
                 <Input.Password />
