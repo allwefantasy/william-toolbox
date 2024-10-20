@@ -2,18 +2,19 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { Button, Modal, Form, Input, InputNumber, Select, message, AutoComplete } from 'antd';
 import { PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
-import { PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
 
 const saasBaseUrls = [
   { value: 'https://api.siliconflow.cn/v1', label: '硅基流动' },
   { value: 'https://api.deepseek.com/beta', label: 'DeepSeek' },
+  { value: 'https://dashscope.aliyuncs.com/compatible-mode/v1', label: '通义千问' },
 ];
 
 const pretrainedModelTypes = [
-  { value: 'saas/openai', label: 'OpenAI' },
-  { value: 'saas/qianwen_vl', label: '通义千问' },
+  { value: 'saas/openai', label: 'OpenAI 兼容模型' },
+  { value: 'saas/qianwen', label: '通义千问' },
+  { value: 'saas/qianwen_vl', label: '通义千问视觉' },  
   { value: 'saas/claude', label: 'Claude' },
 ];
 
