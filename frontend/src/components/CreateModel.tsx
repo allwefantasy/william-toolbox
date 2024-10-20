@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Button, Modal, Form, Input, InputNumber, Select, message, AutoComplete } from 'antd';
-import { PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
+import { Button, Modal, Form, Input, InputNumber, Select, message, AutoComplete, Tooltip } from 'antd';
+import { PlusOutlined, MinusCircleOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
 
@@ -137,7 +137,19 @@ const CreateModel: React.FC<CreateModelProps> = ({ onModelAdded }) => {
           <Form.Item name="name" label="模型名称" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="pretrained_model_type" label="预训练模型类型" initialValue="saas/openai" rules={[{ required: true }]}>
+          <Form.Item
+            name="pretrained_model_type"
+            label={
+              <span>
+                预训练模型类型&nbsp;
+                <Tooltip title="如果你需要部署私有模型，可以选择 custom/模型名称 并且合理配置推理后端以及 GPU 数">
+                  <QuestionCircleOutlined />
+                </Tooltip>
+              </span>
+            }
+            initialValue="saas/openai"
+            rules={[{ required: true }]}
+          >
             <AutoComplete
               options={pretrainedModelTypes}
               onChange={handlePretrainedModelTypeChange}
