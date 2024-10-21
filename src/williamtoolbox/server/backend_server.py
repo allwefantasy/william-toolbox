@@ -663,13 +663,7 @@ class AddMessageRequest(BaseModel):
     selected_item: str
 
 
-# Chat-related API endpoints
-@app.get("/chat/conversations", response_model=List[Conversation])
-async def get_conversations():
-    chat_data = load_chat_data()
-    return chat_data["conversations"]
-
-@app.get("/chat/conversations/list")
+@app.get("/chat/conversations")
 async def get_conversation_list():
     chat_data = load_chat_data()
     conversation_list = [
@@ -678,15 +672,16 @@ async def get_conversation_list():
             "title": conv["title"],
             "created_at": conv["created_at"],
             "updated_at": conv["updated_at"],
-            "message_count": len(conv["messages"])
+            "message_count": len(conv["messages"]),
         }
         for conv in chat_data["conversations"]
     ]
-    return {"conversations": conversation_list}
+    return conversation_list
 
 
 class CreateConversationRequest(BaseModel):
     title: str
+
 
 @app.post("/chat/conversations", response_model=Conversation)
 async def create_conversation(request: CreateConversationRequest):
