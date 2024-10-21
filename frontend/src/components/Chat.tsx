@@ -56,11 +56,11 @@ const Chat: React.FC = () => {
     try {
       const response = await axios.get('/chat/conversations');
       setConversations(response.data);
-      if (response.data.length > 0) {
-        setCurrentConversationId(response.data[0].id);
-        setCurrentConversationTitle(response.data[0].title);
-        fetchMessages(response.data[0].id);
-      }
+    if (response.data.length > 0) {
+      setCurrentConversationId(response.data[0].id);
+      setCurrentConversationTitle(response.data[0].title);
+      await fetchMessages(response.data[0].id);
+    }
     } catch (error) {
       console.error('Error fetching conversations:', error);
       message.error('Failed to load conversations');
@@ -71,6 +71,8 @@ const Chat: React.FC = () => {
     try {
       const response = await axios.get(`/chat/conversations/${conversationId}`);
       setMessages(response.data.messages);
+      // 获取对话列表
+      await fetchConversations();
     } catch (error) {
       console.error('Error fetching messages:', error);
       message.error('Failed to load messages');
