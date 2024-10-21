@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Button, Modal, Form, Input, InputNumber, Select, message, Switch } from 'antd';
+import { Button, Modal, Form, Input, InputNumber, Select, message, Switch, Tag } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
@@ -117,10 +117,30 @@ const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
           <Form.Item name="required_exts" label="必需的扩展名" initialValue="">
             <Input placeholder="用逗号分隔，例如: .txt,.pdf" />
           </Form.Item>
-          <Form.Item name="disable_inference_enhance" label="禁用推理增强" valuePropName="checked" initialValue={false}>
+          <Form.Item 
+            name="disable_inference_enhance" 
+            label={
+              <span>
+                禁用推理增强
+                <Tag color="blue" style={{ marginLeft: '8px' }}>Pro</Tag>
+              </span>
+            } 
+            valuePropName="checked" 
+            initialValue={false}
+          >
             <Switch />
           </Form.Item>
-          <Form.Item name="inference_deep_thought" label="推理深度思考" valuePropName="checked" initialValue={false}>
+          <Form.Item 
+            name="inference_deep_thought" 
+            label={
+              <span>
+                推理深度思考
+                <Tag color="blue" style={{ marginLeft: '8px' }}>Pro</Tag>
+              </span>
+            } 
+            valuePropName="checked" 
+            initialValue={false}
+          >
             <Switch />
           </Form.Item>
         </Form>
