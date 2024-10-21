@@ -3,6 +3,7 @@ import { Input, Button, List, Avatar, Typography, Select, Space } from 'antd';
 import { SendOutlined, PlusCircleOutlined, GithubOutlined, SettingOutlined, EditOutlined, PictureOutlined, FileOutlined, DatabaseOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import './Chat.css';
+import { message } from 'antd';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -128,8 +129,8 @@ useEffect(() => {
           >
             <Typography.Text strong>{conv.title}</Typography.Text>
             <br />
-            <Typography.Text type="secondary">{conv.messages.length}条对话</Typography.Text>
-            <Typography.Text type="secondary" style={{ float: 'right' }}>{conv.updated_at}</Typography.Text>
+            <Typography.Text type="secondary">{conv.messages}条对话</Typography.Text>
+            <Typography.Text type="secondary" style={{ float: 'right' }}>{conv.time}</Typography.Text>
           </div>
         ))}
       </div>
