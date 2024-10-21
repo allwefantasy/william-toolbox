@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Table, Button, message, Card, Typography, Space, Tag } from 'antd';
+import { Table, Button, message, Card, Typography, Space, Tag, Tooltip } from 'antd';
 import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, DatabaseOutlined } from '@ant-design/icons';
 
-const { Title } = Typography;
+const { Title, Paragraph } = Typography;
 
 interface RAG {
   name: string;
@@ -97,11 +97,25 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
       title: 'Tokenizer路径',
       dataIndex: 'tokenizer_path',
       key: 'tokenizer_path',
+      render: (text: string) => (
+        <Tooltip title={text}>
+          <Paragraph ellipsis={{ rows: 2, expandable: true, symbol: 'more' }} style={{ maxWidth: 200 }}>
+            {text}
+          </Paragraph>
+        </Tooltip>
+      ),
     },
     {
       title: '文档目录',
       dataIndex: 'doc_dir',
       key: 'doc_dir',
+      render: (text: string) => (
+        <Tooltip title={text}>
+          <Paragraph ellipsis={{ rows: 2, expandable: true, symbol: 'more' }} style={{ maxWidth: 200 }}>
+            {text}
+          </Paragraph>
+        </Tooltip>
+      ),
     },
     {
       title: '文档过滤相关度',
