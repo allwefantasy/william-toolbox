@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Input, Button, List, Avatar, Typography, Select, Space, Dropdown, Menu, Modal } from 'antd';
-import { SendOutlined, PlusCircleOutlined, GithubOutlined, SettingOutlined, EditOutlined, PictureOutlined, FileOutlined, DatabaseOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Input, Button, List, Avatar, Typography, Select, Space, Dropdown, Menu, Modal, Spin } from 'antd';
+import { SendOutlined, PlusCircleOutlined, GithubOutlined, SettingOutlined, EditOutlined, PictureOutlined, FileOutlined, DatabaseOutlined, DeleteOutlined, LoadingOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import './Chat.css';
 import { message } from 'antd';
@@ -29,6 +29,7 @@ const Chat: React.FC = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const [listType, setListType] = useState<'models' | 'rags'>('models');
   const [selectedItem, setSelectedItem] = useState<string>('');
@@ -108,6 +109,11 @@ useEffect(() => {
       const newUserMessage = { role: 'user' as const, content: inputMessage, timestamp: new Date().toISOString() };
       setMessages([...messages, newUserMessage]);
       setInputMessage('');
+      setIsLoading(true);
+
+      // Add a temporary "Assistant is typing..." message
+      const tempMessage = { role: 'assistant' as const, content: 'Assistant is typing...', timestamp: new Date().toISOString() };
+      setMessages(prevMessages => [...prevMessages, tempMessage]);
 
       try {
         const response = await axios.post(`/chat/conversations/${currentConversationId}/messages`, {
@@ -118,11 +124,16 @@ useEffect(() => {
         });
 
         if (response.data && response.data.role === 'assistant') {
-          setMessages(prevMessages => [...prevMessages, response.data]);
+          // Remove the temporary message and add the real response
+          setMessages(prevMessages => prevMessages.filter(msg => msg !== tempMessage).concat(response.data));
         }
       } catch (error) {
         console.error('Error sending message:', error);
         message.error('Failed to send message');
+        // Remove the temporary message if there's an error
+        setMessages(prevMessages => prevMessages.filter(msg => msg !== tempMessage));
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -257,7 +268,7 @@ useEffect(() => {
               <List.Item.Meta
                 avatar={<Avatar icon={item.role === 'user' ? <EditOutlined /> : <img src="/path/to/assistant-avatar.png" alt="Assistant" />} />}
                 title={item.role === 'user' ? 'You' : 'Assistant'}
-                description={item.content}
+                description={item.content === 'Assistant is typing...' ? <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} /> : item.content}
               />
             </List.Item>
           )}
@@ -286,7 +297,7 @@ useEffect(() => {
                   <Option key={item} value={item}>{item}</Option>
                 ))}
               </Select>
-              <Button type="primary" icon={<SendOutlined />} onClick={handleSendMessage}>
+              <Button type="primary" icon={<SendOutlined />} onClick={handleSendMessage} disabled={isLoading}>
                 发送
               </Button>
             </div>
@@ -302,6 +313,7 @@ useEffect(() => {
                 }
               }}
               style={{ borderRadius: '8px', flex: 1 }}
+              disabled={isLoading}
             />
           </div>
         </div>
