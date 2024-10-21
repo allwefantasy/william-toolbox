@@ -27,6 +27,14 @@ import openai
 from openai.types import OpenAIError
 
 app = FastAPI()
+# Add CORS middleware with restricted origins
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Restrict to trusted origins
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Path to the chat.json file
 CHAT_JSON_PATH = "chat.json"
@@ -233,14 +241,7 @@ async def list_rags():
     rags = load_rags_from_json()
     return [{"name": name, **info} for name, info in rags.items()]
 
-# Add CORS middleware with restricted origins
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Restrict to trusted origins
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+
 
 class DeployCommand(BaseModel):
     pretrained_model_type: str
