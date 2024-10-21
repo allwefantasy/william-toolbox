@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Input, Button, List, Avatar, Typography, Select, Space, Dropdown, Menu, Modal, Spin } from 'antd';
-import { SendOutlined, PlusCircleOutlined, GithubOutlined, SettingOutlined, EditOutlined, PictureOutlined, FileOutlined, DatabaseOutlined, DeleteOutlined, LoadingOutlined } from '@ant-design/icons';
+import { SendOutlined, PlusCircleOutlined, GithubOutlined, SettingOutlined, EditOutlined, PictureOutlined, FileOutlined, DatabaseOutlined, DeleteOutlined, LoadingOutlined, RobotOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import './Chat.css';
 import { message } from 'antd';
@@ -266,7 +266,7 @@ useEffect(() => {
           renderItem={(item: Message) => (
             <List.Item>
               <List.Item.Meta
-                avatar={<Avatar icon={item.role === 'user' ? <EditOutlined /> : <img src="/path/to/assistant-avatar.png" alt="Assistant" />} />}
+                avatar={<Avatar icon={item.role === 'user' ? <EditOutlined /> : <RobotOutlined />} />}
                 title={item.role === 'user' ? 'You' : 'Assistant'}
                 description={item.content === 'Assistant is typing...' ? <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} /> : item.content}
               />
