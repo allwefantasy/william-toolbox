@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Input, Button, List, Avatar, Typography, Select, Space } from 'antd';
-import { SendOutlined, PlusCircleOutlined, GithubOutlined, SettingOutlined, EditOutlined, PictureOutlined, FileOutlined, DatabaseOutlined } from '@ant-design/icons';
+import { Input, Button, List, Avatar, Typography, Select, Space, Dropdown, Menu, Modal } from 'antd';
+import { SendOutlined, PlusCircleOutlined, GithubOutlined, SettingOutlined, EditOutlined, PictureOutlined, FileOutlined, DatabaseOutlined, DeleteOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import './Chat.css';
 import { message } from 'antd';
@@ -154,6 +154,36 @@ useEffect(() => {
     }
   };
 
+  const handleDeleteConversation = async (convId: string) => {
+    Modal.confirm({
+      title: '确认删除',
+      content: '你确定要删除这个会话吗？',
+      onOk: async () => {
+        try {
+          await axios.delete(`/chat/conversations/${convId}`);
+          setConversations(conversations.filter(c => c.id !== convId));
+          if (currentConversationId === convId) {
+            setCurrentConversationId(null);
+            setCurrentConversationTitle('');
+            setMessages([]);
+          }
+          message.success('会话已删除');
+        } catch (error) {
+          console.error('Error deleting conversation:', error);
+          message.error('删除会话失败');
+        }
+      },
+    });
+  };
+
+  const menu = (conv: Conversation) => (
+    <Menu>
+      <Menu.Item key="delete" onClick={() => handleDeleteConversation(conv.id)} icon={<DeleteOutlined />}>
+        删除会话
+      </Menu.Item>
+    </Menu>
+  );
+
   return (
     <div className="chat-container">
       <div className="sidebar">
@@ -185,33 +215,34 @@ useEffect(() => {
           新的聊天
         </Button>
         {conversations.map((conv) => (
-          <div 
-            key={conv.id} 
-            className={`conversation-item ${currentConversationId === conv.id ? 'active' : ''}`}
-            onClick={() => {
-              setCurrentConversationId(conv.id);
-              setCurrentConversationTitle(conv.title);
-              fetchMessages(conv.id);
-            }}
-            onDoubleClick={() => handleTitleDoubleClick(conv)}
-          >
-            {editingTitleId === conv.id ? (
-              <Input
-                value={editingTitle}
-                onChange={handleTitleChange}
-                onPressEnter={() => handleTitleUpdate(conv)}
-                onBlur={() => handleTitleUpdate(conv)}
-                autoFocus
-              />
-            ) : (
-              <>
-                <Typography.Text strong>{conv.title}</Typography.Text>
-                <br />
-                <Typography.Text type="secondary">{conv.messages}条对话</Typography.Text>
-                <Typography.Text type="secondary" style={{ float: 'right' }}>{conv.time}</Typography.Text>
-              </>
-            )}
-          </div>
+          <Dropdown overlay={menu(conv)} trigger={['contextMenu']} key={conv.id}>
+            <div 
+              className={`conversation-item ${currentConversationId === conv.id ? 'active' : ''}`}
+              onClick={() => {
+                setCurrentConversationId(conv.id);
+                setCurrentConversationTitle(conv.title);
+                fetchMessages(conv.id);
+              }}
+              onDoubleClick={() => handleTitleDoubleClick(conv)}
+            >
+              {editingTitleId === conv.id ? (
+                <Input
+                  value={editingTitle}
+                  onChange={handleTitleChange}
+                  onPressEnter={() => handleTitleUpdate(conv)}
+                  onBlur={() => handleTitleUpdate(conv)}
+                  autoFocus
+                />
+              ) : (
+                <>
+                  <Typography.Text strong>{conv.title}</Typography.Text>
+                  <br />
+                  <Typography.Text type="secondary">{conv.messages}条对话</Typography.Text>
+                  <Typography.Text type="secondary" style={{ float: 'right' }}>{conv.time}</Typography.Text>
+                </>
+              )}
+            </div>
+          </Dropdown>
         ))}
       </div>
       <div className="chat-area">
