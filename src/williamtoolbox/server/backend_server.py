@@ -44,10 +44,7 @@ async def add_config_item(item: dict):
     config = load_config()
     for key, value in item.items():
         if key in config:
-            if isinstance(config[key], list):
-                config[key].append(value)
-            else:
-                config[key] = [config[key], value]
+            config[key].extend(value)
         else:
             config[key] = value
     save_config(config)
@@ -76,7 +73,7 @@ async def delete_config_item(key: str):
 def save_config(config):
     """Save the configuration to file."""
     with open("config.json", 'w') as f:
-        json.dump(config, f, indent=2)
+        json.dump(config, f, indent=2,ensure_ascii=False)
 
 class AddModelRequest(BaseModel):
     name: str
