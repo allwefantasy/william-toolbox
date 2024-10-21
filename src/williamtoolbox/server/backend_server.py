@@ -23,6 +23,8 @@ import traceback
 import psutil
 from datetime import datetime
 import uuid
+import openai
+from openai.types import OpenAIError
 
 app = FastAPI()
 
@@ -583,9 +585,6 @@ async def get_conversation(conversation_id: str):
     if conversation is None:
         raise HTTPException(status_code=404, detail="Conversation not found")
     return conversation
-
-import openai
-from openai.error import OpenAIError
 
 @app.post("/chat/conversations/{conversation_id}/messages", response_model=Message)
 async def add_message(conversation_id: str, message: Message):

@@ -112,7 +112,7 @@ useEffect(() => {
           <div style={{ display: 'flex', width: '100%', gap: '8px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <Select
-                style={{ width: 120 }}
+                style={{ width: 240 }}
                 value={listType}
                 onChange={(value: 'models' | 'rags') => {
                   setListType(value);
@@ -123,7 +123,7 @@ useEffect(() => {
                 <Option value="rags">RAG列表</Option>
               </Select>
               <Select
-                style={{ width: 120 }}
+                style={{ width: 240 }}
                 value={selectedItem}
                 onChange={(value: string) => setSelectedItem(value)}
               >
