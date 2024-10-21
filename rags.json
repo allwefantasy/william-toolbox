@@ -19,5 +19,19 @@
     "host": "0.0.0.0",
     "port": 8009,
     "process_id": 39831
+  },
+  "Ray文档知识库": {
+    "status": "running",
+    "name": "Ray文档知识库",
+    "model": "deepseek_chat",
+    "tokenizer_path": "/Users/allwefantasy/Downloads/tokenizer.json",
+    "doc_dir": "/Users/allwefantasy/projects/ray/doc/source",
+    "rag_doc_filter_relevance": 2.0,
+    "host": "0.0.0.0",
+    "port": 8010,
+    "required_exts": ".md,.rst",
+    "disable_inference_enhance": false,
+    "inference_deep_thought": false,
+    "process_id": 12289
   }
 }

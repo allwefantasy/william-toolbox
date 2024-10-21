@@ -267,7 +267,7 @@ async def add_rag(rag: AddRAGRequest):
     new_rag = {        
         "status": "stopped",
         **rag.model_dump()        
-    }
+    }    
     
     rags[rag.name] = new_rag
     save_rags_to_json(rags)
@@ -300,6 +300,13 @@ async def manage_rag(rag_name: str, action: str):
         command += f" --rag_doc_filter_relevance {rag_doc_filter_relevance}"
         command += f" --host {rag_info['host'] or '0.0.0.0'}"
         command += f" --port {port}"
+
+        if rag_info['required_exts']:
+            command += f" --required_exts {rag_info['required_exts']}"
+        if rag_info['disable_inference_enhance']:
+            command += f" --disable_inference_enhance"
+        if rag_info['inference_deep_thought']:
+            command += f" --inference_deep_thought"
 
         logger.info(f"manage rag {rag_name} with command: {command}")
         try:
