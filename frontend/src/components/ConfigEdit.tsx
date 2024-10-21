@@ -10,10 +10,21 @@ interface ConfigEditProps {
   onConfigUpdated: () => void;
 }
 
+interface ConfigItem {
+  value: string;
+  label: string;
+}
+
+interface Config {
+  [key: string]: ConfigItem[];
+}
+
 const ConfigEdit: React.FC<ConfigEditProps> = ({ onConfigUpdated }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [config, setConfig] = useState<{ [key: string]: any }>({});
+  const [config, setConfig] = useState<Config>({});
+  const [selectedConfigType, setSelectedConfigType] = useState<string>('');
+  const [selectedConfigItem, setSelectedConfigItem] = useState<string>('');
 
   useEffect(() => {
     fetchConfig();
@@ -32,7 +43,15 @@ const ConfigEdit: React.FC<ConfigEditProps> = ({ onConfigUpdated }) => {
   const onFinish = async (values: any) => {
     setLoading(true);
     try {
-      await axios.put(`/config/${values.key}`, { [values.key]: values.value });
+      const updatedConfig = {...config};
+      const itemIndex = updatedConfig[selectedConfigType].findIndex(item => item.value === selectedConfigItem);
+      if (itemIndex !== -1) {
+        updatedConfig[selectedConfigType][itemIndex] = {
+          value: values.value,
+          label: values.label
+        };
+      }
+      await axios.put(`/config/${selectedConfigType}`, { [selectedConfigType]: updatedConfig[selectedConfigType] });
       message.success('配置项更新成功');
       form.resetFields();
       onConfigUpdated();
@@ -45,8 +64,20 @@ const ConfigEdit: React.FC<ConfigEditProps> = ({ onConfigUpdated }) => {
     }
   };
 
-  const onKeyChange = (key: string) => {
-    form.setFieldsValue({ value: JSON.stringify(config[key]) });
+  const onConfigTypeChange = (configType: string) => {
+    setSelectedConfigType(configType);
+    form.resetFields(['configItem', 'value', 'label']);
+  };
+
+  const onConfigItemChange = (configItemValue: string) => {
+    setSelectedConfigItem(configItemValue);
+    const selectedItem = config[selectedConfigType].find(item => item.value === configItemValue);
+    if (selectedItem) {
+      form.setFieldsValue({
+        value: selectedItem.value,
+        label: selectedItem.label
+      });
+    }
   };
 
   return (
@@ -58,15 +89,25 @@ const ConfigEdit: React.FC<ConfigEditProps> = ({ onConfigUpdated }) => {
         </Space>
       </Title>
       <Form form={form} onFinish={onFinish} layout="vertical">
-        <Form.Item name="key" label="配置项" rules={[{ required: true, message: '请选择配置项' }]}>
-          <Select onChange={onKeyChange}>
+        <Form.Item name="configType" label="配置类型" rules={[{ required: true, message: '请选择配置类型' }]}>
+          <Select onChange={onConfigTypeChange}>
             {Object.keys(config).map(key => (
               <Option key={key} value={key}>{key}</Option>
             ))}
           </Select>
         </Form.Item>
+        <Form.Item name="configItem" label="配置项" rules={[{ required: true, message: '请选择配置项' }]}>
+          <Select onChange={onConfigItemChange} disabled={!selectedConfigType}>
+            {selectedConfigType && config[selectedConfigType]?.map(item => (
+              <Option key={item.value} value={item.value}>{item.label}</Option>
+            ))}
+          </Select>
+        </Form.Item>
         <Form.Item name="value" label="值" rules={[{ required: true, message: '请输入值' }]}>
-          <Input.TextArea rows={4} />
+          <Input />
+        </Form.Item>
+        <Form.Item name="label" label="标签" rules={[{ required: true, message: '请输入标签' }]}>
+          <Input />
         </Form.Item>
         <Form.Item>
           <Button type="primary" htmlType="submit" loading={loading}>

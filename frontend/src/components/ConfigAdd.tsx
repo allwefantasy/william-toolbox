@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Form, Input, Button, message, Card, Typography, Space } from 'antd';
+import { Form, Input, Button, message, Card, Typography, Space, Select } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 
 const { Title } = Typography;
+const { Option } = Select;
 
 interface ConfigAddProps {
   onConfigAdded: () => void;
@@ -12,11 +13,31 @@ interface ConfigAddProps {
 const ConfigAdd: React.FC<ConfigAddProps> = ({ onConfigAdded }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [configTypes, setConfigTypes] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetchConfigTypes();
+  }, []);
+
+  const fetchConfigTypes = async () => {
+    try {
+      const response = await axios.get('/config');
+      setConfigTypes(Object.keys(response.data));
+    } catch (error) {
+      console.error('Error fetching config types:', error);
+      message.error('获取配置类型失败');
+    }
+  };
 
   const onFinish = async (values: any) => {
     setLoading(true);
     try {
-      await axios.post('/config', { [values.key]: values.value });
+      await axios.post('/config', {
+        [values.configType]: [{
+          value: values.value,
+          label: values.label
+        }]
+      });
       message.success('配置项添加成功');
       form.resetFields();
       onConfigAdded();
@@ -37,11 +58,18 @@ const ConfigAdd: React.FC<ConfigAddProps> = ({ onConfigAdded }) => {
         </Space>
       </Title>
       <Form form={form} onFinish={onFinish} layout="vertical">
-        <Form.Item name="key" label="配置项" rules={[{ required: true, message: '请输入配置项' }]}>
-          <Input />
+        <Form.Item name="configType" label="配置类型" rules={[{ required: true, message: '请选择配置类型' }]}>
+          <Select>
+            {configTypes.map(type => (
+              <Option key={type} value={type}>{type}</Option>
+            ))}
+          </Select>
         </Form.Item>
         <Form.Item name="value" label="值" rules={[{ required: true, message: '请输入值' }]}>
-          <Input.TextArea rows={4} />
+          <Input />
+        </Form.Item>
+        <Form.Item name="label" label="标签" rules={[{ required: true, message: '请输入标签' }]}>
+          <Input />
         </Form.Item>
         <Form.Item>
           <Button type="primary" htmlType="submit" loading={loading}>
