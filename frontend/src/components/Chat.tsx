@@ -81,7 +81,7 @@ useEffect(() => {
 
   const handleSendMessage = async () => {
     if (inputMessage.trim() && currentConversationId) {
-      const newUserMessage = { role: 'user' as const, content: inputMessage };
+      const newUserMessage = { role: 'user' as const, content: inputMessage, timestamp: new Date().toISOString() };
       setMessages([...messages, newUserMessage]);
       setInputMessage('');
 

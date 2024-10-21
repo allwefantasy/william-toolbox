@@ -609,7 +609,7 @@ async def add_message(conversation_id: str, message: Message, list_type: str, se
         raise HTTPException(status_code=404, detail="Conversation not found")
     
     message.timestamp = datetime.now().isoformat()
-    conversation["messages"].append(message.dict())
+    conversation["messages"].append(message.model_dump())
 
     # 根据 list_type 和 selected_item 选择合适的模型或 RAG
     try:
