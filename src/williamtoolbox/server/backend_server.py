@@ -20,8 +20,12 @@ import psutil
 from loguru import logger
 import subprocess
 import traceback
+import psutil
 
 app = FastAPI()
+
+# Global variable to store the OpenAI compatible service process
+openai_compatible_service_process = None
 
 # Add this function to load the config
 def load_config():
@@ -84,6 +88,41 @@ async def delete_config_item(key: str):
     del config[key]
     save_config(config)
     return {"message": "Configuration item deleted successfully"}
+
+@app.post("/openai-compatible-service/start")
+async def start_openai_compatible_service(host: str = "0.0.0.0", port: int = 8000):
+    global openai_compatible_service_process
+    if openai_compatible_service_process is not None:
+        return {"message": "OpenAI compatible service is already running"}
+    
+    command = f"byzerllm serve --ray_address auto --host {host} --port {port}"
+    try:
+        openai_compatible_service_process = subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return {"message": "OpenAI compatible service started successfully"}
+    except Exception as e:
+        return {"error": f"Failed to start OpenAI compatible service: {str(e)}"}
+
+@app.post("/openai-compatible-service/stop")
+async def stop_openai_compatible_service():
+    global openai_compatible_service_process
+    if openai_compatible_service_process is None:
+        return {"message": "OpenAI compatible service is not running"}
+    
+    try:
+        parent = psutil.Process(openai_compatible_service_process.pid)
+        for child in parent.children(recursive=True):
+            child.terminate()
+        parent.terminate()
+        openai_compatible_service_process = None
+        return {"message": "OpenAI compatible service stopped successfully"}
+    except Exception as e:
+        return {"error": f"Failed to stop OpenAI compatible service: {str(e)}"}
+
+@app.get("/openai-compatible-service/status")
+async def get_openai_compatible_service_status():
+    global openai_compatible_service_process
+    is_running = openai_compatible_service_process is not None and openai_compatible_service_process.poll() is None
+    return {"isRunning": is_running}
 
 def save_config(config):
     """Save the configuration to file."""

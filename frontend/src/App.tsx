@@ -34,13 +34,15 @@ function App() {
 
   const renderContent = () => {
     switch (selectedKey) {
-      case '1':
+      case '1.1':
         return (
           <>
             <CreateModel onModelAdded={refreshModelList} />
             <ModelList refreshTrigger={refreshTrigger} />
           </>
         );
+      case '1.2':
+        return <OpenAICompatibleService />;
       case '2':
         return (
           <>
@@ -63,10 +65,11 @@ function App() {
     <Layout style={{ minHeight: '100vh' }}>
       <Sider width={250} style={{ background: '#fff' }}>
         <div className="logo" style={{ height: 64, margin: 16, background: 'rgba(255, 255, 255, 0.2)' }} />
-        <Menu mode="inline" defaultSelectedKeys={['1']} defaultOpenKeys={['3']} onSelect={({ key }) => setSelectedKey(key)} style={{ borderRight: 0 }}>
-          <Menu.Item key="1" icon={<RocketOutlined />}>
-            模型管理
-          </Menu.Item>
+        <Menu mode="inline" defaultSelectedKeys={['1']} defaultOpenKeys={['1', '3']} onSelect={({ key }) => setSelectedKey(key)} style={{ borderRight: 0 }}>
+          <SubMenu key="1" icon={<RocketOutlined />} title="模型管理">
+            <Menu.Item key="1.1">模型列表</Menu.Item>
+            <Menu.Item key="1.2">OpenAI兼容服务</Menu.Item>
+          </SubMenu>
           <Menu.Item key="2" icon={<DatabaseOutlined />}>
             RAG管理
           </Menu.Item>
