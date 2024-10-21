@@ -601,15 +601,22 @@ async def get_conversation(conversation_id: str):
         raise HTTPException(status_code=404, detail="Conversation not found")
     return conversation
 
+from pydantic import BaseModel
+
+class AddMessageRequest(BaseModel):
+    message: Message
+    list_type: str
+    selected_item: str
+
 @app.post("/chat/conversations/{conversation_id}/messages", response_model=Message)
-async def add_message(conversation_id: str, message: Message, list_type: str, selected_item: str):
+async def add_message(conversation_id: str, request: AddMessageRequest):
     chat_data = load_chat_data()
     conversation = next((conv for conv in chat_data["conversations"] if conv["id"] == conversation_id), None)
     if conversation is None:
         raise HTTPException(status_code=404, detail="Conversation not found")
     
-    message.timestamp = datetime.now().isoformat()
-    conversation["messages"].append(message.model_dump())
+    request.message.timestamp = datetime.now().isoformat()
+    conversation["messages"].append(request.message.model_dump())
 
     # 根据 list_type 和 selected_item 选择合适的模型或 RAG
     try:
