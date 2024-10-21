@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Button, Modal, Form, Input, InputNumber, Select, message } from 'antd';
+import { Button, Modal, Form, Input, InputNumber, Select, message, Switch } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
@@ -13,6 +13,9 @@ interface FormValues {
   rag_doc_filter_relevance: number;
   host: string;
   port: number;
+  required_exts: string;
+  disable_inference_enhance: boolean;
+  inference_deep_thought: boolean;
 }
 
 interface Model {
@@ -46,9 +49,12 @@ const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
   const showModal = () => {
     setIsModalVisible(true);
     form.setFieldsValue({ 
-      rag_doc_filter_relevance: 2,
+      rag_doc_filter_relevance: 2.0,
       host: '0.0.0.0',
-      port: 8000
+      port: 8000,
+      required_exts: '',
+      disable_inference_enhance: false,
+      inference_deep_thought: false
     });
   };
 
@@ -99,7 +105,7 @@ const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
           <Form.Item name="doc_dir" label="文档目录" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="rag_doc_filter_relevance" label="文档过滤相关度" initialValue={2}>
+          <Form.Item name="rag_doc_filter_relevance" label="文档过滤相关度" initialValue={2.0}>
             <InputNumber min={0} step={0.1} max={10} />
           </Form.Item>
           <Form.Item name="host" label="主机" initialValue="0.0.0.0">
@@ -107,6 +113,15 @@ const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
           </Form.Item>
           <Form.Item name="port" label="端口" initialValue={8000}>
             <InputNumber min={1024} max={65535} />
+          </Form.Item>
+          <Form.Item name="required_exts" label="必需的扩展名" initialValue="">
+            <Input placeholder="用逗号分隔，例如: .txt,.pdf" />
+          </Form.Item>
+          <Form.Item name="disable_inference_enhance" label="禁用推理增强" valuePropName="checked" initialValue={false}>
+            <Switch />
+          </Form.Item>
+          <Form.Item name="inference_deep_thought" label="推理深度思考" valuePropName="checked" initialValue={false}>
+            <Switch />
           </Form.Item>
         </Form>
       </Modal>
