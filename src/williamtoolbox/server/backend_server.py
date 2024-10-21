@@ -151,6 +151,16 @@ async def start_openai_compatible_service(host: str = "0.0.0.0", port: int = 800
         # Use subprocess.Popen to start the process in the background
         openai_compatible_service_process = subprocess.Popen(command.split(), stdout=stdout_log, stderr=stderr_log)
         logger.info(f"OpenAI compatible service started with PID: {openai_compatible_service_process.pid}")
+        
+        # Update config.json with the new server information
+        config = load_config()
+        config['openaiServerList'].append({
+            'host': host,
+            'port': port,
+            'pid': openai_compatible_service_process.pid
+        })
+        save_config(config)
+        
         return {"message": "OpenAI compatible service started successfully", "pid": openai_compatible_service_process.pid}
     except Exception as e:
         logger.error(f"Failed to start OpenAI compatible service: {str(e)}")

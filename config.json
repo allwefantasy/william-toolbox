@@ -34,5 +34,6 @@
       "value": "saas/claude",
       "label": "Claude"
     }
-  ]
+  ],
+  "openaiServerList": []
 }
