@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Input, Button, List, Avatar, Typography } from 'antd';
+import { Input, Button, List, Avatar, Typography, Select, Space } from 'antd';
 import { SendOutlined, PlusCircleOutlined, GithubOutlined, SettingOutlined, EditOutlined, PictureOutlined, FileOutlined, DatabaseOutlined } from '@ant-design/icons';
+import axios from 'axios';
 import './Chat.css';
 
 const { TextArea } = Input;
+const { Option } = Select;
 
 interface Message {
   role: 'user' | 'assistant';
@@ -25,6 +27,10 @@ const Chat: React.FC = () => {
     { title: '新的聊天', time: '9/30/2024, 9:14:56 PM', messages: 2 },
   ]);
 
+  const [listType, setListType] = useState<'models' | 'rags'>('models');
+  const [selectedItem, setSelectedItem] = useState<string>('');
+  const [itemList, setItemList] = useState<string[]>([]);
+
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -32,6 +38,25 @@ const Chat: React.FC = () => {
   };
 
   useEffect(scrollToBottom, [messages]);
+
+  useEffect(() => {
+    fetchItemList();
+  }, [listType]);
+
+  const fetchItemList = async () => {
+    try {
+      let response;
+      if (listType === 'models') {
+        response = await axios.get('/models');
+        setItemList(response.data.filter((model: any) => model.status === 'running').map((model: any) => model.name));
+      } else {
+        response = await axios.get('/rags');
+        setItemList(response.data.filter((rag: any) => rag.status === 'running').map((rag: any) => rag.name));
+      }
+    } catch (error) {
+      console.error('Error fetching item list:', error);
+    }
+  };
 
   const handleSendMessage = () => {
     if (inputMessage.trim()) {
@@ -72,22 +97,44 @@ const Chat: React.FC = () => {
         />
         <div ref={messagesEndRef} />
         <div className="input-area">
-          <TextArea
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            placeholder="有什么可以帮你的吗"
-            autoSize={{ minRows: 1, maxRows: 4 }}
-            onPressEnter={(e) => {
-              if (!e.shiftKey) {
-                e.preventDefault();
-                handleSendMessage();
-              }
-            }}
-            style={{ borderRadius: '8px' }}
-          />
-          <Button type="primary" icon={<SendOutlined />} onClick={handleSendMessage} style={{ marginLeft: '10px' }}>
-            发送
-          </Button>
+          <Space style={{ width: '100%' }}>
+            <TextArea
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              placeholder="有什么可以帮你的吗"
+              autoSize={{ minRows: 1, maxRows: 4 }}
+              onPressEnter={(e) => {
+                if (!e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage();
+                }
+              }}
+              style={{ borderRadius: '8px', flexGrow: 1 }}
+            />
+            <Select
+              style={{ width: 120 }}
+              value={listType}
+              onChange={(value: 'models' | 'rags') => {
+                setListType(value);
+                setSelectedItem('');
+              }}
+            >
+              <Option value="models">模型列表</Option>
+              <Option value="rags">RAG列表</Option>
+            </Select>
+            <Select
+              style={{ width: 120 }}
+              value={selectedItem}
+              onChange={(value: string) => setSelectedItem(value)}
+            >
+              {itemList.map((item) => (
+                <Option key={item} value={item}>{item}</Option>
+              ))}
+            </Select>
+            <Button type="primary" icon={<SendOutlined />} onClick={handleSendMessage}>
+              发送
+            </Button>
+          </Space>
         </div>
         <div className="tool-bar">
           <div>
