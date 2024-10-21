@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { Layout, Menu, Typography, Space } from 'antd';
-import { RocketOutlined, AppstoreOutlined, DatabaseOutlined, SettingOutlined } from '@ant-design/icons';
+import { RocketOutlined, AppstoreOutlined, DatabaseOutlined, SettingOutlined, MessageOutlined } from '@ant-design/icons';
 import ModelList from './components/ModelList';
 import CreateModel from './components/CreateModel';
 import RAGList from './components/RAGList';
@@ -9,6 +9,7 @@ import ConfigList from './components/ConfigList';
 import ConfigAdd from './components/ConfigAdd';
 import ConfigEdit from './components/ConfigEdit';
 import OpenAICompatibleService from './components/OpenAICompatibleService';
+import Chat from './components/Chat';
 import './App.css';
 
 const { Header, Sider, Content } = Layout;
@@ -57,6 +58,8 @@ function App() {
         return <ConfigAdd onConfigAdded={refreshConfigList} />;
       case '3.3':
         return <ConfigEdit onConfigUpdated={refreshConfigList} />;
+      case '4':
+        return <Chat />;
       default:
         return <Text>请选择一个功能</Text>;
     }
@@ -79,6 +82,9 @@ function App() {
             <Menu.Item key="3.2">添加配置</Menu.Item>
             <Menu.Item key="3.3">编辑配置</Menu.Item>
           </SubMenu>
+          <Menu.Item key="4" icon={<MessageOutlined />}>
+            聊天
+          </Menu.Item>
         </Menu>
       </Sider>
       <Layout>
