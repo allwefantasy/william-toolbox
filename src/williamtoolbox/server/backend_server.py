@@ -728,10 +728,7 @@ async def add_message(conversation_id: str, request: AddMessageRequest):
 
     # 根据 list_type 和 selected_item 选择合适的模型或 RAG
     try:
-        config = load_config()
-        base_url = config.get("openaiServerList", [{}])[0].get(
-            "host", "http://localhost:8000/v1"
-        )
+        config = load_config()        
         openai_server = config.get("openaiServerList", [{}])[0]
         base_url = f"http://{openai_server.get('host', 'localhost')}:{openai_server.get('port', 8000)}/v1"
         client = AsyncOpenAI(base_url=base_url, api_key="xxxx")
