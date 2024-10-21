@@ -710,9 +710,7 @@ async def get_conversation(conversation_id: str):
     return conversation
 
 
-from fastapi.responses import StreamingResponse
-
-@app.post("/chat/conversations/{conversation_id}/messages")
+@app.post("/chat/conversations/{conversation_id}/messages", response_model=Message)
 async def add_message(conversation_id: str, request: AddMessageRequest):
     chat_data = load_chat_data()
     conversation = next(
@@ -728,67 +726,62 @@ async def add_message(conversation_id: str, request: AddMessageRequest):
     list_type = request.list_type
     selected_item = request.selected_item
 
-    async def generate_response():
-        try:
-            config = load_config()        
-            openai_server = config.get("openaiServerList", [{}])[0]
-            base_url = f"http://{openai_server.get('host', 'localhost')}:{openai_server.get('port', 8000)}/v1"
+    # 根据 list_type 和 selected_item 选择合适的模型或 RAG
+    try:
+        config = load_config()        
+        openai_server = config.get("openaiServerList", [{}])[0]
+        base_url = f"http://{openai_server.get('host', 'localhost')}:{openai_server.get('port', 8000)}/v1"
+        client = AsyncOpenAI(base_url=base_url, api_key="xxxx")
+
+        if list_type == "models":
+            response = await client.chat.completions.create(
+                model=selected_item,
+                messages=[
+                    {"role": msg["role"], "content": msg["content"]}
+                    for msg in conversation["messages"]
+                ],
+            )
+            assistant_message = response.choices[0].message
+        elif list_type == "rags":
+            rags = load_rags_from_json()
+            if not selected_item in rags:
+                logger.error(f"RAG {selected_item} not found")
+                raise ValueError(f"RAG {selected_item} not found")
+
+            rag_info = rags.get(selected_item, {})
+            openai_server = rag_info.get("host", "localhost")
+            port = rag_info.get("port", 8000)
+            base_url = f"http://{openai_server}:{port}/v1"
             client = AsyncOpenAI(base_url=base_url, api_key="xxxx")
 
-            if list_type == "models":
-                stream = await client.chat.completions.create(
-                    model=selected_item,
-                    messages=[
-                        {"role": msg["role"], "content": msg["content"]}
-                        for msg in conversation["messages"]
-                    ],
-                    stream=True
-                )
-            elif list_type == "rags":
-                rags = load_rags_from_json()
-                if not selected_item in rags:
-                    logger.error(f"RAG {selected_item} not found")
-                    raise ValueError(f"RAG {selected_item} not found")
-
-                rag_info = rags.get(selected_item, {})
-                openai_server = rag_info.get("host", "localhost")
-                port = rag_info.get("port", 8000)
-                base_url = f"http://{openai_server}:{port}/v1"
-                client = AsyncOpenAI(base_url=base_url, api_key="xxxx")
-
-                stream = await client.chat.completions.create(
-                    model=rag_info.get("model", "gpt-3.5-turbo"),
-                    messages=[
-                        {"role": msg["role"], "content": msg["content"]}
-                        for msg in conversation["messages"]
-                    ],
-                    stream=True
-                )
-            else:
-                raise ValueError("Invalid list_type")
-
-            full_content = ""
-            async for chunk in stream:
-                if chunk.choices[0].delta.content is not None:
-                    content = chunk.choices[0].delta.content
-                    full_content += content
-                    yield f"data: {json.dumps({'content': content})}\n\n"
-
-            assistant_response = Message(
-                role="assistant",
-                content=full_content,
-                timestamp=datetime.now().isoformat(),
+            response = await client.chat.completions.create(
+                model=rag_info.get(
+                    "model", "gpt-3.5-turbo"
+                ),  # Use a default model if not specified
+                messages=[
+                    {"role": msg["role"], "content": msg["content"]}
+                    for msg in conversation["messages"]
+                ],
             )
-            conversation["messages"].append(assistant_response.model_dump())
-            conversation["updated_at"] = datetime.now().isoformat()
-            save_chat_data(chat_data)
-            yield f"data: [DONE]\n\n"
+            assistant_message = response.choices[0].message
+        else:
+            raise ValueError("Invalid list_type")
 
-        except Exception as e:
-            logger.error(f"Error calling {list_type} service: {str(e)}")
-            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+        assistant_response = Message(
+            role="assistant",
+            content=assistant_message.content,
+            timestamp=datetime.now().isoformat(),
+        )
+        conversation["messages"].append(assistant_response.model_dump())
+    except Exception as e:
+        logger.error(f"Error calling {list_type} service: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get response from {list_type} service"
+        )
 
-    return StreamingResponse(generate_response(), media_type="text/event-stream")
+    conversation["updated_at"] = datetime.now().isoformat()
+    save_chat_data(chat_data)
+    return assistant_response
 
 
 @app.delete("/chat/conversations/{conversation_id}")
