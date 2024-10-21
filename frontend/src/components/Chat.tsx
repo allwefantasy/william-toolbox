@@ -7,6 +7,7 @@ import { message } from 'antd';
 
 const { TextArea } = Input;
 const { Option } = Select;
+const { Title } = Typography;
 
 interface Message {
   role: 'user' | 'assistant';
@@ -24,6 +25,7 @@ const Chat: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  const [currentConversationTitle, setCurrentConversationTitle] = useState<string>('');
   const [conversations, setConversations] = useState<Conversation[]>([
     { id: '1', title: 'Ray设置temp_dir', time: '10/21/2024, 4:12:50 PM', messages: 2 },
     { id: '2', title: '新的聊天', time: '10/17/2024, 9:41:31 PM', messages: 4 },
@@ -132,9 +134,10 @@ useEffect(() => {
         {conversations.map((conv) => (
           <div 
             key={conv.id} 
-            className="conversation-item"
+            className={`conversation-item ${currentConversationId === conv.id ? 'active' : ''}`}
             onClick={() => {
               setCurrentConversationId(conv.id);
+              setCurrentConversationTitle(conv.title);
               // 这里需要加载选中对话的消息
               // TODO: 实现加载选中对话消息的逻辑
             }}
@@ -147,6 +150,9 @@ useEffect(() => {
         ))}
       </div>
       <div className="chat-area">
+        <Title level={4} style={{ padding: '16px', borderBottom: '1px solid #e8e8e8' }}>
+          {currentConversationTitle || '选择或创建一个对话'}
+        </Title>
         <List
           className="message-list"
           dataSource={messages}

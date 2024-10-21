@@ -55,3 +55,7 @@
 .ant-input {
   resize: none;
 }
+.conversation-item.active {
+  background-color: #e6f7ff;
+  border-right: 3px solid #1890ff;
+}
