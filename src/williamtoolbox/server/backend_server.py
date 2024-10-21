@@ -107,6 +107,11 @@ class AddRAGRequest(BaseModel):
     tokenizer_path: str
     doc_dir: str
     rag_doc_filter_relevance: float = Field(default=2.0)
+    host: str = Field(default="0.0.0.0")
+    port: int = Field(default=8000)
+    required_exts: str = Field(default="")
+    disable_inference_enhance: bool = Field(default=False)
+    inference_deep_thought: bool = Field(default=False)
 
 # Path to the models.json file
 MODELS_JSON_PATH = "models.json"
@@ -259,15 +264,9 @@ async def add_rag(rag: AddRAGRequest):
     for other_rag in rags.values():        
         if other_rag['port'] == rag.port:
             raise HTTPException(status_code=400, detail=f"Port {rag.port} is already in use by RAG {other_rag['name']}")
-    new_rag = {
-        "name": rag.name,
+    new_rag = {        
         "status": "stopped",
-        "model": rag.model,
-        "tokenizer_path": rag.tokenizer_path,
-        "doc_dir": rag.doc_dir,
-        "rag_doc_filter_relevance": rag.rag_doc_filter_relevance,
-        "host": rag.host,
-        "port": rag.port
+        **rag.model_dump()        
     }
     
     rags[rag.name] = new_rag

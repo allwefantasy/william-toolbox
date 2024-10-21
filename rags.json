@@ -11,7 +11,7 @@
   },
   "doc_repo": {
     "name": "doc_repo",
-    "status": "running",
+    "status": "stopped",
     "model": "deepseek_chat",
     "tokenizer_path": "/Users/allwefantasy/Downloads/tokenizer.json",
     "doc_dir": "/Users/allwefantasy/projects/doc_repo/deploy_models",
