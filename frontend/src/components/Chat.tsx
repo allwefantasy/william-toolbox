@@ -15,6 +15,7 @@ interface Message {
 const Chat: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [conversations, setConversations] = useState([
     { title: 'Ray设置temp_dir', time: '10/21/2024, 4:12:50 PM', messages: 2 },
     { title: '新的聊天', time: '10/17/2024, 9:41:31 PM', messages: 4 },
@@ -71,7 +72,7 @@ useEffect(() => {
 }, []);
 
   const handleSendMessage = async () => {
-    if (inputMessage.trim()) {
+    if (inputMessage.trim() && currentConversationId) {
       const newUserMessage = { role: 'user' as const, content: inputMessage };
       setMessages([...messages, newUserMessage]);
       setInputMessage('');
@@ -96,15 +97,39 @@ useEffect(() => {
   return (
     <div className="chat-container">
       <div className="sidebar">
-        <Button type="primary" icon={<PlusCircleOutlined />} style={{ marginBottom: 20, width: '100%' }}>
+        <Button 
+          type="primary" 
+          icon={<PlusCircleOutlined />} 
+          style={{ marginBottom: 20, width: '100%' }}
+          onClick={async () => {
+            try {
+              const response = await axios.post('/chat/conversations', { title: '新的聊天' });
+              const newConversation = response.data;
+              setConversations([newConversation, ...conversations]);
+              setCurrentConversationId(newConversation.id);
+              setMessages([]);
+            } catch (error) {
+              console.error('Error creating new conversation:', error);
+              message.error('创建新对话失败');
+            }
+          }}
+        >
           新的聊天
         </Button>
-        {conversations.map((conv, index) => (
-          <div key={index} className="conversation-item">
+        {conversations.map((conv) => (
+          <div 
+            key={conv.id} 
+            className="conversation-item"
+            onClick={() => {
+              setCurrentConversationId(conv.id);
+              // 这里需要加载选中对话的消息
+              // TODO: 实现加载选中对话消息的逻辑
+            }}
+          >
             <Typography.Text strong>{conv.title}</Typography.Text>
             <br />
-            <Typography.Text type="secondary">{conv.messages}条对话</Typography.Text>
-            <Typography.Text type="secondary" style={{ float: 'right' }}>{conv.time}</Typography.Text>
+            <Typography.Text type="secondary">{conv.messages.length}条对话</Typography.Text>
+            <Typography.Text type="secondary" style={{ float: 'right' }}>{conv.updated_at}</Typography.Text>
           </div>
         ))}
       </div>
