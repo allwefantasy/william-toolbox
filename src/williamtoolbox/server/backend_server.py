@@ -614,9 +614,9 @@ async def add_message(conversation_id: str, message: Message, list_type: str, se
     # 根据 list_type 和 selected_item 选择合适的模型或 RAG
     try:
         config = load_config()
+        base_url = config.get('openaiServerList', [{}])[0].get('host', 'http://localhost:8000/v1')
         openai_server = config.get('openaiServerList', [{}])[0]
-        base_url = f"http://{openai_server.get('host', 'localhost')}:{openai_server.get('port', 8000)}/v1"
-        
+        base_url = f"http://{openai_server.get('host', 'localhost')}:{openai_server.get('port', 8000)}/v1"        
         client = AsyncOpenAI(base_url=base_url, api_key="xxxx")
         
         if list_type == "models":
@@ -627,24 +627,19 @@ async def add_message(conversation_id: str, message: Message, list_type: str, se
             assistant_message = response.choices[0].message
         elif list_type == "rags":
             rags = load_rags_from_json()
-            rag_info = rags.get(selected_item, {})
-            rag_url = f"/rag/{selected_item}/chat"
+            if not selected_item in rags:
+                logger.error(f"RAG {selected_item} not found")
+                raise ValueError(f"RAG {selected_item} not found")
+            
+            rag_info = rags.get(selected_item, {})            
+            openai_server = rag_info.get('host', 'localhost')
+            port = rag_info.get('port', 8000)
+            base_url = f"http://{openai_server}:{port}/v1"
+            client = AsyncOpenAI(base_url=base_url, api_key="xxxx")
             
             response = await client.chat.completions.create(
                 model=rag_info.get('model', 'gpt-3.5-turbo'),  # Use a default model if not specified
-                messages=[{"role": msg["role"], "content": msg["content"]} for msg in conversation["messages"]],
-                functions=[{
-                    "name": "rag_query",
-                    "description": "Query the RAG system",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "url": {"type": "string", "description": "The RAG endpoint URL"},
-                        },
-                        "required": ["url"]
-                    }
-                }],
-                function_call={"name": "rag_query", "arguments": json.dumps({"url": rag_url})}
+                messages=[{"role": msg["role"], "content": msg["content"]} for msg in conversation["messages"]]                            
             )
             assistant_message = response.choices[0].message
         else:
