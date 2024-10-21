@@ -68,9 +68,6 @@ class ChatData(BaseModel):
     conversations: List[Conversation]
 
 
-# Global variable to store the OpenAI compatible service process
-openai_compatible_service_process = None
-
 # Add this function to load the config
 def load_config():
     config_path = "config.json"
@@ -135,8 +132,8 @@ async def delete_config_item(key: str):
 
 @app.post("/openai-compatible-service/start")
 async def start_openai_compatible_service(host: str = "0.0.0.0", port: int = 8000):
-    global openai_compatible_service_process
-    if openai_compatible_service_process is not None:
+    config = load_config()
+    if 'openaiServerList' in config and config['openaiServerList']:
         return {"message": "OpenAI compatible service is already running"}
     
     command = f"byzerllm serve --ray_address auto --host {host} --port {port}"
@@ -149,21 +146,20 @@ async def start_openai_compatible_service(host: str = "0.0.0.0", port: int = 800
         stderr_log = open(os.path.join("logs", "openai_compatible_service.err"), "w")
         
         # Use subprocess.Popen to start the process in the background
-        openai_compatible_service_process = subprocess.Popen(command.split(), stdout=stdout_log, stderr=stderr_log)
-        logger.info(f"OpenAI compatible service started with PID: {openai_compatible_service_process.pid}")
+        process = subprocess.Popen(command.split(), stdout=stdout_log, stderr=stderr_log)
+        logger.info(f"OpenAI compatible service started with PID: {process.pid}")
         
         # Update config.json with the new server information
-        config = load_config()
         if 'openaiServerList' not in config:
             config['openaiServerList'] = []
         config['openaiServerList'].append({
             'host': host,
             'port': port,
-            'pid': openai_compatible_service_process.pid
+            'pid': process.pid
         })
         save_config(config)
         
-        return {"message": "OpenAI compatible service started successfully", "pid": openai_compatible_service_process.pid}
+        return {"message": "OpenAI compatible service started successfully", "pid": process.pid}
     except Exception as e:
         logger.error(f"Failed to start OpenAI compatible service: {str(e)}")
         traceback.print_exc()
@@ -171,24 +167,30 @@ async def start_openai_compatible_service(host: str = "0.0.0.0", port: int = 800
 
 @app.post("/openai-compatible-service/stop")
 async def stop_openai_compatible_service():
-    global openai_compatible_service_process
-    if openai_compatible_service_process is None:
+    config = load_config()
+    if 'openaiServerList' not in config or not config['openaiServerList']:
         return {"message": "OpenAI compatible service is not running"}
     
     try:
-        parent = psutil.Process(openai_compatible_service_process.pid)
-        for child in parent.children(recursive=True):
-            child.terminate()
-        parent.terminate()
-        openai_compatible_service_process = None
+        for server in config['openaiServerList']:
+            try:
+                process = psutil.Process(server['pid'])
+                for child in process.children(recursive=True):
+                    child.terminate()
+                process.terminate()
+            except psutil.NoSuchProcess:
+                logger.warning(f"Process with PID {server['pid']} not found")
+        
+        config['openaiServerList'] = []
+        save_config(config)
         return {"message": "OpenAI compatible service stopped successfully"}
     except Exception as e:
         return {"error": f"Failed to stop OpenAI compatible service: {str(e)}"}
 
 @app.get("/openai-compatible-service/status")
 async def get_openai_compatible_service_status():
-    global openai_compatible_service_process
-    is_running = openai_compatible_service_process is not None and openai_compatible_service_process.poll() is None
+    config = load_config()
+    is_running = 'openaiServerList' in config and len(config['openaiServerList']) > 0
     return {"isRunning": is_running}
 
 def save_config(config):
