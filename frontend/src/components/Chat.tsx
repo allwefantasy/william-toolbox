@@ -89,6 +89,7 @@ useEffect(() => {
 
       try {
         const response = await axios.post(`/chat/conversations/${currentConversationId}/messages`, {
+          conversation_id: currentConversationId,
           message: newUserMessage,
           list_type: listType,
           selected_item: selectedItem
