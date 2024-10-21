@@ -97,7 +97,7 @@ const Chat: React.FC = () => {
         />
         <div ref={messagesEndRef} />
         <div className="input-area">
-          <Space style={{ width: '100%' }} align="start">
+          <div style={{ display: 'flex', width: '100%', gap: '8px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <Select
                 style={{ width: 120 }}
@@ -134,9 +134,9 @@ const Chat: React.FC = () => {
                   handleSendMessage();
                 }
               }}
-              style={{ borderRadius: '8px', flexGrow: 1, minWidth: '300px' }}
+              style={{ borderRadius: '8px', flex: 1 }}
             />
-          </Space>
+          </div>
         </div>
         <div className="tool-bar">
           <div>
