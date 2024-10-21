@@ -24,7 +24,6 @@ import psutil
 from datetime import datetime
 import uuid
 import openai
-from openai.types import OpenAIError
 
 app = FastAPI()
 # Add CORS middleware with restricted origins
@@ -602,7 +601,7 @@ async def get_conversation(conversation_id: str):
     return conversation
 
 @app.post("/chat/conversations/{conversation_id}/messages", response_model=Message)
-async def add_message(conversation_id: str, message: Message, list_type: str, selected_item: str):
+async def add_message(conversation_id: str, message: Message, model_type: str, selected_model: str):
     chat_data = load_chat_data()
     conversation = next((conv for conv in chat_data["conversations"] if conv["id"] == conversation_id), None)
     if conversation is None:
@@ -613,19 +612,18 @@ async def add_message(conversation_id: str, message: Message, list_type: str, se
 
     # 根据 list_type 和 selected_item 选择合适的模型或 RAG
     try:
-        if list_type == "models":
+        if model_type == "models":
             # 使用选定的模型
-            openai.api_base = "http://localhost:8000/v1"
-            openai.api_key = "your-api-key"
+            client = openai.OpenAI(base_url="http://localhost:8000/v1")            
 
-            response = openai.ChatCompletion.create(
-                model=selected_item,
+            response = client.chat.completions.create(
+                model=selected_model,
                 messages=[{"role": msg["role"], "content": msg["content"]} for msg in conversation["messages"]]
             )
             assistant_message = response.choices[0].message
-        elif list_type == "rags":
+        elif model_type == "rags":
             # 使用选定的 RAG
-            rag_url = f"http://localhost:8000/rag/{selected_item}/chat"  # 假设 RAG 服务的地址
+            rag_url = f"http://localhost:8000/rag/{selected_model}/chat"  # 假设 RAG 服务的地址
             rag_response = await httpx.post(rag_url, json={
                 "messages": [{"role": msg["role"], "content": msg["content"]} for msg in conversation["messages"]]
             })
@@ -640,7 +638,7 @@ async def add_message(conversation_id: str, message: Message, list_type: str, se
             timestamp=datetime.now().isoformat()
         )
         conversation["messages"].append(assistant_response.dict())
-    except (OpenAIError, httpx.HTTPError) as e:
+    except Exception as e:
         logger.error(f"Error calling {list_type} service: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to get response from {list_type} service")
 

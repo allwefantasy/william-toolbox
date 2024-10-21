@@ -61,7 +61,12 @@ function App() {
       case '4':
         return <Chat />;
       default:
-        return <Text>请选择一个功能</Text>;
+        return (
+          <>
+            <CreateModel onModelAdded={refreshModelList} />
+            <ModelList refreshTrigger={refreshTrigger} />
+          </>
+        );
     }
   };
 
