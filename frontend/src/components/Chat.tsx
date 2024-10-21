@@ -71,8 +71,15 @@ const Chat: React.FC = () => {
     try {
       const response = await axios.get(`/chat/conversations/${conversationId}`);
       setMessages(response.data.messages);
-      // 获取对话列表
-      await fetchConversations();
+      setCurrentConversationTitle(response.data.title);
+      // 更新当前会话在会话列表中的信息
+      setConversations(prevConversations => 
+        prevConversations.map(conv => 
+          conv.id === conversationId 
+            ? { ...conv, title: response.data.title, messages: response.data.messages.length } 
+            : conv
+        )
+      );
     } catch (error) {
       console.error('Error fetching messages:', error);
       message.error('Failed to load messages');
@@ -232,9 +239,10 @@ useEffect(() => {
             <div 
               className={`conversation-item ${currentConversationId === conv.id ? 'active' : ''}`}
               onClick={() => {
-                setCurrentConversationId(conv.id);
-                setCurrentConversationTitle(conv.title);
-                fetchMessages(conv.id);
+                if (currentConversationId !== conv.id) {
+                  setCurrentConversationId(conv.id);
+                  fetchMessages(conv.id);
+                }
               }}
               onDoubleClick={() => handleTitleDoubleClick(conv)}
             >
