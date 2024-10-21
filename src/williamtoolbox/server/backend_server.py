@@ -97,9 +97,20 @@ async def start_openai_compatible_service(host: str = "0.0.0.0", port: int = 800
     
     command = f"byzerllm serve --ray_address auto --host {host} --port {port}"
     try:
-        openai_compatible_service_process = subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        return {"message": "OpenAI compatible service started successfully"}
+        # Create logs directory if it doesn't exist
+        os.makedirs("logs", exist_ok=True)
+        
+        # Open log files for stdout and stderr
+        stdout_log = open(os.path.join("logs", "openai_compatible_service.out"), "w")
+        stderr_log = open(os.path.join("logs", "openai_compatible_service.err"), "w")
+        
+        # Use subprocess.Popen to start the process in the background
+        openai_compatible_service_process = subprocess.Popen(command.split(), stdout=stdout_log, stderr=stderr_log)
+        logger.info(f"OpenAI compatible service started with PID: {openai_compatible_service_process.pid}")
+        return {"message": "OpenAI compatible service started successfully", "pid": openai_compatible_service_process.pid}
     except Exception as e:
+        logger.error(f"Failed to start OpenAI compatible service: {str(e)}")
+        traceback.print_exc()
         return {"error": f"Failed to start OpenAI compatible service: {str(e)}"}
 
 @app.post("/openai-compatible-service/stop")
