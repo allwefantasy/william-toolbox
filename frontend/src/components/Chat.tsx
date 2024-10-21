@@ -124,17 +124,69 @@ useEffect(() => {
       setMessages(prevMessages => [...prevMessages, tempMessage]);
 
       try {
-        const response = await axios.post(`/chat/conversations/${currentConversationId}/messages`, {
-          conversation_id: currentConversationId,
-          message: newUserMessage,
-          list_type: listType,
-          selected_item: selectedItem
+        const response = await fetch(`/chat/conversations/${currentConversationId}/messages`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            conversation_id: currentConversationId,
+            message: newUserMessage,
+            list_type: listType,
+            selected_item: selectedItem
+          }),
         });
 
-        if (response.data && response.data.role === 'assistant') {
-          // Remove the temporary message and add the real response
-          setMessages(prevMessages => prevMessages.filter(msg => msg !== tempMessage).concat(response.data));
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
         }
+
+        const reader = response.body?.getReader();
+        if (!reader) {
+          throw new Error('No reader available');
+        }
+
+        let assistantMessage = { role: 'assistant' as const, content: '', timestamp: new Date().toISOString() };
+        
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          const chunk = new TextDecoder().decode(value);
+          const lines = chunk.split('\n\n');
+          
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(5);
+              if (data === '[DONE]') {
+                // Stream finished
+                break;
+              }
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.content) {
+                  assistantMessage.content += parsed.content;
+                  // Update the message in real-time
+                  setMessages(prevMessages => {
+                    const newMessages = [...prevMessages];
+                    const lastMessage = newMessages[newMessages.length - 1];
+                    if (lastMessage.role === 'assistant') {
+                      lastMessage.content = assistantMessage.content;
+                    } else {
+                      newMessages.push(assistantMessage);
+                    }
+                    return newMessages;
+                  });
+                }
+              } catch (e) {
+                console.error('Error parsing JSON:', e);
+              }
+            }
+          }
+        }
+
+        // Remove the temporary message
+        setMessages(prevMessages => prevMessages.filter(msg => msg !== tempMessage));
       } catch (error) {
         console.error('Error sending message:', error);
         message.error('Failed to send message');
