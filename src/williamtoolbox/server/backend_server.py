@@ -587,7 +587,7 @@ async def get_conversation(conversation_id: str):
     return conversation
 
 @app.post("/chat/conversations/{conversation_id}/messages", response_model=Message)
-async def add_message(conversation_id: str, message: Message):
+async def add_message(conversation_id: str, message: Message, list_type: str, selected_item: str):
     chat_data = load_chat_data()
     conversation = next((conv for conv in chat_data["conversations"] if conv["id"] == conversation_id), None)
     if conversation is None:
@@ -596,25 +596,38 @@ async def add_message(conversation_id: str, message: Message):
     message.timestamp = datetime.now().isoformat()
     conversation["messages"].append(message.dict())
 
-    # 使用 OpenAI SDK 访问后端模型服务
+    # 根据 list_type 和 selected_item 选择合适的模型或 RAG
     try:
-        openai.api_base = "http://localhost:8000/v1"  # 假设OpenAI兼容服务运行在本地8000端口
-        openai.api_key = "your-api-key"  # 设置适当的API密钥
+        if list_type == "models":
+            # 使用选定的模型
+            openai.api_base = "http://localhost:8000/v1"
+            openai.api_key = "your-api-key"
 
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # 或者您使用的其他模型名称
-            messages=[{"role": msg["role"], "content": msg["content"]} for msg in conversation["messages"]]
-        )
-        assistant_message = response.choices[0].message
+            response = openai.ChatCompletion.create(
+                model=selected_item,
+                messages=[{"role": msg["role"], "content": msg["content"]} for msg in conversation["messages"]]
+            )
+            assistant_message = response.choices[0].message
+        elif list_type == "rags":
+            # 使用选定的 RAG
+            rag_url = f"http://localhost:8000/rag/{selected_item}/chat"  # 假设 RAG 服务的地址
+            rag_response = await httpx.post(rag_url, json={
+                "messages": [{"role": msg["role"], "content": msg["content"]} for msg in conversation["messages"]]
+            })
+            rag_response.raise_for_status()
+            assistant_message = rag_response.json()["message"]
+        else:
+            raise ValueError("Invalid list_type")
+
         assistant_response = Message(
             role="assistant",
-            content=assistant_message.content,
+            content=assistant_message["content"],
             timestamp=datetime.now().isoformat()
         )
         conversation["messages"].append(assistant_response.dict())
-    except OpenAIError as e:
-        logger.error(f"Error calling OpenAI service: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to get response from OpenAI service")
+    except (OpenAIError, httpx.HTTPError) as e:
+        logger.error(f"Error calling {list_type} service: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get response from {list_type} service")
 
     conversation["updated_at"] = datetime.now().isoformat()
     save_chat_data(chat_data)
