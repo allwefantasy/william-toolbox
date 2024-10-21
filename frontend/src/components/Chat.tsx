@@ -70,11 +70,26 @@ useEffect(() => {
   fetchItemList();
 }, []);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (inputMessage.trim()) {
-      setMessages([...messages, { role: 'user', content: inputMessage }]);
+      const newUserMessage = { role: 'user' as const, content: inputMessage };
+      setMessages([...messages, newUserMessage]);
       setInputMessage('');
-      // TODO: Add logic to send message to backend and receive response
+
+      try {
+        const response = await axios.post(`/chat/conversations/${currentConversationId}/messages`, {
+          message: newUserMessage,
+          list_type: listType,
+          selected_item: selectedItem
+        });
+
+        if (response.data && response.data.role === 'assistant') {
+          setMessages(prevMessages => [...prevMessages, response.data]);
+        }
+      } catch (error) {
+        console.error('Error sending message:', error);
+        message.error('Failed to send message');
+      }
     }
   };
 

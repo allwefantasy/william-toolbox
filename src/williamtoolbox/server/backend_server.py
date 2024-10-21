@@ -601,7 +601,7 @@ async def get_conversation(conversation_id: str):
     return conversation
 
 @app.post("/chat/conversations/{conversation_id}/messages", response_model=Message)
-async def add_message(conversation_id: str, message: Message, model_type: str, selected_model: str):
+async def add_message(conversation_id: str, message: Message, list_type: str, selected_item: str):
     chat_data = load_chat_data()
     conversation = next((conv for conv in chat_data["conversations"] if conv["id"] == conversation_id), None)
     if conversation is None:
@@ -612,21 +612,28 @@ async def add_message(conversation_id: str, message: Message, model_type: str, s
 
     # 根据 list_type 和 selected_item 选择合适的模型或 RAG
     try:
-        if model_type == "models":
-            # 使用选定的模型
-            client = openai.OpenAI(base_url="http://localhost:8000/v1")            
-
-            response = client.chat.completions.create(
-                model=selected_model,
+        if list_type == "models":
+            # 从 config.json 获取 OpenAI 服务器信息
+            config = load_config()
+            openai_server = config.get('openaiServerList', [{}])[0]
+            base_url = f"http://{openai_server.get('host', 'localhost')}:{openai_server.get('port', 8000)}/v1"
+            
+            client = AsyncOpenAI(base_url=base_url)
+            response = await client.chat.completions.create(
+                model=selected_item,
                 messages=[{"role": msg["role"], "content": msg["content"]} for msg in conversation["messages"]]
             )
             assistant_message = response.choices[0].message
-        elif model_type == "rags":
-            # 使用选定的 RAG
-            rag_url = f"http://localhost:8000/rag/{selected_model}/chat"  # 假设 RAG 服务的地址
-            rag_response = await httpx.post(rag_url, json={
-                "messages": [{"role": msg["role"], "content": msg["content"]} for msg in conversation["messages"]]
-            })
+        elif list_type == "rags":
+            # 从 rags.json 获取 RAG 服务器信息
+            rags = load_rags_from_json()
+            rag_info = rags.get(selected_item, {})
+            rag_url = f"http://{rag_info.get('host', 'localhost')}:{rag_info.get('port', 8000)}/rag/{selected_item}/chat"
+            
+            async with httpx.AsyncClient() as client:
+                rag_response = await client.post(rag_url, json={
+                    "messages": [{"role": msg["role"], "content": msg["content"]} for msg in conversation["messages"]]
+                })
             rag_response.raise_for_status()
             assistant_message = rag_response.json()["message"]
         else:
@@ -634,7 +641,7 @@ async def add_message(conversation_id: str, message: Message, model_type: str, s
 
         assistant_response = Message(
             role="assistant",
-            content=assistant_message["content"],
+            content=assistant_message.content if hasattr(assistant_message, 'content') else assistant_message["content"],
             timestamp=datetime.now().isoformat()
         )
         conversation["messages"].append(assistant_response.dict())
