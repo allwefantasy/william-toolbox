@@ -28,23 +28,53 @@ const Chat: React.FC = () => {
   const [currentConversationTitle, setCurrentConversationTitle] = useState<string>('');
   const [conversations, setConversations] = useState<Conversation[]>([]);
 
-const [listType, setListType] = useState<'models' | 'rags'>('models');
-const [selectedItem, setSelectedItem] = useState<string>('');
-const [itemList, setItemList] = useState<string[]>([]);
+  const [listType, setListType] = useState<'models' | 'rags'>('models');
+  const [selectedItem, setSelectedItem] = useState<string>('');
+  const [itemList, setItemList] = useState<string[]>([]);
 
-const messagesEndRef = useRef<null | HTMLDivElement>(null);
+  const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
-const scrollToBottom = () => {
-  messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-};
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
-useEffect(scrollToBottom, [messages]);
+  useEffect(scrollToBottom, [messages]);
 
-useEffect(() => {
-  fetchItemList();
-}, [listType]);
+  useEffect(() => {
+    fetchItemList();
+    fetchConversations();
+  }, []);
 
-const fetchItemList = async () => {
+  useEffect(() => {
+    fetchItemList();
+  }, [listType]);
+
+  const fetchConversations = async () => {
+    try {
+      const response = await axios.get('/chat/conversations');
+      setConversations(response.data);
+      if (response.data.length > 0) {
+        setCurrentConversationId(response.data[0].id);
+        setCurrentConversationTitle(response.data[0].title);
+        fetchMessages(response.data[0].id);
+      }
+    } catch (error) {
+      console.error('Error fetching conversations:', error);
+      message.error('Failed to load conversations');
+    }
+  };
+
+  const fetchMessages = async (conversationId: string) => {
+    try {
+      const response = await axios.get(`/chat/conversations/${conversationId}`);
+      setMessages(response.data.messages);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      message.error('Failed to load messages');
+    }
+  };
+
+  const fetchItemList = async () => {
   try {
     let response;
     if (listType === 'models') {
