@@ -154,6 +154,8 @@ async def start_openai_compatible_service(host: str = "0.0.0.0", port: int = 800
         
         # Update config.json with the new server information
         config = load_config()
+        if 'openaiServerList' not in config:
+            config['openaiServerList'] = []
         config['openaiServerList'].append({
             'host': host,
             'port': port,
