@@ -27,36 +27,48 @@ const Chat: React.FC = () => {
     { title: '新的聊天', time: '9/30/2024, 9:14:56 PM', messages: 2 },
   ]);
 
-  const [listType, setListType] = useState<'models' | 'rags'>('models');
-  const [selectedItem, setSelectedItem] = useState<string>('');
-  const [itemList, setItemList] = useState<string[]>([]);
+const [listType, setListType] = useState<'models' | 'rags'>('models');
+const [selectedItem, setSelectedItem] = useState<string>('');
+const [itemList, setItemList] = useState<string[]>([]);
 
-  const messagesEndRef = useRef<null | HTMLDivElement>(null);
+const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+const scrollToBottom = () => {
+  messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+};
 
-  useEffect(scrollToBottom, [messages]);
+useEffect(scrollToBottom, [messages]);
 
-  useEffect(() => {
-    fetchItemList();
-  }, [listType]);
+useEffect(() => {
+  fetchItemList();
+}, [listType]);
 
-  const fetchItemList = async () => {
-    try {
-      let response;
-      if (listType === 'models') {
-        response = await axios.get('/models');
-        setItemList(response.data.filter((model: any) => model.status === 'running').map((model: any) => model.name));
-      } else {
-        response = await axios.get('/rags');
-        setItemList(response.data.filter((rag: any) => rag.status === 'running').map((rag: any) => rag.name));
+const fetchItemList = async () => {
+  try {
+    let response;
+    if (listType === 'models') {
+      response = await axios.get('/models');
+      const runningModels = response.data.filter((model: any) => model.status === 'running').map((model: any) => model.name);
+      setItemList(runningModels);
+      if (runningModels.length > 0 && !selectedItem) {
+        setSelectedItem(runningModels[0]);
       }
-    } catch (error) {
-      console.error('Error fetching item list:', error);
+    } else {
+      response = await axios.get('/rags');
+      const runningRags = response.data.filter((rag: any) => rag.status === 'running').map((rag: any) => rag.name);
+      setItemList(runningRags);
+      if (runningRags.length > 0 && !selectedItem) {
+        setSelectedItem(runningRags[0]);
+      }
     }
-  };
+  } catch (error) {
+    console.error('Error fetching item list:', error);
+  }
+};
+
+useEffect(() => {
+  fetchItemList();
+}, []);
 
   const handleSendMessage = () => {
     if (inputMessage.trim()) {
