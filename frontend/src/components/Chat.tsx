@@ -4,6 +4,9 @@ import { SendOutlined, PlusCircleOutlined, GithubOutlined, SettingOutlined, Edit
 import axios from 'axios';
 import './Chat.css';
 import { message } from 'antd';
+import ReactMarkdown from 'react-markdown';
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { coy } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -52,15 +55,20 @@ const Chat: React.FC = () => {
     fetchItemList();
   }, [listType]);
 
+  useEffect(() => {
+    if (currentConversationId) {
+      fetchMessages(currentConversationId);
+    }
+  }, [currentConversationId]);
+
   const fetchConversations = async () => {
     try {
       const response = await axios.get('/chat/conversations');
       setConversations(response.data);
-    if (response.data.length > 0) {
-      setCurrentConversationId(response.data[0].id);
-      setCurrentConversationTitle(response.data[0].title);
-      await fetchMessages(response.data[0].id);
-    }
+      if (response.data.length > 0) {
+        setCurrentConversationId(response.data[0].id);
+        setCurrentConversationTitle(response.data[0].title);        
+      }
     } catch (error) {
       console.error('Error fetching conversations:', error);
       message.error('Failed to load conversations');
@@ -71,15 +79,6 @@ const Chat: React.FC = () => {
     try {
       const response = await axios.get(`/chat/conversations/${conversationId}`);
       setMessages(response.data.messages);
-      setCurrentConversationTitle(response.data.title);
-      // 更新当前会话在会话列表中的信息
-      setConversations(prevConversations => 
-        prevConversations.map(conv => 
-          conv.id === conversationId 
-            ? { ...conv, title: response.data.title, messages: response.data.messages.length } 
-            : conv
-        )
-      );
     } catch (error) {
       console.error('Error fetching messages:', error);
       message.error('Failed to load messages');
@@ -204,6 +203,12 @@ useEffect(() => {
     </Menu>
   );
 
+  const CodeBlock = ({ language, value }: { language: string, value: string }) => (
+    <SyntaxHighlighter language={language} style={coy}>
+      {value}
+    </SyntaxHighlighter>
+  );
+
   return (
     <div className="chat-container">
       <div className="sidebar">
@@ -239,10 +244,8 @@ useEffect(() => {
             <div 
               className={`conversation-item ${currentConversationId === conv.id ? 'active' : ''}`}
               onClick={() => {
-                if (currentConversationId !== conv.id) {
-                  setCurrentConversationId(conv.id);
-                  fetchMessages(conv.id);
-                }
+                setCurrentConversationId(conv.id);
+                setCurrentConversationTitle(conv.title);                
               }}
               onDoubleClick={() => handleTitleDoubleClick(conv)}
             >
@@ -287,7 +290,26 @@ useEffect(() => {
               <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} />
             ) : (
               <Typography.Text style={{ color: item.role === 'user' ? '#096dd9' : '#389e0d' }}>
-                {item.content}
+                <ReactMarkdown
+                  components={{
+                    code({ inline, className, children, ...props }: any) {
+                      const match = /language-(\w+)/.exec(className || '');
+                      return !inline && match ? (
+                        <CodeBlock
+                          language={match[1]}
+                          value={String(children).replace(/\n$/, '')}
+                          {...props}
+                        />
+                      ) : (
+                        <code className={className} {...props}>
+                          {children}
+                        </code>
+                      );
+                    },
+                  }}
+                >
+                  {item.content}
+                </ReactMarkdown>
               </Typography.Text>
             )
           }

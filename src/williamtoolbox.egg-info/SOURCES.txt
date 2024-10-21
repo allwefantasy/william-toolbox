@@ -19,10 +19,10 @@ src/williamtoolbox/web/logo192.png
 src/williamtoolbox/web/logo512.png
 src/williamtoolbox/web/manifest.json
 src/williamtoolbox/web/robots.txt
-src/williamtoolbox/web/static/css/main.5e7bc9c7.css
-src/williamtoolbox/web/static/css/main.5e7bc9c7.css.map
-src/williamtoolbox/web/static/js/453.8ab44547.chunk.js
-src/williamtoolbox/web/static/js/453.8ab44547.chunk.js.map
-src/williamtoolbox/web/static/js/main.c9acd6e9.js
-src/williamtoolbox/web/static/js/main.c9acd6e9.js.LICENSE.txt
-src/williamtoolbox/web/static/js/main.c9acd6e9.js.map
+src/williamtoolbox/web/static/css/main.3cccd2d5.css
+src/williamtoolbox/web/static/css/main.3cccd2d5.css.map
+src/williamtoolbox/web/static/js/453.d855a71b.chunk.js
+src/williamtoolbox/web/static/js/453.d855a71b.chunk.js.map
+src/williamtoolbox/web/static/js/main.07ced4ce.js
+src/williamtoolbox/web/static/js/main.07ced4ce.js.LICENSE.txt
+src/williamtoolbox/web/static/js/main.07ced4ce.js.map
