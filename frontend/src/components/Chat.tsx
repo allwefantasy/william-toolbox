@@ -97,43 +97,45 @@ const Chat: React.FC = () => {
         />
         <div ref={messagesEndRef} />
         <div className="input-area">
-          <Space style={{ width: '100%' }}>
+          <Space style={{ width: '100%' }} align="start">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <Select
+                style={{ width: 120 }}
+                value={listType}
+                onChange={(value: 'models' | 'rags') => {
+                  setListType(value);
+                  setSelectedItem('');
+                }}
+              >
+                <Option value="models">模型列表</Option>
+                <Option value="rags">RAG列表</Option>
+              </Select>
+              <Select
+                style={{ width: 120 }}
+                value={selectedItem}
+                onChange={(value: string) => setSelectedItem(value)}
+              >
+                {itemList.map((item) => (
+                  <Option key={item} value={item}>{item}</Option>
+                ))}
+              </Select>
+              <Button type="primary" icon={<SendOutlined />} onClick={handleSendMessage}>
+                发送
+              </Button>
+            </div>
             <TextArea
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               placeholder="有什么可以帮你的吗"
-              autoSize={{ minRows: 1, maxRows: 4 }}
+              autoSize={{ minRows: 3, maxRows: 6 }}
               onPressEnter={(e) => {
                 if (!e.shiftKey) {
                   e.preventDefault();
                   handleSendMessage();
                 }
               }}
-              style={{ borderRadius: '8px', flexGrow: 1 }}
+              style={{ borderRadius: '8px', flexGrow: 1, minWidth: '300px' }}
             />
-            <Select
-              style={{ width: 120 }}
-              value={listType}
-              onChange={(value: 'models' | 'rags') => {
-                setListType(value);
-                setSelectedItem('');
-              }}
-            >
-              <Option value="models">模型列表</Option>
-              <Option value="rags">RAG列表</Option>
-            </Select>
-            <Select
-              style={{ width: 120 }}
-              value={selectedItem}
-              onChange={(value: string) => setSelectedItem(value)}
-            >
-              {itemList.map((item) => (
-                <Option key={item} value={item}>{item}</Option>
-              ))}
-            </Select>
-            <Button type="primary" icon={<SendOutlined />} onClick={handleSendMessage}>
-              发送
-            </Button>
           </Space>
         </div>
         <div className="tool-bar">
