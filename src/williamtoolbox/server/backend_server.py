@@ -669,6 +669,21 @@ async def get_conversations():
     chat_data = load_chat_data()
     return chat_data["conversations"]
 
+@app.get("/chat/conversations/list")
+async def get_conversation_list():
+    chat_data = load_chat_data()
+    conversation_list = [
+        {
+            "id": conv["id"],
+            "title": conv["title"],
+            "created_at": conv["created_at"],
+            "updated_at": conv["updated_at"],
+            "message_count": len(conv["messages"])
+        }
+        for conv in chat_data["conversations"]
+    ]
+    return {"conversations": conversation_list}
+
 
 class CreateConversationRequest(BaseModel):
     title: str
