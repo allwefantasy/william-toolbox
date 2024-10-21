@@ -104,18 +104,20 @@ useEffect(() => {
           style={{ marginBottom: 20, width: '100%' }}
           onClick={async () => {
             try {
-              const formData = new FormData();
-              formData.append("title", "新的聊天");
-              const response = await axios.post("/chat/conversations", formData);
+              const response = await axios.post("/chat/conversations", {
+                title: "新的聊天"
+              });
               const newConversation: Conversation = {
-                id: response.data.id || String(Date.now()),
-                title: '新的聊天',
-                time: new Date().toLocaleString(),
-                messages: 0
+                id: response.data.id,
+                title: response.data.title,
+                created_at: response.data.created_at,
+                updated_at: response.data.updated_at,
+                messages: response.data.messages.length
               };
               setConversations([newConversation, ...conversations]);
               setCurrentConversationId(newConversation.id);
-              setMessages([]);
+              setCurrentConversationTitle(newConversation.title);
+              setMessages(response.data.messages);
             } catch (error) {
               console.error('Error creating new conversation:', error);
               message.error('创建新对话失败');
