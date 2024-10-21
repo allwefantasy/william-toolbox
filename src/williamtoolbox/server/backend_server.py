@@ -24,6 +24,7 @@ import psutil
 from datetime import datetime
 import uuid
 from openai import AsyncOpenAI
+import json
 
 app = FastAPI()
 # Add CORS middleware with restricted origins
@@ -612,36 +613,46 @@ async def add_message(conversation_id: str, message: Message, list_type: str, se
 
     # 根据 list_type 和 selected_item 选择合适的模型或 RAG
     try:
+        config = load_config()
+        openai_server = config.get('openaiServerList', [{}])[0]
+        base_url = f"http://{openai_server.get('host', 'localhost')}:{openai_server.get('port', 8000)}/v1"
+        
+        client = AsyncOpenAI(base_url=base_url, api_key="xxxx")
+        
         if list_type == "models":
-            # 从 config.json 获取 OpenAI 服务器信息
-            config = load_config()
-            openai_server = config.get('openaiServerList', [{}])[0]
-            base_url = f"http://{openai_server.get('host', 'localhost')}:{openai_server.get('port', 8000)}/v1"
-            
-            client = AsyncOpenAI(base_url=base_url,api_key="xxxx")
             response = await client.chat.completions.create(
                 model=selected_item,
                 messages=[{"role": msg["role"], "content": msg["content"]} for msg in conversation["messages"]]
             )
             assistant_message = response.choices[0].message
         elif list_type == "rags":
-            # 从 rags.json 获取 RAG 服务器信息
             rags = load_rags_from_json()
             rag_info = rags.get(selected_item, {})
-            rag_url = f"http://{rag_info.get('host', 'localhost')}:{rag_info.get('port', 8000)}/rag/{selected_item}/chat"
+            rag_url = f"/rag/{selected_item}/chat"
             
-            async with httpx.AsyncClient() as client:
-                rag_response = await client.post(rag_url, json={
-                    "messages": [{"role": msg["role"], "content": msg["content"]} for msg in conversation["messages"]]
-                })
-            rag_response.raise_for_status()
-            assistant_message = rag_response.json()["message"]
+            response = await client.chat.completions.create(
+                model=rag_info.get('model', 'gpt-3.5-turbo'),  # Use a default model if not specified
+                messages=[{"role": msg["role"], "content": msg["content"]} for msg in conversation["messages"]],
+                functions=[{
+                    "name": "rag_query",
+                    "description": "Query the RAG system",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "url": {"type": "string", "description": "The RAG endpoint URL"},
+                        },
+                        "required": ["url"]
+                    }
+                }],
+                function_call={"name": "rag_query", "arguments": json.dumps({"url": rag_url})}
+            )
+            assistant_message = response.choices[0].message
         else:
             raise ValueError("Invalid list_type")
 
         assistant_response = Message(
             role="assistant",
-            content=assistant_message.content if hasattr(assistant_message, 'content') else assistant_message["content"],
+            content=assistant_message.content,
             timestamp=datetime.now().isoformat()
         )
         conversation["messages"].append(assistant_response.dict())
