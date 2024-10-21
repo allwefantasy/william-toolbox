@@ -593,6 +593,30 @@ async def add_message(conversation_id: str, message: Message):
     
     message.timestamp = datetime.now().isoformat()
     conversation["messages"].append(message.dict())
+
+    # 使用 OpenAI 兼容接口访问后端模型服务
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "http://localhost:8000/v1/chat/completions",  # 假设OpenAI兼容服务运行在本地8000端口
+                json={
+                    "model": "gpt-3.5-turbo",  # 或者您使用的其他模型名称
+                    "messages": [{"role": msg["role"], "content": msg["content"]} for msg in conversation["messages"]]
+                },
+                timeout=60.0  # 设置适当的超时时间
+            )
+            response.raise_for_status()
+            assistant_message = response.json()["choices"][0]["message"]
+            assistant_response = Message(
+                role="assistant",
+                content=assistant_message["content"],
+                timestamp=datetime.now().isoformat()
+            )
+            conversation["messages"].append(assistant_response.dict())
+    except Exception as e:
+        logger.error(f"Error calling model service: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get response from model service")
+
     conversation["updated_at"] = datetime.now().isoformat()
     save_chat_data(chat_data)
     return message
