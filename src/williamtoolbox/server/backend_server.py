@@ -56,9 +56,24 @@ async def update_config_item(key: str, item: dict):
     config = load_config()
     if key not in config:
         raise HTTPException(status_code=404, detail="Configuration item not found")
-    config[key] = item[key]
+    
+    updated_items = item.get(key, [])
+    if not isinstance(updated_items, list):
+        raise HTTPException(status_code=400, detail="Invalid data format")
+    
+    # Update existing items and add new ones
+    existing_values = {i['value'] for i in config[key]}
+    for updated_item in updated_items:
+        if updated_item['value'] in existing_values:
+            for i, existing_item in enumerate(config[key]):
+                if existing_item['value'] == updated_item['value']:
+                    config[key][i] = updated_item
+                    break
+        else:
+            config[key].append(updated_item)
+    
     save_config(config)
-    return {"message": "Configuration item updated successfully"}
+    return {"message": "Configuration items updated successfully"}
 
 @app.delete("/config/{key}")
 async def delete_config_item(key: str):
