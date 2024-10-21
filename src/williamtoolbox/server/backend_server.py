@@ -38,6 +38,46 @@ async def get_config():
     config = load_config()
     return config
 
+@app.post("/config")
+async def add_config_item(item: dict):
+    """Add a new configuration item."""
+    config = load_config()
+    for key, value in item.items():
+        if key in config:
+            if isinstance(config[key], list):
+                config[key].append(value)
+            else:
+                config[key] = [config[key], value]
+        else:
+            config[key] = value
+    save_config(config)
+    return {"message": "Configuration item added successfully"}
+
+@app.put("/config/{key}")
+async def update_config_item(key: str, item: dict):
+    """Update an existing configuration item."""
+    config = load_config()
+    if key not in config:
+        raise HTTPException(status_code=404, detail="Configuration item not found")
+    config[key] = item[key]
+    save_config(config)
+    return {"message": "Configuration item updated successfully"}
+
+@app.delete("/config/{key}")
+async def delete_config_item(key: str):
+    """Delete a configuration item."""
+    config = load_config()
+    if key not in config:
+        raise HTTPException(status_code=404, detail="Configuration item not found")
+    del config[key]
+    save_config(config)
+    return {"message": "Configuration item deleted successfully"}
+
+def save_config(config):
+    """Save the configuration to file."""
+    with open("config.json", 'w') as f:
+        json.dump(config, f, indent=2)
+
 class AddModelRequest(BaseModel):
     name: str
     pretrained_model_type: str
