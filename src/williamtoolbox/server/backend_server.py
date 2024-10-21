@@ -796,6 +796,17 @@ async def delete_conversation(conversation_id: str):
     save_chat_data(chat_data)
     return {"message": "Conversation deleted successfully"}
 
+@app.put("/chat/conversations/{conversation_id}")
+async def update_conversation_title(conversation_id: str, request: dict):
+    chat_data = load_chat_data()
+    for conv in chat_data["conversations"]:
+        if conv["id"] == conversation_id:
+            conv["title"] = request.get("title")
+            conv["updated_at"] = datetime.now().isoformat()
+            save_chat_data(chat_data)
+            return {"message": "Conversation title updated successfully"}
+    raise HTTPException(status_code=404, detail="Conversation not found")
+
 
 def main():
     parser = argparse.ArgumentParser(description="Backend Server")
