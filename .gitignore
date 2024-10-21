@@ -6,6 +6,7 @@ web/
 logs/
 rags.json
 models.json
+config.json
 deploy.sh
 dist/
 build/
