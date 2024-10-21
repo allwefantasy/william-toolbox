@@ -13,20 +13,27 @@ interface Message {
   content: string;
 }
 
+interface Conversation {
+  id: string;
+  title: string;
+  time: string;
+  messages: number;
+}
+
 const Chat: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
-  const [conversations, setConversations] = useState([
-    { title: 'Ray设置temp_dir', time: '10/21/2024, 4:12:50 PM', messages: 2 },
-    { title: '新的聊天', time: '10/17/2024, 9:41:31 PM', messages: 4 },
-    { title: '银行贷款健康', time: '10/9/2024, 8:11:39 PM', messages: 2 },
-    { title: '银行健康', time: '10/17/2024, 11:34:38 AM', messages: 4 },
-    { title: '阿里巴巴营收中位数', time: '10/5/2024, 10:13:36 AM', messages: 2 },
-    { title: '公司营收比较', time: '10/5/2024, 9:55:37 AM', messages: 4 },
-    { title: '公司营收比较', time: '10/5/2024, 9:31:47 AM', messages: 2 },
-    { title: '阿里巴巴营收增长', time: '10/5/2024, 9:55:59 AM', messages: 6 },
-    { title: '新的聊天', time: '9/30/2024, 9:14:56 PM', messages: 2 },
+  const [conversations, setConversations] = useState<Conversation[]>([
+    { id: '1', title: 'Ray设置temp_dir', time: '10/21/2024, 4:12:50 PM', messages: 2 },
+    { id: '2', title: '新的聊天', time: '10/17/2024, 9:41:31 PM', messages: 4 },
+    { id: '3', title: '银行贷款健康', time: '10/9/2024, 8:11:39 PM', messages: 2 },
+    { id: '4', title: '银行健康', time: '10/17/2024, 11:34:38 AM', messages: 4 },
+    { id: '5', title: '阿里巴巴营收中位数', time: '10/5/2024, 10:13:36 AM', messages: 2 },
+    { id: '6', title: '公司营收比较', time: '10/5/2024, 9:55:37 AM', messages: 4 },
+    { id: '7', title: '公司营收比较', time: '10/5/2024, 9:31:47 AM', messages: 2 },
+    { id: '8', title: '阿里巴巴营收增长', time: '10/5/2024, 9:55:59 AM', messages: 6 },
+    { id: '9', title: '新的聊天', time: '9/30/2024, 9:14:56 PM', messages: 2 },
   ]);
 
 const [listType, setListType] = useState<'models' | 'rags'>('models');
@@ -105,7 +112,12 @@ useEffect(() => {
           onClick={async () => {
             try {
               const response = await axios.post('/chat/conversations', { title: '新的聊天' });
-              const newConversation = response.data;
+              const newConversation: Conversation = {
+                id: response.data.id || String(Date.now()),
+                title: '新的聊天',
+                time: new Date().toLocaleString(),
+                messages: 0
+              };
               setConversations([newConversation, ...conversations]);
               setCurrentConversationId(newConversation.id);
               setMessages([]);
