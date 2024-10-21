@@ -264,13 +264,25 @@ useEffect(() => {
           className="message-list"
           dataSource={messages}
           renderItem={(item: Message) => (
-            <List.Item>
-              <List.Item.Meta
-                avatar={<Avatar icon={item.role === 'user' ? <EditOutlined /> : <RobotOutlined />} />}
-                title={item.role === 'user' ? 'You' : 'Assistant'}
-                description={item.content === 'Assistant is typing...' ? <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} /> : item.content}
-              />
-            </List.Item>
+      <List.Item>
+        <List.Item.Meta
+          avatar={<Avatar icon={item.role === 'user' ? <EditOutlined /> : <RobotOutlined />} />}
+          title={
+            <Typography.Text strong style={{ color: item.role === 'user' ? '#1890ff' : '#52c41a' }}>
+              {item.role === 'user' ? 'You' : 'Assistant'}
+            </Typography.Text>
+          }
+          description={
+            item.content === 'Assistant is typing...' ? (
+              <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} />
+            ) : (
+              <Typography.Text style={{ color: item.role === 'user' ? '#096dd9' : '#389e0d' }}>
+                {item.content}
+              </Typography.Text>
+            )
+          }
+        />
+      </List.Item>
           )}
         />
         <div ref={messagesEndRef} />
