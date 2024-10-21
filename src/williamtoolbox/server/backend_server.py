@@ -23,7 +23,7 @@ import traceback
 import psutil
 from datetime import datetime
 import uuid
-import openai
+from openai import AsyncOpenAI
 
 app = FastAPI()
 # Add CORS middleware with restricted origins
@@ -618,7 +618,7 @@ async def add_message(conversation_id: str, message: Message, list_type: str, se
             openai_server = config.get('openaiServerList', [{}])[0]
             base_url = f"http://{openai_server.get('host', 'localhost')}:{openai_server.get('port', 8000)}/v1"
             
-            client = AsyncOpenAI(base_url=base_url)
+            client = AsyncOpenAI(base_url=base_url,api_key="xxxx")
             response = await client.chat.completions.create(
                 model=selected_item,
                 messages=[{"role": msg["role"], "content": msg["content"]} for msg in conversation["messages"]]
