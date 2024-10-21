@@ -8,6 +8,7 @@ import CreateRAG from './components/CreateRAG';
 import ConfigList from './components/ConfigList';
 import ConfigAdd from './components/ConfigAdd';
 import ConfigEdit from './components/ConfigEdit';
+import OpenAICompatibleService from './components/OpenAICompatibleService';
 import './App.css';
 
 const { Header, Sider, Content } = Layout;
