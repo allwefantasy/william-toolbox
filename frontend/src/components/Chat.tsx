@@ -103,15 +103,14 @@ useEffect(() => {
           icon={<PlusCircleOutlined />} 
           style={{ marginBottom: 20, width: '100%' }}
           onClick={async () => {
-            try {
+            try {              
               const response = await axios.post("/chat/conversations", {
                 title: "新的聊天"
               });
               const newConversation: Conversation = {
                 id: response.data.id,
                 title: response.data.title,
-                created_at: response.data.created_at,
-                updated_at: response.data.updated_at,
+                time: response.data.created_at,                
                 messages: response.data.messages.length
               };
               setConversations([newConversation, ...conversations]);

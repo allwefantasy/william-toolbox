@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Form
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -670,12 +670,15 @@ async def get_conversations():
     return chat_data["conversations"]
 
 
+class CreateConversationRequest(BaseModel):
+    title: str
+
 @app.post("/chat/conversations", response_model=Conversation)
-async def create_conversation(title: Conversation):
+async def create_conversation(request: CreateConversationRequest):
     chat_data = load_chat_data()
     new_conversation = Conversation(
         id=str(uuid.uuid4()),
-        title=title,
+        title=request.title,
         created_at=datetime.now().isoformat(),
         updated_at=datetime.now().isoformat(),
         messages=[],
