@@ -23,6 +23,21 @@ import traceback
 
 app = FastAPI()
 
+# Add this function to load the config
+def load_config():
+    config_path = "config.json"
+    if os.path.exists(config_path):
+        with open(config_path, 'r') as f:
+            return json.load(f)
+    return {}
+
+# Add this new endpoint
+@app.get("/config")
+async def get_config():
+    """Get the configuration information."""
+    config = load_config()
+    return config
+
 class AddModelRequest(BaseModel):
     name: str
     pretrained_model_type: str

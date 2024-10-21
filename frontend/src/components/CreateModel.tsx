@@ -1,22 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Button, Modal, Form, Input, InputNumber, Select, message, AutoComplete, Tooltip } from 'antd';
 import { PlusOutlined, MinusCircleOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
-
-const saasBaseUrls = [
-  { value: 'https://api.siliconflow.cn/v1', label: '硅基流动' },
-  { value: 'https://api.deepseek.com/beta', label: 'DeepSeek' },
-  { value: 'https://dashscope.aliyuncs.com/compatible-mode/v1', label: '通义千问' },
-];
-
-const pretrainedModelTypes = [
-  { value: 'saas/openai', label: 'OpenAI 兼容模型' },
-  { value: 'saas/qianwen', label: '通义千问' },
-  { value: 'saas/qianwen_vl', label: '通义千问视觉' },  
-  { value: 'saas/claude', label: 'Claude' },
-];
 
 enum InferBackend {
   Transformers = "transformers",
@@ -55,6 +42,24 @@ const CreateModel: React.FC<CreateModelProps> = ({ onModelAdded }) => {
   const [form] = Form.useForm<FormValues>();
   const [selectedBackend, setSelectedBackend] = useState<InferBackend>(InferBackend.SaaS);
   const [selectedBaseUrl, setSelectedBaseUrl] = useState<string>('');
+  const [saasBaseUrls, setSaasBaseUrls] = useState<Array<{value: string, label: string}>>([]);
+  const [pretrainedModelTypes, setPretrainedModelTypes] = useState<Array<{value: string, label: string}>>([]);
+
+  useEffect(() => {
+    // Fetch configuration when component mounts
+    fetchConfig();
+  }, []);
+
+  const fetchConfig = async () => {
+    try {
+      const response = await axios.get('/config');
+      setSaasBaseUrls(response.data.saasBaseUrls);
+      setPretrainedModelTypes(response.data.pretrainedModelTypes);
+    } catch (error) {
+      console.error('Error fetching config:', error);
+      message.error('Failed to fetch configuration');
+    }
+  };
 
   const showModal = () => {
     setIsModalVisible(true);
