@@ -27,6 +27,8 @@ const Chat: React.FC = () => {
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [currentConversationTitle, setCurrentConversationTitle] = useState<string>('');
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState<string>('');
 
   const [listType, setListType] = useState<'models' | 'rags'>('models');
   const [selectedItem, setSelectedItem] = useState<string>('');
@@ -125,6 +127,33 @@ useEffect(() => {
     }
   };
 
+  const handleTitleDoubleClick = (conv: Conversation) => {
+    setEditingTitleId(conv.id);
+    setEditingTitle(conv.title);
+  };
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditingTitle(e.target.value);
+  };
+
+  const handleTitleUpdate = async (conv: Conversation) => {
+    if (editingTitle.trim() === '') return;
+
+    try {
+      await axios.put(`/chat/conversations/${conv.id}`, { title: editingTitle });
+      setConversations(conversations.map(c => 
+        c.id === conv.id ? { ...c, title: editingTitle } : c
+      ));
+      if (currentConversationId === conv.id) {
+        setCurrentConversationTitle(editingTitle);
+      }
+      setEditingTitleId(null);
+    } catch (error) {
+      console.error('Error updating conversation title:', error);
+      message.error('Failed to update conversation title');
+    }
+  };
+
   return (
     <div className="chat-container">
       <div className="sidebar">
@@ -162,14 +191,26 @@ useEffect(() => {
             onClick={() => {
               setCurrentConversationId(conv.id);
               setCurrentConversationTitle(conv.title);
-              // 这里需要加载选中对话的消息
-              // TODO: 实现加载选中对话消息的逻辑
+              fetchMessages(conv.id);
             }}
+            onDoubleClick={() => handleTitleDoubleClick(conv)}
           >
-            <Typography.Text strong>{conv.title}</Typography.Text>
-            <br />
-            <Typography.Text type="secondary">{conv.messages}条对话</Typography.Text>
-            <Typography.Text type="secondary" style={{ float: 'right' }}>{conv.time}</Typography.Text>
+            {editingTitleId === conv.id ? (
+              <Input
+                value={editingTitle}
+                onChange={handleTitleChange}
+                onPressEnter={() => handleTitleUpdate(conv)}
+                onBlur={() => handleTitleUpdate(conv)}
+                autoFocus
+              />
+            ) : (
+              <>
+                <Typography.Text strong>{conv.title}</Typography.Text>
+                <br />
+                <Typography.Text type="secondary">{conv.messages}条对话</Typography.Text>
+                <Typography.Text type="secondary" style={{ float: 'right' }}>{conv.time}</Typography.Text>
+              </>
+            )}
           </div>
         ))}
       </div>
