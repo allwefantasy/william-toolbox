@@ -11,7 +11,7 @@ import aiofiles
 import subprocess
 from typing import List, Dict
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 import json
 import subprocess
 import os
@@ -21,8 +21,42 @@ from loguru import logger
 import subprocess
 import traceback
 import psutil
+from datetime import datetime
+import uuid
 
 app = FastAPI()
+
+# Path to the chat.json file
+CHAT_JSON_PATH = "chat.json"
+
+# Function to load chat data from JSON file
+def load_chat_data():
+    if os.path.exists(CHAT_JSON_PATH):
+        with open(CHAT_JSON_PATH, 'r') as f:
+            return json.load(f)
+    return {"conversations": []}
+
+# Function to save chat data to JSON file
+def save_chat_data(data):
+    with open(CHAT_JSON_PATH, 'w') as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+# Chat-related models
+class Message(BaseModel):
+    role: str
+    content: str
+    timestamp: str
+
+class Conversation(BaseModel):
+    id: str
+    title: str
+    created_at: str
+    updated_at: str
+    messages: List[Message]
+
+class ChatData(BaseModel):
+    conversations: List[Conversation]
+
 
 # Global variable to store the OpenAI compatible service process
 openai_compatible_service_process = None
@@ -490,6 +524,85 @@ async def get_model_status(model_name: str):
     except Exception as e:
         error_message = f"Failed to get status for model {model_name}: {str(e)}"
         return {"model": model_name, "status": "error", "error": error_message, "success": False}
+
+# Path to the chat.json file
+CHAT_JSON_PATH = "chat.json"
+
+# Function to load chat data from JSON file
+def load_chat_data():
+    if os.path.exists(CHAT_JSON_PATH):
+        with open(CHAT_JSON_PATH, 'r') as f:
+            return json.load(f)
+    return {"conversations": []}
+
+# Function to save chat data to JSON file
+def save_chat_data(data):
+    with open(CHAT_JSON_PATH, 'w') as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+# Chat-related models
+class Message(BaseModel):
+    role: str
+    content: str
+    timestamp: str
+
+class Conversation(BaseModel):
+    id: str
+    title: str
+    created_at: str
+    updated_at: str
+    messages: List[Message]
+
+class ChatData(BaseModel):
+    conversations: List[Conversation]
+
+# Chat-related API endpoints
+@app.get("/chat/conversations", response_model=List[Conversation])
+async def get_conversations():
+    chat_data = load_chat_data()
+    return chat_data["conversations"]
+
+@app.post("/chat/conversations", response_model=Conversation)
+async def create_conversation(title: str):
+    chat_data = load_chat_data()
+    new_conversation = Conversation(
+        id=str(uuid.uuid4()),
+        title=title,
+        created_at=datetime.now().isoformat(),
+        updated_at=datetime.now().isoformat(),
+        messages=[]
+    )
+    chat_data["conversations"].append(new_conversation.dict())
+    save_chat_data(chat_data)
+    return new_conversation
+
+@app.get("/chat/conversations/{conversation_id}", response_model=Conversation)
+async def get_conversation(conversation_id: str):
+    chat_data = load_chat_data()
+    conversation = next((conv for conv in chat_data["conversations"] if conv["id"] == conversation_id), None)
+    if conversation is None:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    return conversation
+
+@app.post("/chat/conversations/{conversation_id}/messages", response_model=Message)
+async def add_message(conversation_id: str, message: Message):
+    chat_data = load_chat_data()
+    conversation = next((conv for conv in chat_data["conversations"] if conv["id"] == conversation_id), None)
+    if conversation is None:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    
+    message.timestamp = datetime.now().isoformat()
+    conversation["messages"].append(message.dict())
+    conversation["updated_at"] = datetime.now().isoformat()
+    save_chat_data(chat_data)
+    return message
+
+@app.delete("/chat/conversations/{conversation_id}")
+async def delete_conversation(conversation_id: str):
+    chat_data = load_chat_data()
+    chat_data["conversations"] = [conv for conv in chat_data["conversations"] if conv["id"] != conversation_id]
+    save_chat_data(chat_data)
+    return {"message": "Conversation deleted successfully"}
 
 def main():
     parser = argparse.ArgumentParser(description="Backend Server")
