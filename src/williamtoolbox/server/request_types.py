@@ -82,3 +82,10 @@ class AddMessageResponse(BaseModel):
 class EventResponse(BaseModel):
     events: list[Dict[str, Any]]
 
+class ModelInfo(BaseModel):
+    name: str
+    status: str
+
+class CreateConversationRequest(BaseModel):
+    title: str
+

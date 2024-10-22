@@ -11,3 +11,4 @@ deploy.sh
 dist/
 build/
 pasted/
+chat_events/

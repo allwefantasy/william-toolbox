@@ -1,36 +1,40 @@
 import os
 import json
-
+import aiofiles
 # Path to the chat.json file
 CHAT_JSON_PATH = "chat.json"
 
 
 # Function to load chat data from JSON file
-def load_chat_data():
+async def load_chat_data():
     if os.path.exists(CHAT_JSON_PATH):
-        with open(CHAT_JSON_PATH, "r") as f:
-            return json.load(f)
+        async with aiofiles.open(CHAT_JSON_PATH, "r") as f:
+            content = await f.read()
+            return json.loads(content)
     return {"conversations": []}
 
 
 # Function to save chat data to JSON file
-def save_chat_data(data):
-    with open(CHAT_JSON_PATH, "w") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
+async def save_chat_data(data):
+    async with aiofiles.open(CHAT_JSON_PATH, "w") as f:        
+        content = json.dumps(data, ensure_ascii=False)
+        await f.write(content)
 
 
 # Add this function to load the config
-def load_config():
+async def load_config():
     config_path = "config.json"
     if os.path.exists(config_path):
-        with open(config_path, "r") as f:
-            return json.load(f)
+        async with aiofiles.open(config_path, "r") as f:
+            content = await f.read()
+            return json.loads(content)
     return {}
 
-def save_config(config):
+async def save_config(config):
     """Save the configuration to file."""
-    with open("config.json", "w") as f:
-        json.dump(config, f, indent=2, ensure_ascii=False)
+    async with aiofiles.open("config.json", "w") as f:
+        content = json.dumps(config, ensure_ascii=False)
+        await f.write(content)
 
 
 # Path to the models.json file
@@ -39,32 +43,49 @@ RAGS_JSON_PATH = "rags.json"
 
 
 # Function to load models from JSON file
-def load_models_from_json():
+async def load_models_from_json():
     if os.path.exists(MODELS_JSON_PATH):
-        with open(MODELS_JSON_PATH, "r") as f:
-            return json.load(f)
+        async with aiofiles.open(MODELS_JSON_PATH, "r") as f:
+            content = await f.read()
+            return json.loads(content)
     return {}
 
 
 # Function to save models to JSON file
-def save_models_to_json(models):
+async def save_models_to_json(models):
+    async with aiofiles.open(MODELS_JSON_PATH, "w") as f:
+        content = json.dumps(models, ensure_ascii=False)
+        await f.write(content)
+
+
+def b_load_models_from_json():
+    if os.path.exists(MODELS_JSON_PATH):
+        with open(MODELS_JSON_PATH, "r") as f:
+            content = f.read()
+            return json.loads(content)
+    return {}
+
+def b_save_models_to_json(models):
     with open(MODELS_JSON_PATH, "w") as f:
-        json.dump(models, f, indent=2, ensure_ascii=False)
+        content = json.dumps(models, ensure_ascii=False)
+        f.write(content)
 
 
 # Function to load RAGs from JSON file
-def load_rags_from_json():
+async def load_rags_from_json():
     if os.path.exists(RAGS_JSON_PATH):
-        with open(RAGS_JSON_PATH, "r") as f:
-            return json.load(f)
+        async with aiofiles.open(RAGS_JSON_PATH, "r") as f:
+            content = await f.read()
+            return json.loads(content)
     return {}
 
 
 # Function to save RAGs to JSON file
-def save_rags_to_json(rags):
-    with open(RAGS_JSON_PATH, "w") as f:
-        json.dump(rags, f, indent=2, ensure_ascii=False)
+async def save_rags_to_json(rags):
+    async with aiofiles.open(RAGS_JSON_PATH, "w") as f:
+        content = json.dumps(rags, ensure_ascii=False)
+        await f.write(content)
 
-def get_event_file_path(request_id: str) -> str:
+async def get_event_file_path(request_id: str) -> str:
     os.makedirs("chat_events", exist_ok=True)
     return f"chat_events/{request_id}.json"

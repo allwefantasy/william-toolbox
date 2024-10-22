@@ -10,12 +10,14 @@ from loguru import logger
 from pydantic import BaseModel
 from .request_types import *
 from ..storage.json_file import *
+import aiofiles
+import traceback
 
 router = APIRouter()
 
 @router.post("/chat/conversations/{conversation_id}/messages", response_model=Message)
 async def add_message(conversation_id: str, request: AddMessageRequest):
-    chat_data = load_chat_data()
+    chat_data = await load_chat_data()
     conversation = next(
         (conv for conv in chat_data["conversations"] if conv["id"] == conversation_id),
         None,
@@ -31,7 +33,7 @@ async def add_message(conversation_id: str, request: AddMessageRequest):
 
     # 根据 list_type 和 selected_item 选择合适的模型或 RAG
     try:
-        config = load_config()        
+        config = await load_config()        
         openai_server = config.get("openaiServerList", [{}])[0]
         base_url = f"http://{openai_server.get('host', 'localhost')}:{openai_server.get('port', 8000)}/v1"
         client = AsyncOpenAI(base_url=base_url, api_key="xxxx")
@@ -83,14 +85,14 @@ async def add_message(conversation_id: str, request: AddMessageRequest):
         )
 
     conversation["updated_at"] = datetime.now().isoformat()
-    save_chat_data(chat_data)
+    await save_chat_data(chat_data)
     return assistant_response
 
 @router.post("/chat/conversations/{conversation_id}/messages/stream", response_model=AddMessageResponse)
 async def add_message_stream(conversation_id: str, request: AddMessageRequest):
     request_id = str(uuid.uuid4())
     
-    chat_data = load_chat_data()
+    chat_data = await load_chat_data()
     conversation = next(
         (conv for conv in chat_data["conversations"] if conv["id"] == conversation_id),
         None,
@@ -99,6 +101,7 @@ async def add_message_stream(conversation_id: str, request: AddMessageRequest):
         raise HTTPException(status_code=404, detail="Conversation not found")
 
     conversation["messages"].append(request.message.model_dump())
+    await save_chat_data(chat_data)
 
     asyncio.create_task(process_message_stream(request_id, request, conversation))
     
@@ -106,11 +109,14 @@ async def add_message_stream(conversation_id: str, request: AddMessageRequest):
 
 @router.get("/chat/conversations/events/{request_id}/{index}", response_model=EventResponse)
 async def get_message_events(request_id: str, index: int):    
-    file_path = get_event_file_path(request_id)
+    file_path = await get_event_file_path(request_id)
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail=f"No events found for request_id: {request_id}")
         
     events = []
+    if not os.path.exists(file_path):
+        return EventResponse(events=[])
+    
     with open(file_path, 'r') as f:
         for line in f:
             event = json.loads(line)
@@ -120,11 +126,17 @@ async def get_message_events(request_id: str, index: int):
     return EventResponse(events=events)
 
 async def process_message_stream(request_id: str, request: AddMessageRequest, conversation: Conversation):
-    file_path = get_event_file_path(request_id)
+    chat_data = await load_chat_data()
+    conversation = next(
+        (conv for conv in chat_data["conversations"] if conv["id"] == conversation["id"]),
+        None,
+    )
+
+    file_path = await get_event_file_path(request_id)
     idx = 0
-    with open(file_path, 'w') as event_file:    
+    async with aiofiles.open(file_path, 'w') as event_file:    
         try:
-            config = load_config()
+            config = await load_config()
             if request.list_type == "models":
                 openai_server = config.get("openaiServerList", [{}])[0]
                 base_url = f"http://{openai_server.get('host', 'localhost')}:{openai_server.get('port', 8000)}/v1"
@@ -147,12 +159,12 @@ async def process_message_stream(request_id: str, request: AddMessageRequest, co
                             "content": chunk.choices[0].delta.content,
                             "timestamp": datetime.now().isoformat()
                         }
-                        event_file.write(json.dumps(event,ensure_ascii=False))
-                        event_file.flush()
+                        await event_file.write(json.dumps(event, ensure_ascii=False) + "\n")
+                        await event_file.flush()
                         idx += 1
 
             elif request.list_type == "rags":
-                rags = load_rags_from_json()
+                rags = await load_rags_from_json()
                 rag_info = rags.get(request.selected_item, {})
                 host = rag_info.get("host", "localhost")
                 port = rag_info.get("port", 8000)
@@ -176,8 +188,8 @@ async def process_message_stream(request_id: str, request: AddMessageRequest, co
                             "content": chunk.choices[0].delta.content,
                             "timestamp": datetime.now().isoformat()
                         }
-                        event_file.write(json.dumps(event,ensure_ascii=False))
-                        event_file.flush()
+                        await event_file.write(json.dumps(event, ensure_ascii=False) + "\n")
+                        await event_file.flush()
                             
                         idx += 1
                         
@@ -189,28 +201,30 @@ async def process_message_stream(request_id: str, request: AddMessageRequest, co
                 "content": str(e),
                 "timestamp": datetime.now().isoformat()
             }
-            event_file.write(json.dumps(error_event,ensure_ascii=False))
-            event_file.flush()
-            logger.error(f"Error processing message stream: {str(e)}")
+            await event_file.write(json.dumps(error_event, ensure_ascii=False) + "\n")
+            await event_file.flush()                        
+            logger.error(traceback.format_exc())
+            
         
-        event_file.write(json.dumps({
+        await event_file.write(json.dumps({
             "index": idx,
             "event": "done",
             "content": "",
             "timestamp": datetime.now().isoformat()
-        },ensure_ascii=False))
-        event_file.flush()
+        }, ensure_ascii=False) + "\n")
+        await event_file.flush()
 
-def load_config():
-    config_path = "config.json"
-    if os.path.exists(config_path):
-        with open(config_path, "r") as f:
-            return json.load(f)
-    return {}
+    s = ""
+    async with aiofiles.open(file_path, 'r') as event_file:
+        async for line in event_file:
+            event = json.loads(line)
+            if event["event"] == "chunk":
+                s += event["content"]
+    
+    conversation["messages"].append({
+        "role": "assistant",
+        "content": s,
+        "timestamp": datetime.now().isoformat()
+    })
+    await save_chat_data(chat_data)
 
-def load_rags_from_json():
-    rags_path = "rags.json"
-    if os.path.exists(rags_path):
-        with open(rags_path, "r") as f:
-            return json.load(f)
-    return {}

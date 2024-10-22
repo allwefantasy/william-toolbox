@@ -41,27 +41,27 @@ app.add_middleware(
 @app.get("/config")
 async def get_config():
     """Get the configuration information."""
-    config = load_config()
+    config = await load_config()
     return config
 
 
 @app.post("/config")
 async def add_config_item(item: dict):
     """Add a new configuration item."""
-    config = load_config()
+    config = await load_config()
     for key, value in item.items():
         if key in config:
             config[key].extend(value)
         else:
             config[key] = value
-    save_config(config)
+    await save_config(config)
     return {"message": "Configuration item added successfully"}
 
 
 @app.put("/config/{key}")
 async def update_config_item(key: str, item: dict):
     """Update an existing configuration item."""
-    config = load_config()
+    config = await load_config()
     if key not in config:
         raise HTTPException(status_code=404, detail="Configuration item not found")
 
@@ -80,24 +80,24 @@ async def update_config_item(key: str, item: dict):
         else:
             config[key].append(updated_item)
 
-    save_config(config)
+    await save_config(config)
     return {"message": "Configuration items updated successfully"}
 
 
 @app.delete("/config/{key}")
 async def delete_config_item(key: str):
     """Delete a configuration item."""
-    config = load_config()
+    config = await load_config()
     if key not in config:
         raise HTTPException(status_code=404, detail="Configuration item not found")
     del config[key]
-    save_config(config)
+    await save_config(config)
     return {"message": "Configuration item deleted successfully"}
 
 
 @app.post("/openai-compatible-service/start")
 async def start_openai_compatible_service(host: str = "0.0.0.0", port: int = 8000):
-    config = load_config()
+    config = await load_config()
     if "openaiServerList" in config and config["openaiServerList"]:
         return {"message": "OpenAI compatible service is already running"}
 
@@ -122,7 +122,7 @@ async def start_openai_compatible_service(host: str = "0.0.0.0", port: int = 800
         config["openaiServerList"].append(
             {"host": host, "port": port, "pid": process.pid}
         )
-        save_config(config)
+        await save_config(config)
 
         return {
             "message": "OpenAI compatible service started successfully",
@@ -136,7 +136,7 @@ async def start_openai_compatible_service(host: str = "0.0.0.0", port: int = 800
 
 @app.post("/openai-compatible-service/stop")
 async def stop_openai_compatible_service():
-    config = load_config()
+    config = await load_config()
     if "openaiServerList" not in config or not config["openaiServerList"]:
         return {"message": "OpenAI compatible service is not running"}
 
@@ -151,7 +151,7 @@ async def stop_openai_compatible_service():
                 logger.warning(f"Process with PID {server['pid']} not found")
 
         config["openaiServerList"] = []
-        save_config(config)
+        await save_config(config)
         return {"message": "OpenAI compatible service stopped successfully"}
     except Exception as e:
         return {"error": f"Failed to stop OpenAI compatible service: {str(e)}"}
@@ -159,7 +159,7 @@ async def stop_openai_compatible_service():
 
 @app.get("/openai-compatible-service/status")
 async def get_openai_compatible_service_status():
-    config = load_config()
+    config = await load_config()
     is_running = "openaiServerList" in config and len(config["openaiServerList"]) > 0
     return {"isRunning": is_running}
 
@@ -169,11 +169,11 @@ async def get_openai_compatible_service_status():
 @app.get("/rags", response_model=List[Dict[str, Any]])
 async def list_rags():
     """List all RAGs and their current status."""
-    rags = load_rags_from_json()
+    rags = await load_rags_from_json()
     return [{"name": name, **info} for name, info in rags.items()]
 
 # Load supported models from JSON file
-supported_models = load_models_from_json()
+supported_models = b_load_models_from_json()
 
 # If the JSON file is empty or doesn't exist, use the default models
 if not supported_models:
@@ -194,7 +194,7 @@ if not supported_models:
             "status_command": "byzerllm stat --model deepseek_chat",
         }
     }
-    save_models_to_json(supported_models)
+    b_save_models_to_json(supported_models)
 
 
 def deploy_command_to_string(cmd: DeployCommand) -> str:
@@ -219,11 +219,6 @@ def deploy_command_to_string(cmd: DeployCommand) -> str:
         base_cmd += f" --infer_backend {cmd.infer_backend}"
 
     return base_cmd
-
-
-class ModelInfo(BaseModel):
-    name: str
-    status: str
 
 
 @app.get("/models", response_model=List[ModelInfo])
@@ -263,14 +258,14 @@ async def add_model(model: AddModelRequest):
     }
 
     supported_models[model.name] = new_model
-    save_models_to_json(supported_models)
+    await save_models_to_json(supported_models)
     return {"message": f"Model {model.name} added successfully"}
 
 
 @app.post("/rags/add")
 async def add_rag(rag: AddRAGRequest):
     """Add a new RAG to the supported RAGs list."""
-    rags = load_rags_from_json()
+    rags = await load_rags_from_json()
     if rag.name in rags:
         raise HTTPException(status_code=400, detail=f"RAG {rag.name} already exists")
 
@@ -284,14 +279,14 @@ async def add_rag(rag: AddRAGRequest):
     new_rag = {"status": "stopped", **rag.model_dump()}
 
     rags[rag.name] = new_rag
-    save_rags_to_json(rags)
+    await save_rags_to_json(rags)
     return {"message": f"RAG {rag.name} added successfully"}
 
 
 @app.post("/rags/{rag_name}/{action}")
 async def manage_rag(rag_name: str, action: str):
     """Start or stop a specified RAG."""
-    rags = load_rags_from_json()
+    rags = await load_rags_from_json()
     if rag_name not in rags:
         raise HTTPException(status_code=404, detail=f"RAG {rag_name} not found")
 
@@ -369,7 +364,7 @@ async def manage_rag(rag_name: str, action: str):
             rag_info["status"] = "stopped"
 
     rags[rag_name] = rag_info
-    save_rags_to_json(rags)
+    await save_rags_to_json(rags)
 
     return {"message": f"RAG {rag_name} {action}ed successfully"}
 
@@ -377,7 +372,7 @@ async def manage_rag(rag_name: str, action: str):
 @app.get("/rags/{rag_name}/status")
 async def get_rag_status(rag_name: str):
     """Get the status of a specified RAG."""
-    rags = load_rags_from_json()
+    rags = await load_rags_from_json()
     if rag_name not in rags:
         raise HTTPException(status_code=404, detail=f"RAG {rag_name} not found")
 
@@ -396,7 +391,7 @@ async def get_rag_status(rag_name: str):
     status = "running" if is_alive else "stopped"
     rag_info["status"] = status
     rags[rag_name] = rag_info
-    save_rags_to_json(rags)
+    await save_rags_to_json(rags)
 
     return {
         "rag": rag_name,
@@ -439,7 +434,7 @@ async def manage_model(model_name: str, action: str):
             supported_models[model_name] = model_info
 
             # Save updated models to JSON file
-            save_models_to_json(supported_models)
+            await save_models_to_json(supported_models)
 
             return {
                 "message": f"Model {model_name} {action}ed successfully",
@@ -479,7 +474,7 @@ async def get_model_status(model_name: str):
         if result.returncode == 0:
             status_output = result.stdout.strip()
             supported_models[model_name]["status"] = "running"
-            save_models_to_json(supported_models)
+            await save_models_to_json(supported_models)
             return {"model": model_name, "status": status_output, "success": True}
         else:
             error_message = f"Command failed with return code {result.returncode}: {result.stderr.strip()}"
@@ -499,28 +494,9 @@ async def get_model_status(model_name: str):
         }
 
 
-# Path to the chat.json file
-CHAT_JSON_PATH = "chat.json"
-
-
-# Function to load chat data from JSON file
-def load_chat_data():
-    if os.path.exists(CHAT_JSON_PATH):
-        with open(CHAT_JSON_PATH, "r") as f:
-            return json.load(f)
-    return {"conversations": []}
-
-
-# Function to save chat data to JSON file
-def save_chat_data(data):
-    with open(CHAT_JSON_PATH, "w") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
-
-
-
 @app.get("/chat/conversations")
 async def get_conversation_list():
-    chat_data = load_chat_data()
+    chat_data = await load_chat_data()
     conversation_list = [
         {
             "id": conv["id"],
@@ -534,13 +510,9 @@ async def get_conversation_list():
     return conversation_list
 
 
-class CreateConversationRequest(BaseModel):
-    title: str
-
-
 @app.post("/chat/conversations", response_model=Conversation)
 async def create_conversation(request: CreateConversationRequest):
-    chat_data = load_chat_data()
+    chat_data = await load_chat_data()
     new_conversation = Conversation(
         id=str(uuid.uuid4()),
         title=request.title,
@@ -549,13 +521,13 @@ async def create_conversation(request: CreateConversationRequest):
         messages=[],
     )
     chat_data["conversations"].append(new_conversation.model_dump())
-    save_chat_data(chat_data)
+    await save_chat_data(chat_data)
     return new_conversation
 
 
 @app.get("/chat/conversations/{conversation_id}", response_model=Conversation)
 async def get_conversation(conversation_id: str):
-    chat_data = load_chat_data()
+    chat_data = await load_chat_data()
     conversation = next(
         (conv for conv in chat_data["conversations"] if conv["id"] == conversation_id),
         None,
@@ -567,21 +539,21 @@ async def get_conversation(conversation_id: str):
 
 @app.delete("/chat/conversations/{conversation_id}")
 async def delete_conversation(conversation_id: str):
-    chat_data = load_chat_data()
+    chat_data = await load_chat_data()
     chat_data["conversations"] = [
         conv for conv in chat_data["conversations"] if conv["id"] != conversation_id
     ]
-    save_chat_data(chat_data)
+    await save_chat_data(chat_data)
     return {"message": "Conversation deleted successfully"}
 
 @app.put("/chat/conversations/{conversation_id}")
 async def update_conversation_title(conversation_id: str, request: dict):
-    chat_data = load_chat_data()
+    chat_data = await load_chat_data()
     for conv in chat_data["conversations"]:
         if conv["id"] == conversation_id:
             conv["title"] = request.get("title")
             conv["updated_at"] = datetime.now().isoformat()
-            save_chat_data(chat_data)
+            await save_chat_data(chat_data)
             return {"message": "Conversation title updated successfully"}
     raise HTTPException(status_code=404, detail="Conversation not found")
 
