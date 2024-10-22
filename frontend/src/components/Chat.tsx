@@ -119,27 +119,63 @@ useEffect(() => {
       setInputMessage('');
       setIsLoading(true);
 
-      // Add a temporary "Assistant is typing..." message
-      const tempMessage = { role: 'assistant' as const, content: 'Assistant is typing...', timestamp: new Date().toISOString() };
-      setMessages(prevMessages => [...prevMessages, tempMessage]);
-
       try {
-        const response = await axios.post(`/chat/conversations/${currentConversationId}/messages`, {
+        // Call the stream endpoint
+        const streamResponse = await axios.post(`/chat/conversations/${currentConversationId}/messages/stream`, {
           conversation_id: currentConversationId,
           message: newUserMessage,
           list_type: listType,
           selected_item: selectedItem
         });
 
-        if (response.data && response.data.role === 'assistant') {
-          // Remove the temporary message and add the real response
-          setMessages(prevMessages => prevMessages.filter(msg => msg !== tempMessage).concat(response.data));
+        if (streamResponse.data && streamResponse.data.request_id) {
+          const requestId = streamResponse.data.request_id;
+          let currentIndex = 0;
+          let assistantMessage = '';
+          
+          // Add initial assistant message
+          const tempMessage = { role: 'assistant' as const, content: '', timestamp: new Date().toISOString() };
+          setMessages(prevMessages => [...prevMessages, tempMessage]);
+
+          // Poll for events
+          while (true) {
+            const eventsResponse = await axios.get(`/chat/conversations/events/${requestId}/${currentIndex}`);
+            const events = eventsResponse.data.events;
+
+            if (!events || events.length === 0) {
+              await new Promise(resolve => setTimeout(resolve, 100)); // Wait 100ms before next poll
+              continue;
+            }
+
+            for (const event of events) {
+              if (event.event === 'error') {
+                throw new Error(event.content);
+              }
+
+              if (event.event === 'chunk') {
+                assistantMessage += event.content;
+                // Update the last message with new content
+                setMessages(prevMessages => 
+                  prevMessages.map((msg, index) => 
+                    index === prevMessages.length - 1 
+                      ? { ...msg, content: assistantMessage }
+                      : msg
+                  )
+                );
+                currentIndex = event.index + 1;
+              }
+
+              if (event.event === 'done') {
+                return;
+              }
+            }
+          }
         }
       } catch (error) {
         console.error('Error sending message:', error);
         message.error('Failed to send message');
-        // Remove the temporary message if there's an error
-        setMessages(prevMessages => prevMessages.filter(msg => msg !== tempMessage));
+        // Remove the assistant message if there's an error
+        setMessages(prevMessages => prevMessages.slice(0, -1));
       } finally {
         setIsLoading(false);
       }
