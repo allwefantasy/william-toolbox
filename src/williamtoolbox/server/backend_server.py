@@ -1,17 +1,12 @@
-from fastapi import FastAPI, HTTPException, Request, Form
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 import uvicorn
-import httpx
-from typing import Optional, Any
+from typing import Any,List
 import os
 import argparse
-import aiofiles
 import subprocess
 from typing import List, Dict
 from pydantic import BaseModel, Field
-from typing import Optional, List
 import json
 import subprocess
 import os
@@ -25,7 +20,9 @@ from datetime import datetime
 import uuid
 from openai import AsyncOpenAI
 import json
-from .chat_api import router as chat_router
+from .request_types import *
+from ..storage.json_file import *
+from .chat_router import router as chat_router
 
 app = FastAPI()
 app.include_router(chat_router)
@@ -38,50 +35,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Path to the chat.json file
-CHAT_JSON_PATH = "chat.json"
-
-
-# Function to load chat data from JSON file
-def load_chat_data():
-    if os.path.exists(CHAT_JSON_PATH):
-        with open(CHAT_JSON_PATH, "r") as f:
-            return json.load(f)
-    return {"conversations": []}
-
-
-# Function to save chat data to JSON file
-def save_chat_data(data):
-    with open(CHAT_JSON_PATH, "w") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
-
-
-# Chat-related models
-class Message(BaseModel):
-    role: str
-    content: str
-    timestamp: str
-
-
-class Conversation(BaseModel):
-    id: str
-    title: str
-    created_at: str
-    updated_at: str
-    messages: List[Message]
-
-
-class ChatData(BaseModel):
-    conversations: List[Conversation]
-
-
-# Add this function to load the config
-def load_config():
-    config_path = "config.json"
-    if os.path.exists(config_path):
-        with open(config_path, "r") as f:
-            return json.load(f)
-    return {}
 
 
 # Add this new endpoint
@@ -211,68 +164,6 @@ async def get_openai_compatible_service_status():
     return {"isRunning": is_running}
 
 
-def save_config(config):
-    """Save the configuration to file."""
-    with open("config.json", "w") as f:
-        json.dump(config, f, indent=2, ensure_ascii=False)
-
-
-class AddModelRequest(BaseModel):
-    name: str
-    pretrained_model_type: str
-    cpus_per_worker: float = Field(default=0.001)
-    gpus_per_worker: int = Field(default=0)
-    num_workers: int = Field(default=1)
-    worker_concurrency: Optional[int] = Field(default=None)
-    infer_params: dict = Field(default_factory=dict)
-    model_path: Optional[str] = Field(default=None)
-    infer_backend: Optional[str] = Field(default=None)
-
-
-class AddRAGRequest(BaseModel):
-    name: str
-    model: str
-    tokenizer_path: str
-    doc_dir: str
-    rag_doc_filter_relevance: float = Field(default=2.0)
-    host: str = Field(default="0.0.0.0")
-    port: int = Field(default=8000)
-    required_exts: str = Field(default="")
-    disable_inference_enhance: bool = Field(default=False)
-    inference_deep_thought: bool = Field(default=False)
-
-
-# Path to the models.json file
-MODELS_JSON_PATH = "models.json"
-RAGS_JSON_PATH = "rags.json"
-
-
-# Function to load models from JSON file
-def load_models_from_json():
-    if os.path.exists(MODELS_JSON_PATH):
-        with open(MODELS_JSON_PATH, "r") as f:
-            return json.load(f)
-    return {}
-
-
-# Function to save models to JSON file
-def save_models_to_json(models):
-    with open(MODELS_JSON_PATH, "w") as f:
-        json.dump(models, f, indent=2, ensure_ascii=False)
-
-
-# Function to load RAGs from JSON file
-def load_rags_from_json():
-    if os.path.exists(RAGS_JSON_PATH):
-        with open(RAGS_JSON_PATH, "r") as f:
-            return json.load(f)
-    return {}
-
-
-# Function to save RAGs to JSON file
-def save_rags_to_json(rags):
-    with open(RAGS_JSON_PATH, "w") as f:
-        json.dump(rags, f, indent=2, ensure_ascii=False)
 
 
 @app.get("/rags", response_model=List[Dict[str, Any]])
@@ -280,20 +171,6 @@ async def list_rags():
     """List all RAGs and their current status."""
     rags = load_rags_from_json()
     return [{"name": name, **info} for name, info in rags.items()]
-
-
-class DeployCommand(BaseModel):
-    pretrained_model_type: str
-    cpus_per_worker: float = Field(default=0.001)
-    gpus_per_worker: int = Field(default=0)
-    num_workers: int = Field(default=1)
-    worker_concurrency: Optional[int] = Field(default=None)
-    infer_params: dict = Field(default_factory=dict)
-    model: str
-    model_path: Optional[str] = Field(default=None)
-    infer_backend: Optional[str] = Field(default=None)
-    model_config = {"protected_namespaces": ()}
-
 
 # Load supported models from JSON file
 supported_models = load_models_from_json()
@@ -640,30 +517,6 @@ def save_chat_data(data):
         json.dump(data, f, indent=2, ensure_ascii=False)
 
 
-# Chat-related models
-class Message(BaseModel):
-    role: str
-    content: str
-    timestamp: str
-
-
-class Conversation(BaseModel):
-    id: str
-    title: str
-    created_at: str
-    updated_at: str
-    messages: List[Message]
-
-
-class ChatData(BaseModel):
-    conversations: List[Conversation]
-
-
-class AddMessageRequest(BaseModel):
-    message: Message
-    list_type: str
-    selected_item: str
-
 
 @app.get("/chat/conversations")
 async def get_conversation_list():
@@ -710,25 +563,6 @@ async def get_conversation(conversation_id: str):
     if conversation is None:
         raise HTTPException(status_code=404, detail="Conversation not found")
     return conversation
-
-
-from .chat_api import router as chat_router
-
-@app.post("/chat/conversations/{conversation_id}/messages", response_model=Message)
-async def add_message(conversation_id: str, request: AddMessageRequest):
-    raise HTTPException(
-        status_code=400, 
-        detail="This endpoint is deprecated. Please use /chat/conversations/{conversation_id}/messages/stream instead"
-    )
-    except Exception as e:
-        logger.error(f"Error calling {list_type} service: {str(e)}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get response from {list_type} service"
-        )
-
-    conversation["updated_at"] = datetime.now().isoformat()
-    save_chat_data(chat_data)
-    return assistant_response
 
 
 @app.delete("/chat/conversations/{conversation_id}")
