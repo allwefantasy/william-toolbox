@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 
 
 class Message(BaseModel):
+    id: str
     role: str
     content: str
     timestamp: str
@@ -78,6 +79,7 @@ class DeployCommand(BaseModel):
 
 class AddMessageResponse(BaseModel):
     request_id: str
+    response_message_id: str
 
 class EventResponse(BaseModel):
     events: list[Dict[str, Any]]

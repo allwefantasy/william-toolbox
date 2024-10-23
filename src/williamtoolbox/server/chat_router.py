@@ -15,6 +15,7 @@ import traceback
 
 router = APIRouter()
 
+
 @router.post("/chat/conversations/{conversation_id}/messages", response_model=Message)
 async def add_message(conversation_id: str, request: AddMessageRequest):
     chat_data = await load_chat_data()
@@ -33,7 +34,7 @@ async def add_message(conversation_id: str, request: AddMessageRequest):
 
     # 根据 list_type 和 selected_item 选择合适的模型或 RAG
     try:
-        config = await load_config()        
+        config = await load_config()
         openai_server = config.get("openaiServerList", [{}])[0]
         base_url = f"http://{openai_server.get('host', 'localhost')}:{openai_server.get('port', 8000)}/v1"
         client = AsyncOpenAI(base_url=base_url, api_key="xxxx")
@@ -88,10 +89,14 @@ async def add_message(conversation_id: str, request: AddMessageRequest):
     await save_chat_data(chat_data)
     return assistant_response
 
-@router.post("/chat/conversations/{conversation_id}/messages/stream", response_model=AddMessageResponse)
+
+@router.post(
+    "/chat/conversations/{conversation_id}/messages/stream",
+    response_model=AddMessageResponse,
+)
 async def add_message_stream(conversation_id: str, request: AddMessageRequest):
     request_id = str(uuid.uuid4())
-    
+
     chat_data = await load_chat_data()
     conversation = next(
         (conv for conv in chat_data["conversations"] if conv["id"] == conversation_id),
@@ -102,39 +107,59 @@ async def add_message_stream(conversation_id: str, request: AddMessageRequest):
 
     conversation["messages"].append(request.message.model_dump())
     await save_chat_data(chat_data)
+    response_message_id = str(uuid.uuid4())
 
-    asyncio.create_task(process_message_stream(request_id, request, conversation))
-    
-    return AddMessageResponse(request_id=request_id)
+    asyncio.create_task(
+        process_message_stream(request_id, request, conversation, response_message_id)
+    )
 
-@router.get("/chat/conversations/events/{request_id}/{index}", response_model=EventResponse)
-async def get_message_events(request_id: str, index: int):    
+    return AddMessageResponse(
+        request_id=request_id, response_message_id=response_message_id
+    )
+
+
+@router.get(
+    "/chat/conversations/events/{request_id}/{index}", response_model=EventResponse
+)
+async def get_message_events(request_id: str, index: int):
     file_path = await get_event_file_path(request_id)
     if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail=f"No events found for request_id: {request_id}")
-        
+        raise HTTPException(
+            status_code=404, detail=f"No events found for request_id: {request_id}"
+        )
+
     events = []
     if not os.path.exists(file_path):
         return EventResponse(events=[])
-    
-    with open(file_path, 'r') as f:
+
+    with open(file_path, "r") as f:
         for line in f:
             event = json.loads(line)
-            if event['index'] >= index:
+            if event["index"] >= index:
                 events.append(event)
-    
+
     return EventResponse(events=events)
 
-async def process_message_stream(request_id: str, request: AddMessageRequest, conversation: Conversation):
+
+async def process_message_stream(
+    request_id: str,
+    request: AddMessageRequest,
+    conversation: Conversation,
+    response_message_id: str,
+):
     chat_data = await load_chat_data()
     conversation = next(
-        (conv for conv in chat_data["conversations"] if conv["id"] == conversation["id"]),
+        (
+            conv
+            for conv in chat_data["conversations"]
+            if conv["id"] == conversation["id"]
+        ),
         None,
     )
 
     file_path = await get_event_file_path(request_id)
     idx = 0
-    async with aiofiles.open(file_path, 'w') as event_file:    
+    async with aiofiles.open(file_path, "w") as event_file:
         try:
             config = await load_config()
             if request.list_type == "models":
@@ -148,18 +173,20 @@ async def process_message_stream(request_id: str, request: AddMessageRequest, co
                         {"role": msg["role"], "content": msg["content"]}
                         for msg in conversation["messages"]
                     ],
-                    stream=True
+                    stream=True,
                 )
-                                
+
                 async for chunk in response:
                     if chunk.choices[0].delta.content:
                         event = {
                             "index": idx,
                             "event": "chunk",
                             "content": chunk.choices[0].delta.content,
-                            "timestamp": datetime.now().isoformat()
+                            "timestamp": datetime.now().isoformat(),
                         }
-                        await event_file.write(json.dumps(event, ensure_ascii=False) + "\n")
+                        await event_file.write(
+                            json.dumps(event, ensure_ascii=False) + "\n"
+                        )
                         await event_file.flush()
                         idx += 1
 
@@ -169,7 +196,7 @@ async def process_message_stream(request_id: str, request: AddMessageRequest, co
                 host = rag_info.get("host", "localhost")
                 port = rag_info.get("port", 8000)
                 base_url = f"http://{host}:{port}/v1"
-                
+
                 client = AsyncOpenAI(base_url=base_url, api_key="xxxx")
                 response = await client.chat.completions.create(
                     model=rag_info.get("model", "gpt-3.5-turbo"),
@@ -177,54 +204,63 @@ async def process_message_stream(request_id: str, request: AddMessageRequest, co
                         {"role": msg["role"], "content": msg["content"]}
                         for msg in conversation["messages"]
                     ],
-                    stream=True
+                    stream=True,
                 )
-                                
+
                 async for chunk in response:
                     if chunk.choices[0].delta.content:
                         event = {
                             "index": idx,
                             "event": "chunk",
                             "content": chunk.choices[0].delta.content,
-                            "timestamp": datetime.now().isoformat()
+                            "timestamp": datetime.now().isoformat(),
                         }
-                        await event_file.write(json.dumps(event, ensure_ascii=False) + "\n")
+                        await event_file.write(
+                            json.dumps(event, ensure_ascii=False) + "\n"
+                        )
                         await event_file.flush()
-                            
+
                         idx += 1
-                        
+
         except Exception as e:
             # Add error event
             error_event = {
                 "index": idx,
                 "event": "error",
                 "content": str(e),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
             await event_file.write(json.dumps(error_event, ensure_ascii=False) + "\n")
-            await event_file.flush()                        
+            await event_file.flush()
             logger.error(traceback.format_exc())
-            
-        
-        await event_file.write(json.dumps({
-            "index": idx,
-            "event": "done",
-            "content": "",
-            "timestamp": datetime.now().isoformat()
-        }, ensure_ascii=False) + "\n")
+
+        await event_file.write(
+            json.dumps(
+                {
+                    "index": idx,
+                    "event": "done",
+                    "content": "",
+                    "timestamp": datetime.now().isoformat(),
+                },
+                ensure_ascii=False,
+            )
+            + "\n"
+        )
         await event_file.flush()
 
     s = ""
-    async with aiofiles.open(file_path, 'r') as event_file:
+    async with aiofiles.open(file_path, "r") as event_file:
         async for line in event_file:
             event = json.loads(line)
             if event["event"] == "chunk":
                 s += event["content"]
-    
-    conversation["messages"].append({
-        "role": "assistant",
-        "content": s,
-        "timestamp": datetime.now().isoformat()
-    })
-    await save_chat_data(chat_data)
 
+    conversation["messages"].append(
+        {
+            "id": response_message_id,
+            "role": "assistant",
+            "content": s,
+            "timestamp": datetime.now().isoformat(),
+        }
+    )
+    await save_chat_data(chat_data)

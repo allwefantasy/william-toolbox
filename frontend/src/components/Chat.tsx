@@ -42,6 +42,8 @@ const Chat: React.FC = () => {
   const [selectedItem, setSelectedItem] = useState<string>('');
   const [itemList, setItemList] = useState<string[]>([]);
 
+  const [response_message_id, setResponseMessageId] = useState<string>('');
+
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -122,7 +124,7 @@ const Chat: React.FC = () => {
         role: 'user',
         content: inputMessage,
         timestamp: new Date().toISOString(),
-        id: Math.random().toString(36).substring(7)
+        id: Math.random().toString(36)
       };
       setMessages([...messages, newUserMessage]);
       setInputMessage('');
@@ -142,6 +144,7 @@ const Chat: React.FC = () => {
       setCountdownInterval(interval);
 
       try {
+
         // Call the stream endpoint  
         const streamResponse = await axios.post(`/chat/conversations/${currentConversationId}/messages/stream`, {
           conversation_id: currentConversationId,
@@ -155,8 +158,10 @@ const Chat: React.FC = () => {
           let currentIndex = 0;
           let assistantMessage = '';
 
+          const assistant_message_id = streamResponse.data.response_message_id;
+          setResponseMessageId(assistant_message_id);
           // Add initial assistant message
-          const tempMessage = { role: 'assistant' as const, content: '', timestamp: new Date().toISOString() };
+          const tempMessage = { id: assistant_message_id, role: 'assistant' as const, content: '', timestamp: new Date().toISOString() };
           setMessages(prevMessages => [...prevMessages, tempMessage]);
 
           // Poll for events
@@ -190,13 +195,14 @@ const Chat: React.FC = () => {
                   setCountdown(null);
                 }
                 assistantMessage += event.content;
-                // Update the last message with new content
+                // Update the assistant message at the correct position
                 setMessages(prevMessages =>
-                  prevMessages.map((msg, index) =>
-                    index === prevMessages.length - 1
-                      ? { ...msg, content: assistantMessage }
-                      : msg
-                  )
+                  prevMessages.map((msg, index) => {
+                    if (msg.id === assistant_message_id) {
+                      return { ...msg, content: assistantMessage };
+                    }
+                    return msg;
+                  })
                 );
                 currentIndex = event.index + 1;
               }
@@ -366,7 +372,8 @@ const Chat: React.FC = () => {
                 description={
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                     <div style={{ flex: 1 }}>
-                      {isLoading && messages.indexOf(item) === messages.length - 1 ? (
+                      {item.id} / {response_message_id}
+                      {isLoading && item.id === response_message_id && (
                         <div>
                           <Typography.Text>
                             Assistant is typing...
@@ -378,30 +385,29 @@ const Chat: React.FC = () => {
                             </Typography.Text>
                           )}
                         </div>
-                      ) : (
-                        <Typography.Text style={{ color: item.role === 'user' ? '#096dd9' : '#389e0d' }}>
-                          <ReactMarkdown
-                            components={{
-                              code({ inline, className, children, ...props }: any) {
-                                const match = /language-(\w+)/.exec(className || '');
-                                return !inline && match ? (
-                                  <CodeBlock
-                                    language={match[1]}
-                                    value={String(children).replace(/\n$/, '')}
-                                    {...props}
-                                  />
-                                ) : (
-                                  <code className={className} {...props}>
-                                    {children}
-                                  </code>
-                                );
-                              },
-                            }}
-                          >
-                            {item.content}
-                          </ReactMarkdown>
-                        </Typography.Text>
                       )}
+                      <Typography.Text style={{ color: item.role === 'user' ? '#096dd9' : '#389e0d' }}>
+                        <ReactMarkdown
+                          components={{
+                            code({ inline, className, children, ...props }: any) {
+                              const match = /language-(\w+)/.exec(className || '');
+                              return !inline && match ? (
+                                <CodeBlock
+                                  language={match[1]}
+                                  value={String(children).replace(/\n$/, '')}
+                                  {...props}
+                                />
+                              ) : (
+                                <code className={className} {...props}>
+                                  {children}
+                                </code>
+                              );
+                            },
+                          }}
+                        >
+                          {item.content}
+                        </ReactMarkdown>
+                      </Typography.Text>
                     </div>
                     {item.role === 'user' && (
                       <Tooltip title="重新发送">
@@ -409,104 +415,7 @@ const Chat: React.FC = () => {
                           icon={<RedoOutlined />}
                           type="text"
                           onClick={async () => {
-                            // 找到当前用户消息以及紧跟其后的系统回复
-                            const currentIndex = messages.findIndex(msg => msg.id === item.id);
-                            if (currentIndex === -1) return;
 
-                            // 假设每个用户消息后面都跟着一个系统回复
-                            // 移除当前用户消息后的系统回复,但保留更后面的消息
-                            const previousMessages = [...messages];
-                            if (currentIndex + 1 < previousMessages.length) {
-                              previousMessages.splice(currentIndex + 1, 1);
-                            }
-                            setMessages(previousMessages);
-
-                            // 重新发送请求获取回复
-                            setIsLoading(true);
-                            setCountdown(120);
-                            const interval = setInterval(() => {
-                              setCountdown((prev) => {
-                                if (prev === null || prev <= 0) {
-                                  clearInterval(interval);
-                                  return null;
-                                }
-                                return prev - 1;
-                              });
-                            }, 1000);
-                            setCountdownInterval(interval);
-
-                            try {
-                              const streamResponse = await axios.post(`/chat/conversations/${currentConversationId}/messages/stream`, {
-                                conversation_id: currentConversationId,
-                                message: item,
-                                list_type: listType,
-                                selected_item: selectedItem
-                              });
-
-                              if (streamResponse.data && streamResponse.data.request_id) {
-                                const requestId = streamResponse.data.request_id;
-                                let currentIndex = 0;
-                                let assistantMessage = '';
-
-                                const tempMessage = { role: 'assistant' as const, content: '', timestamp: new Date().toISOString() };
-                                setMessages(prev => [...prev, tempMessage]);
-
-                                while (true) {
-                                  const eventsResponse = await axios.get(`/chat/conversations/events/${requestId}/${currentIndex}`);
-                                  const events = eventsResponse.data.events;
-
-                                  if (!events || events.length === 0) {
-                                    await new Promise(resolve => setTimeout(resolve, 100));
-                                    continue;
-                                  }
-
-                                  for (const event of events) {
-                                    if (event.event === 'error') {
-                                      if (countdownInterval) {
-                                        clearInterval(countdownInterval);
-                                        setCountdownInterval(null);
-                                      }
-                                      setCountdown(null);
-                                      throw new Error(event.content);
-                                    }
-
-                                    if (event.event === 'chunk') {
-                                      if (!assistantMessage) {
-                                        if (countdownInterval) {
-                                          clearInterval(countdownInterval);
-                                          setCountdownInterval(null);
-                                        }
-                                        setCountdown(null);
-                                      }
-                                      assistantMessage += event.content;
-                                      setMessages(prevMessages =>
-                                        prevMessages.map((msg, index) =>
-                                          index === prevMessages.length - 1
-                                            ? { ...msg, content: assistantMessage }
-                                            : msg
-                                        )
-                                      );
-                                      currentIndex = event.index + 1;
-                                    }
-
-                                    if (event.event === 'done') {
-                                      return;
-                                    }
-                                  }
-                                }
-                              }
-                            } catch (error) {
-                              console.error('Error refreshing message:', error);
-                              message.error('Failed to refresh message');
-                              setMessages(prevMessages => prevMessages.slice(0, -1));
-                            } finally {
-                              setIsLoading(false);
-                              if (countdownInterval) {
-                                clearInterval(countdownInterval);
-                                setCountdownInterval(null);
-                              }
-                              setCountdown(null);
-                            }
                           }}
                         />
                       </Tooltip>
