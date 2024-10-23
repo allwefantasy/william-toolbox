@@ -409,89 +409,97 @@ const Chat: React.FC = () => {
                           icon={<RedoOutlined />}
                           type="text"
                           onClick={async () => {
-                            // 找到当前消息后面的所有消息
+                            // 找到当前消息在messages中的位置
                             const currentIndex = messages.findIndex(msg => msg.id === item.id);
                             if (currentIndex === -1) return;
 
-                            // 获取并保留到当前消息的所有消息
-                            const previousMessages = messages.slice(0, currentIndex + 1);
-                            setMessages(previousMessages);
+                            // 找到当前消息的回复消息的位置
+                            const responseIndex = currentIndex + 1;
 
-                            // 重新发送请求获取回复
-                            setIsLoading(true);
-                            setCountdown(120);
-                            const interval = setInterval(() => {
-                              setCountdown((prev) => {
-                                if (prev === null || prev <= 0) {
-                                  clearInterval(interval);
-                                  return null;
-                                }
-                                return prev - 1;
-                              });
-                            }, 1000);
-                            setCountdownInterval(interval);
-
-                            try {
-                              const streamResponse = await axios.post(`/chat/conversations/${currentConversationId}/messages/stream`, {
-                                conversation_id: currentConversationId,
-                                message: item,
-                                list_type: listType,
-                                selected_item: selectedItem
-                              });
-
-                              if (streamResponse.data && streamResponse.data.request_id) {
-                                const requestId = streamResponse.data.request_id;
-                                let currentIndex = 0;
-                                let assistantMessage = '';
-
-                                const tempMessage = { role: 'assistant' as const, content: '', timestamp: new Date().toISOString() };
-                                setMessages(prev => [...prev, tempMessage]);
-
-                                while (true) {
-                                  const eventsResponse = await axios.get(`/chat/conversations/events/${requestId}/${currentIndex}`);
-                                  const events = eventsResponse.data.events;
-
-                                  if (!events || events.length === 0) {
-                                    await new Promise(resolve => setTimeout(resolve, 100));
-                                    continue;
+                            // 如果是用户消息且存在对应的回复消息
+                            if (item.role === 'user' && responseIndex < messages.length) {
+                              // 重新发送请求获取回复
+                              setIsLoading(true);
+                              setCountdown(120);
+                              const interval = setInterval(() => {
+                                setCountdown((prev) => {
+                                  if (prev === null || prev <= 0) {
+                                    clearInterval(interval);
+                                    return null;
                                   }
+                                  return prev - 1;
+                                });
+                              }, 1000);
+                              setCountdownInterval(interval);
 
-                                  for (const event of events) {
-                                    if (event.event === 'error') {
-                                      if (countdownInterval) {
-                                        clearInterval(countdownInterval);
-                                        setCountdownInterval(null);
-                                      }
-                                      setCountdown(null);
-                                      throw new Error(event.content);
+                              try {
+                                const streamResponse = await axios.post(`/chat/conversations/${currentConversationId}/messages/stream`, {
+                                  conversation_id: currentConversationId,
+                                  message: item,
+                                  list_type: listType,
+                                  selected_item: selectedItem
+                                });
+
+                                if (streamResponse.data && streamResponse.data.request_id) {
+                                  const requestId = streamResponse.data.request_id;
+                                  let streamIndex = 0;
+                                  let assistantMessage = '';
+
+                                  // 更新现有的回复消息而不是添加新消息
+                                  setMessages(prevMessages => {
+                                    const updatedMessages = [...prevMessages];
+                                    updatedMessages[responseIndex] = { 
+                                      ...updatedMessages[responseIndex],
+                                      content: ''  // 清空内容准备接收新的回复
+                                    };
+                                    return updatedMessages;
+                                  while (true) {
+                                    const eventsResponse = await axios.get(`/chat/conversations/events/${requestId}/${streamIndex}`);
+                                    const events = eventsResponse.data.events;
+
+                                    if (!events || events.length === 0) {
+                                      await new Promise(resolve => setTimeout(resolve, 100)); // Wait 100ms before next poll
+                                      continue;
                                     }
 
-                                    if (event.event === 'chunk') {
-                                      if (!assistantMessage) {
+                                    for (const event of events) {
+                                      if (event.event === 'error') {
+                                        // Clear countdown on error
                                         if (countdownInterval) {
                                           clearInterval(countdownInterval);
                                           setCountdownInterval(null);
                                         }
                                         setCountdown(null);
+                                        throw new Error(event.content);
                                       }
-                                      assistantMessage += event.content;
-                                      setMessages(prevMessages =>
-                                        prevMessages.map((msg, index) =>
-                                          index === prevMessages.length - 1
-                                            ? { ...msg, content: assistantMessage }
-                                            : msg
-                                        )
-                                      );
-                                      currentIndex = event.index + 1;
-                                    }
 
-                                    if (event.event === 'done') {
-                                      return;
+                                      if (event.event === 'chunk') {
+                                        // Clear countdown on first content
+                                        if (!assistantMessage) {
+                                          if (countdownInterval) {
+                                            clearInterval(countdownInterval);
+                                            setCountdownInterval(null);
+                                          }
+                                          setCountdown(null);
+                                        }
+                                        assistantMessage += event.content;
+                                        // Update the response message with new content
+                                        setMessages(prevMessages => {
+                                          const updatedMessages = [...prevMessages];
+                                          updatedMessages[responseIndex] = { 
+                                            ...updatedMessages[responseIndex],
+                                            content: assistantMessage 
+                                          };
+                                          return updatedMessages;
+                                        });
+                                        streamIndex = event.index + 1;
+                                      }
+
+                                      if (event.event === 'done') {
+                                        return;
+                                      }
                                     }
                                   }
-                                }
-                              }
-                            } catch (error) {
                               console.error('Error refreshing message:', error);
                               message.error('Failed to refresh message');
                               setMessages(prevMessages => prevMessages.slice(0, -1));
