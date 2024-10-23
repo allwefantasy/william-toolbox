@@ -13,6 +13,7 @@ src/williamtoolbox/server/__init__.py
 src/williamtoolbox/server/backend_server.py
 src/williamtoolbox/server/chat_router.py
 src/williamtoolbox/server/proxy_server.py
+src/williamtoolbox/server/rag_router.py
 src/williamtoolbox/server/request_types.py
 src/williamtoolbox/storage/__init__.py
 src/williamtoolbox/storage/json_file.py
@@ -23,10 +24,10 @@ src/williamtoolbox/web/logo192.png
 src/williamtoolbox/web/logo512.png
 src/williamtoolbox/web/manifest.json
 src/williamtoolbox/web/robots.txt
-src/williamtoolbox/web/static/css/main.3cccd2d5.css
-src/williamtoolbox/web/static/css/main.3cccd2d5.css.map
+src/williamtoolbox/web/static/css/main.ba7d42b8.css
+src/williamtoolbox/web/static/css/main.ba7d42b8.css.map
 src/williamtoolbox/web/static/js/453.d855a71b.chunk.js
 src/williamtoolbox/web/static/js/453.d855a71b.chunk.js.map
-src/williamtoolbox/web/static/js/main.ad70253d.js
-src/williamtoolbox/web/static/js/main.ad70253d.js.LICENSE.txt
-src/williamtoolbox/web/static/js/main.ad70253d.js.map
+src/williamtoolbox/web/static/js/main.eae48ee0.js
+src/williamtoolbox/web/static/js/main.eae48ee0.js.LICENSE.txt
+src/williamtoolbox/web/static/js/main.eae48ee0.js.map
