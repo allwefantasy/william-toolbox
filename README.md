@@ -5,8 +5,10 @@ William Toolbox is an open-source project designed to simplify the management of
 
 This project is powered by [auto-coder.chat](https://auto-coder.chat). You can check how we develop this project by reading yamls in directory `auto-coder-actions`.
 
+
 ![image](./images/image.png)
 
+飞书文档链接： https://uelng8wukz.feishu.cn/wiki/R7mswlEn2iROu4kbUezcRyJAnSf?fromScene=spaceOverview
 
 ## 🌟 Features
 
@@ -21,7 +23,6 @@ This project is powered by [auto-coder.chat](https://auto-coder.chat). You can c
 ### Prerequisites
 
 - Python 3.9+
-- Node.js and npm
 
 ### Installation
 
