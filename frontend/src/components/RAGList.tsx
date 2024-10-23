@@ -41,6 +41,9 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
     logType: string;
   } | null>(null);
 
+  const [logOffsets, setLogOffsets] = useState<{ [key: string]: number }>({});
+  const logContentRef = useRef<HTMLPreElement>(null);
+
   const showLogModal = async (ragName: string, logType: string) => {
     setCurrentLogRequest({ ragName, logType });
     setLogModal({
@@ -48,6 +51,7 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
       content: '',
       title: `${ragName} ${logType === 'out' ? 'Standard Output' : 'Standard Error'}`,
     });
+    setLogOffsets({ [`${ragName}-${logType}`]: 0 }); // Reset offset for new log view
     
     // Start polling logs
     if (logPolling) {
@@ -56,11 +60,26 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
     
     const pollLogs = async () => {
       try {
-        const response = await axios.get(`/rags/${ragName}/logs/${logType}`);
-        setLogModal(prev => ({
-          ...prev,
-          content: response.data.content,
-        }));
+        const currentOffset = logOffsets[`${ragName}-${logType}`] || 0;
+        const response = await axios.get(`/rags/${ragName}/logs/${logType}`, {
+          params: { offset: currentOffset }
+        });
+        
+        if (response.data.content) {
+          setLogModal(prev => ({
+            ...prev,
+            content: prev.content + response.data.content,
+          }));
+          setLogOffsets(prev => ({
+            ...prev,
+            [`${ragName}-${logType}`]: response.data.offset
+          }));
+          
+          // Scroll to bottom
+          if (logContentRef.current) {
+            logContentRef.current.scrollTop = logContentRef.current.scrollHeight;
+          }
+        }
       } catch (error) {
         console.error('Error fetching logs:', error);
         message.error('Failed to fetch logs');
@@ -254,7 +273,15 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
         width={800}
         bodyStyle={{ maxHeight: '500px', overflow: 'auto' }}
       >
-        <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
+        <pre 
+          ref={logContentRef}
+          style={{ 
+            whiteSpace: 'pre-wrap', 
+            wordWrap: 'break-word',
+            maxHeight: '450px',
+            overflowY: 'auto'
+          }}
+        >
           {logModal.content || 'No logs available'}
         </pre>
       </Modal>
