@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Table, Button, message, Card, Typography, Space, Tag, Tooltip } from 'antd';
-import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, DatabaseOutlined } from '@ant-design/icons';
+import { Table, Button, message, Card, Typography, Space, Tag, Tooltip, Modal } from 'antd';
+import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, DatabaseOutlined, FileOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 
 const { Title, Paragraph } = Typography;
 
@@ -26,6 +26,60 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
   const [rags, setRAGs] = useState<RAG[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState<{ [key: string]: boolean }>({});
+  const [logModal, setLogModal] = useState<{
+    visible: boolean;
+    content: string;
+    title: string;
+  }>({
+    visible: false,
+    content: '',
+    title: '',
+  });
+  const [logPolling, setLogPolling] = useState<NodeJS.Timeout | null>(null);
+  const [currentLogRequest, setCurrentLogRequest] = useState<{
+    ragName: string;
+    logType: string;
+  } | null>(null);
+
+  const showLogModal = async (ragName: string, logType: string) => {
+    setCurrentLogRequest({ ragName, logType });
+    setLogModal({
+      visible: true,
+      content: '',
+      title: `${ragName} ${logType === 'out' ? 'Standard Output' : 'Standard Error'}`,
+    });
+    
+    // Start polling logs
+    if (logPolling) {
+      clearInterval(logPolling);
+    }
+    
+    const pollLogs = async () => {
+      try {
+        const response = await axios.get(`/rags/${ragName}/logs/${logType}`);
+        setLogModal(prev => ({
+          ...prev,
+          content: response.data.content,
+        }));
+      } catch (error) {
+        console.error('Error fetching logs:', error);
+        message.error('Failed to fetch logs');
+      }
+    };
+
+    await pollLogs(); // Initial fetch
+    const interval = setInterval(pollLogs, 1000); // Poll every second
+    setLogPolling(interval);
+  };
+
+  const handleCloseLogModal = () => {
+    if (logPolling) {
+      clearInterval(logPolling);
+      setLogPolling(null);
+    }
+    setCurrentLogRequest(null);
+    setLogModal(prev => ({ ...prev, visible: false }));
+  };
 
   useEffect(() => {
     fetchRAGs();
@@ -159,6 +213,18 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
           >
             刷新状态
           </Button>
+          <Button
+            icon={<FileOutlined />}
+            onClick={() => showLogModal(record.name, 'out')}
+          >
+            标准输出
+          </Button>
+          <Button
+            icon={<ExclamationCircleOutlined />}
+            onClick={() => showLogModal(record.name, 'err')}
+          >
+            标准错误
+          </Button>
         </Space>
       ),
     },
@@ -180,6 +246,18 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
         pagination={false}
         bordered
       />
+      <Modal
+        title={logModal.title}
+        visible={logModal.visible}
+        onCancel={handleCloseLogModal}
+        footer={null}
+        width={800}
+        bodyStyle={{ maxHeight: '500px', overflow: 'auto' }}
+      >
+        <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
+          {logModal.content || 'No logs available'}
+        </pre>
+      </Modal>
     </Card>
   );
 };
