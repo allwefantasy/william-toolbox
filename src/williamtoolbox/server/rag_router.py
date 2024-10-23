@@ -32,6 +32,11 @@ async def get_rag_logs(rag_name: str, log_type: str, offset: int = 0) -> Dict[st
                     await f.seek(file_size - read_size)
                 content = await f.read(read_size)
                 current_offset = file_size
+            return {
+                "content": content, 
+                "exists": True, 
+                "offset": current_offset
+            }
         else:
             # For positive offset, read from the specified position to end
             if offset > file_size:

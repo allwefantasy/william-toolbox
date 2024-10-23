@@ -36,29 +36,9 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
     title: '',
   });
   // State for managing log auto-scrolling
-  const [autoScroll, setAutoScroll] = useState(true);
-  const [logPolling, setLogPolling] = useState<NodeJS.Timeout | null>(null);
-  const [pollingInterval, setPollingInterval] = useState(3000); // 默认3秒
-  const [maxLogSize, setMaxLogSize] = useState(100000); // 默认最大日志大小(字符)
-  const [currentLogRequest, setCurrentLogRequest] = useState<{
-    ragName: string;
-    logType: string;
-  } | null>(null);
-
-  const [logOffsets, setLogOffsets] = useState<{ [key: string]: number }>({});
-  const logContentRef = useRef<HTMLPreElement>(null);
   
-  // 动态调整轮询间隔
-  const adjustPollingInterval = (contentLength: number) => {
-    // 根据内容长度动态调整轮询间隔
-    if (contentLength > 50000) {
-      return 5000; // 内容较大时降低频率
-    } else if (contentLength > 10000) {
-      return 3000;
-    }
-    return 1000; // 内容较小时提高频率
-  };
-
+  const [logPolling, setLogPolling] = useState<NodeJS.Timeout | null>(null);
+    
   const showLogModal = async (ragName: string, logType: string) => {
     setLogModal({
       visible: true,
