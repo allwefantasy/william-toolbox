@@ -8,7 +8,7 @@ from pathlib import Path
 
 router = APIRouter()
 
-@router.get("/rags/{rag_name}/logs/{log_type}")
+@router.get("/rags/{rag_name}/logs/{log_type}/{offset}")
 async def get_rag_logs(rag_name: str, log_type: str, offset: int = 0) -> Dict[str, Any]:
     """Get the logs for a specific RAG with offset support."""
     if log_type not in ["out", "err"]:
@@ -21,7 +21,7 @@ async def get_rag_logs(rag_name: str, log_type: str, offset: int = 0) -> Dict[st
             return {"content": "", "exists": False, "offset": 0}
             
         file_size = os.path.getsize(log_file)
-        if offset > file_size:
+        if offset > file_size or offset == -1:
             return {"content": "", "exists": True, "offset": file_size}
             
         async with aiofiles.open(log_file, mode='r') as f:

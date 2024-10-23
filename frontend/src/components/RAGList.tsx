@@ -54,7 +54,7 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
     
     try {
       // 先获取最新的offset
-      const initialResponse = await axios.get(`/rags/${ragName}/logs/${logType}`);
+      const initialResponse = await axios.get(`/rags/${ragName}/logs/${logType}/-1`);
       const initialOffset = initialResponse.data.offset || 0;
       setLogOffsets({ [`${ragName}-${logType}`]: initialOffset });
     } catch (error) {
@@ -70,9 +70,8 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
     const pollLogs = async () => {
       try {
         const currentOffset = logOffsets[`${ragName}-${logType}`] || 0;
-        const response = await axios.get(`/rags/${ragName}/logs/${logType}`, {
-          params: { offset: currentOffset }
-        });
+        console.log(logOffsets[`${ragName}-${logType}`]);
+        const response = await axios.get(`/rags/${ragName}/logs/${logType}/${currentOffset}`);        
         
         if (response.data.content) {
           setLogModal(prev => ({
@@ -96,7 +95,7 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
     };
 
     await pollLogs(); // Initial fetch
-    const interval = setInterval(pollLogs, 1000); // Poll every second
+    const interval = setInterval(pollLogs, 3000); // Poll every 3 seconds
     setLogPolling(interval);
   };
 
