@@ -60,69 +60,23 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
   };
 
   const showLogModal = async (ragName: string, logType: string) => {
-    setAutoScroll(true);
-    setCurrentLogRequest({ ragName, logType });
     setLogModal({
       visible: true,
       content: '',
       title: `${ragName} ${logType === 'out' ? 'Standard Output' : 'Standard Error'}`,
     });
-    
-    try {
-      const initialResponse = await axios.get(`/rags/${ragName}/logs/${logType}/-1`);
-      const initialOffset = initialResponse.data.offset || 0;
-      setLogOffsets({ [`${ragName}-${logType}`]: initialOffset });
-    } catch (error) {
-      console.error('Error getting initial offset:', error);
-      setLogOffsets({ [`${ragName}-${logType}`]: 0 });
-    }
 
-    if (logPolling) {
-      clearInterval(logPolling);
-    }
-    
-    const pollLogs = async () => {
-      // if (!currentLogRequest) return;
-      
+    const fetchLogs = async () => {
       try {
-        console.log(`currentLogRequest: ${currentLogRequest?.ragName} ${currentLogRequest?.logType} maxLogSize: ${maxLogSize} logOffsets: ${logOffsets}`);
-        const currentOffset = logOffsets[`${ragName}-${logType}`] || 0;
-        const response = await axios.get(`/rags/${ragName}/logs/${logType}/${currentOffset}`);        
-        
+        const response = await axios.get(`/rags/${ragName}/logs/${logType}/0`);
         if (response.data.content) {
-          setLogModal(prev => {
-            let newContent = prev.content + response.data.content;
-            // 限制日志大小
-            if (newContent.length > maxLogSize) {
-              newContent = newContent.slice(-maxLogSize);
-            }
-            return {
-              ...prev,
-              content: newContent
-            };
-          });
-          
-          setLogOffsets(prev => ({
+          // 获取最新的10000个字符
+          const content = response.data.content;
+          const latestContent = content.slice(-10000);
+          setLogModal(prev => ({
             ...prev,
-            [`${ragName}-${logType}`]: response.data.offset
+            content: latestContent
           }));
-
-          // 根据内容长度调整轮询间隔
-          const newInterval = adjustPollingInterval(response.data.content.length);
-          if (newInterval !== pollingInterval) {
-            setPollingInterval(newInterval);
-            // 重启轮询
-            if (logPolling) {
-              clearInterval(logPolling);
-              const newPoll = setInterval(pollLogs, newInterval);
-              setLogPolling(newPoll);
-            }
-          }
-          
-          // 仅在autoScroll为true时滚动到底部
-          if (autoScroll && logContentRef.current) {
-            logContentRef.current.scrollTop = logContentRef.current.scrollHeight;
-          }
         }
       } catch (error) {
         console.error('Error fetching logs:', error);
@@ -130,42 +84,21 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
       }
     };
 
-    await pollLogs(); // Initial fetch
-    const interval = setInterval(pollLogs, pollingInterval);
+    // 立即获取一次日志
+    await fetchLogs();
+    
+    // 每3秒轮询一次
+    const interval = setInterval(fetchLogs, 3000);
     setLogPolling(interval);
   };
 
   // 监听滚动事件来控制自动滚动
-  const handleScroll = () => {
-    if (logContentRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } = logContentRef.current;
-      // 如果用户向上滚动,禁用自动滚动
-      setAutoScroll(scrollHeight - scrollTop - clientHeight < 30);
-    }
-  };
-
   const handleCloseLogModal = () => {
     if (logPolling) {
       clearInterval(logPolling);
       setLogPolling(null);
     }
-    setCurrentLogRequest(null);
     setLogModal(prev => ({ ...prev, visible: false }));
-  };
-
-  const clearLogs = () => {
-    setLogModal(prev => ({
-      ...prev,
-      content: ''
-    }));
-    // 重置 offset
-    if (currentLogRequest) {
-      const { ragName, logType } = currentLogRequest;
-      setLogOffsets(prev => ({
-        ...prev,
-        [`${ragName}-${logType}`]: 0
-      }));
-    }
   };
 
   useEffect(() => {
@@ -337,47 +270,22 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
         title={logModal.title}
         visible={logModal.visible}
         onCancel={handleCloseLogModal}
-        footer={[
-          <Button key="clear" onClick={clearLogs}>
-            清除日志
-          </Button>,
-          <Button key="autoScroll" onClick={() => setAutoScroll(!autoScroll)}>
-            {autoScroll ? '禁用自动滚动' : '启用自动滚动'}
-          </Button>
-        ]}
+        footer={null}
         width={800}
         bodyStyle={{ maxHeight: '500px', overflow: 'auto' }}
       >
-        <div style={{ marginBottom: 16 }}>
-          <Space>
-            轮询间隔: {pollingInterval}ms
-            <Select
-              value={maxLogSize}
-              style={{ width: 200 }}
-              onChange={(value) => setMaxLogSize(value)}
-            >
-              <Select.Option value={50000}>最大50K字符</Select.Option>
-              <Select.Option value={100000}>最大100K字符</Select.Option>
-              <Select.Option value={500000}>最大500K字符</Select.Option>
-            </Select>
-          </Space>
-        </div>
-        <pre 
-          ref={logContentRef}
-          onScroll={handleScroll}
-          style={{ 
-            whiteSpace: 'pre-wrap', 
-            wordWrap: 'break-word',
-            maxHeight: '450px',
-            overflowY: 'auto',
-            backgroundColor: '#f5f5f5',
-            padding: '12px',
-            borderRadius: '4px',
-            fontSize: '12px',
-            lineHeight: '1.5',
-            fontFamily: 'monospace'
-          }}
-        >
+        <pre style={{ 
+          whiteSpace: 'pre-wrap', 
+          wordWrap: 'break-word',
+          maxHeight: '450px',
+          overflowY: 'auto',
+          backgroundColor: '#f5f5f5',
+          padding: '12px',
+          borderRadius: '4px',
+          fontSize: '12px',
+          lineHeight: '1.5',
+          fontFamily: 'monospace'
+        }}>
           {logModal.content || 'No logs available'}
         </pre>
       </Modal>
