@@ -276,6 +276,7 @@ async def update_conversation(conversation_id: str, request: Conversation):
     # Find and update the conversation
     for conv in chat_data["conversations"]:
         if conv["id"] == conversation_id:
+            logger.info(f"Updating conversation {conversation_id}")
             conv.update({
                 "title": request.title,
                 "messages": [msg.model_dump() for msg in request.messages],

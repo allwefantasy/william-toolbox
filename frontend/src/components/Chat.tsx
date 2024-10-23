@@ -3,7 +3,7 @@ import { Input, Button, List, Avatar, Typography, Select, Space, Dropdown, Menu,
 import { SendOutlined, PlusCircleOutlined, GithubOutlined, SettingOutlined, EditOutlined, PictureOutlined, FileOutlined, DatabaseOutlined, DeleteOutlined, LoadingOutlined, RobotOutlined, RedoOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import './Chat.css';
-import { message } from 'antd';
+import { message as MessageBox } from 'antd';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { coy } from "react-syntax-highlighter/dist/esm/styles/prism";
@@ -27,100 +27,7 @@ interface Conversation {
 }
 
 const Chat: React.FC = () => {
-  const handleRegenerateResponse = async (message: Message) => {
-    const messageIndex = messages.findIndex(msg => msg.id === message.id);
-    if (messageIndex === -1) return;
-    
-    const messagesToSend = messages.slice(0, messageIndex + 1);
-    setIsLoading(true);
-    
-    try {
-      const streamResponse = await axios.post(`/chat/conversations/${currentConversationId}/messages/stream`, {
-        conversation_id: currentConversationId,
-        messages: messagesToSend,
-        list_type: listType,
-        selected_item: selectedItem
-      });
-
-      if (streamResponse.data && streamResponse.data.request_id) {
-        const requestId = streamResponse.data.request_id;
-        let currentIndex = 0;
-        let assistantMessage = '';
-        
-        const assistant_message_id = streamResponse.data.response_message_id;
-        setResponseMessageId(assistant_message_id);
-
-        const nextMessage = messages[messageIndex + 1];
-        let newMessages;
-        if (nextMessage && nextMessage.role === 'assistant') {
-          newMessages = [
-            ...messages.slice(0, messageIndex + 1),
-            { id: assistant_message_id, role: 'assistant', content: '', timestamp: new Date().toISOString() },
-            ...messages.slice(messageIndex + 2)
-          ];
-        } else {
-          newMessages = [
-            ...messages.slice(0, messageIndex + 1),
-            { id: assistant_message_id, role: 'assistant', content: '', timestamp: new Date().toISOString() },
-            ...messages.slice(messageIndex + 1)
-          ];
-        }
-        setMessages(newMessages);
-
-        while (true) {
-          const eventsResponse = await axios.get(`/chat/conversations/events/${requestId}/${currentIndex}`);
-          const events = eventsResponse.data.events;
-
-          if (!events || events.length === 0) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-            continue;
-          }
-
-          for (const event of events) {
-            if (event.event === 'error') {
-              throw new Error(event.content);
-            }
-
-            if (event.event === 'chunk') {
-              assistantMessage += event.content;
-              setMessages(prevMessages =>
-                prevMessages.map(msg => {
-                  if (msg.id === assistant_message_id) {
-                    return { ...msg, content: assistantMessage };
-                  }
-                  return msg;
-                })
-              );
-              currentIndex = event.index + 1;
-            }
-
-            if (event.event === 'done') {
-              // Update conversation after regeneration is complete
-              try {
-                await axios.put(`/chat/conversations/${currentConversationId}`, {
-                  id: currentConversationId,
-                  title: currentConversationTitle,
-                  messages: newMessages,
-                  created_at: conversation?.created_at || new Date().toISOString(),
-                  updated_at: new Date().toISOString()
-                });
-              } catch (error) {
-                console.error('Error updating conversation:', error);
-                message.error('Failed to update conversation');
-              }
-              return;
-            }
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error regenerating response:', error);
-      message.error('Failed to regenerate response');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
@@ -161,6 +68,106 @@ const Chat: React.FC = () => {
     }
   }, [currentConversationId]);
 
+  const handleRegenerateResponse = async (message: Message) => {
+    const messageIndex = messages.findIndex(msg => msg.id === message.id);
+    if (messageIndex === -1) return;
+    
+    const messagesToSend = messages.slice(0, messageIndex + 1);    
+    setIsLoading(true);
+    
+    try {
+      const streamResponse = await axios.post(`/chat/conversations/${currentConversationId}/messages/stream`, {
+        conversation_id: currentConversationId,
+        messages: messagesToSend,
+        list_type: listType,
+        selected_item: selectedItem
+      });
+
+      if (streamResponse.data && streamResponse.data.request_id) {
+        const requestId = streamResponse.data.request_id;
+        let currentIndex = 0;
+        let assistantMessage = '';
+        
+        const assistant_message_id = streamResponse.data.response_message_id;
+        setResponseMessageId(assistant_message_id);
+
+        const nextMessage = messages[messageIndex + 1];
+        
+        let newMessages;
+        if (nextMessage && nextMessage.role === 'assistant') {
+          newMessages = [
+            ...messages.slice(0, messageIndex + 1),
+            { id: assistant_message_id, role: 'assistant', content: '', timestamp: new Date().toISOString() },
+            ...messages.slice(messageIndex + 2)
+          ];
+        } else {
+          newMessages = [
+            ...messages.slice(0, messageIndex + 1),
+            { id: assistant_message_id, role: 'assistant', content: '', timestamp: new Date().toISOString() },
+            ...messages.slice(messageIndex + 1)
+          ];
+        }
+        setMessages(newMessages as Message[]);
+
+        while (true) {
+          const eventsResponse = await axios.get(`/chat/conversations/events/${requestId}/${currentIndex}`);
+          const events = eventsResponse.data.events;
+
+          if (!events || events.length === 0) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            continue;
+          }
+
+          for (const event of events) {
+            if (event.event === 'error') {
+              throw new Error(event.content);
+            }
+
+            if (event.event === 'chunk') {
+              assistantMessage += event.content;
+              setMessages(prevMessages =>
+                prevMessages.map(msg => {
+                  if (msg.id === assistant_message_id) {
+                    return { ...msg, content: assistantMessage };
+                  }
+                  return msg;
+                })
+              );
+              currentIndex = event.index + 1;
+            }
+
+            if (event.event === 'done') {
+              // Update conversation after regeneration is complete
+              try {
+                for( const message of newMessages) {
+                   if (message.id === assistant_message_id) {
+                    message.content = assistantMessage;
+                   }
+                }
+                await axios.put(`/chat/conversations/${currentConversationId}`, {
+                  id: currentConversationId,
+                  title: currentConversationTitle,
+                  messages: newMessages,
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString()
+                });
+              } catch (error) {
+                console.error('Error updating conversation:', error);
+                MessageBox.error('Failed to update conversation');
+              }
+              return;
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error regenerating response:', error);
+      MessageBox.error('Failed to regenerate response');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const fetchConversations = async () => {
     try {
       const response = await axios.get('/chat/conversations');
@@ -171,7 +178,7 @@ const Chat: React.FC = () => {
       }
     } catch (error) {
       console.error('Error fetching conversations:', error);
-      message.error('Failed to load conversations');
+      MessageBox.error('Failed to load conversations');
     }
   };
 
@@ -181,7 +188,7 @@ const Chat: React.FC = () => {
       setMessages(response.data.messages);
     } catch (error) {
       console.error('Error fetching messages:', error);
-      message.error('Failed to load messages');
+      MessageBox.error('Failed to load messages');
     }
   };
 
@@ -309,7 +316,7 @@ const Chat: React.FC = () => {
         }
       } catch (error) {
         console.error('Error sending message:', error);
-        message.error('Failed to send message');
+        MessageBox.error('Failed to send message');
         // Remove the assistant message if there's an error
         setMessages(prevMessages => prevMessages.slice(0, -1));
       } finally {
@@ -347,7 +354,7 @@ const Chat: React.FC = () => {
       setEditingTitleId(null);
     } catch (error) {
       console.error('Error updating conversation title:', error);
-      message.error('Failed to update conversation title');
+      MessageBox.error('Failed to update conversation title');
     }
   };
 
@@ -364,10 +371,10 @@ const Chat: React.FC = () => {
             setCurrentConversationTitle('');
             setMessages([]);
           }
-          message.success('会话已删除');
+          MessageBox.success('会话已删除');
         } catch (error) {
           console.error('Error deleting conversation:', error);
-          message.error('删除会话失败');
+          MessageBox.error('删除会话失败');
         }
       },
     });
@@ -411,7 +418,7 @@ const Chat: React.FC = () => {
               setMessages(response.data.messages);
             } catch (error) {
               console.error('Error creating new conversation:', error);
-              message.error('创建新对话失败');
+              MessageBox.error('创建新对话失败');
             }
           }}
         >
