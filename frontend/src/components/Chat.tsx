@@ -344,7 +344,8 @@ const Chat: React.FC = () => {
     if (editingTitle.trim() === '') return;
 
     try {
-      await axios.put(`/chat/conversations/${conv.id}`, { title: editingTitle });
+      // 使用 /chat/conversations/{conversation_id}/title 接口
+      await axios.put(`/chat/conversations/${conv.id}/title`, { title: editingTitle });
       setConversations(conversations.map(c =>
         c.id === conv.id ? { ...c, title: editingTitle } : c
       ));
