@@ -357,15 +357,18 @@ useEffect(() => {
             </Typography.Text>
           }
           description={
-            item.content === 'Assistant is typing...' ? (
-              <>
+            isLoading && messages.indexOf(item) === messages.length - 1 ? (
+              <div>
+                <Typography.Text>
+                  Assistant is typing...
+                </Typography.Text>
                 <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} />
                 {countdown !== null && (
                   <Typography.Text style={{ marginLeft: 10 }}>
                     思考中...{countdown}s
                   </Typography.Text>
                 )}
-              </>
+              </div>
             ) : (
               <Typography.Text style={{ color: item.role === 'user' ? '#096dd9' : '#389e0d' }}>
                 <ReactMarkdown
