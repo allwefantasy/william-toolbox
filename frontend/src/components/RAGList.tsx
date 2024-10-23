@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Table, Button, message, Card, Typography, Space, Tag, Tooltip, Modal } from 'antd';
+import { Table, Button, message, Card, Typography, Space, Tag, Tooltip, Modal, Select } from 'antd';
 import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, DatabaseOutlined, FileOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 
 const { Title, Paragraph } = Typography;
@@ -82,9 +82,10 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
     }
     
     const pollLogs = async () => {
-      if (!currentLogRequest) return;
+      // if (!currentLogRequest) return;
       
       try {
+        console.log(`currentLogRequest: ${currentLogRequest?.ragName} ${currentLogRequest?.logType} maxLogSize: ${maxLogSize} logOffsets: ${logOffsets}`);
         const currentOffset = logOffsets[`${ragName}-${logType}`] || 0;
         const response = await axios.get(`/rags/${ragName}/logs/${logType}/${currentOffset}`);        
         
@@ -355,9 +356,9 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
               style={{ width: 200 }}
               onChange={(value) => setMaxLogSize(value)}
             >
-              <Option value={50000}>最大50K字符</Option>
-              <Option value={100000}>最大100K字符</Option>
-              <Option value={500000}>最大500K字符</Option>
+              <Select.Option value={50000}>最大50K字符</Select.Option>
+              <Select.Option value={100000}>最大100K字符</Select.Option>
+              <Select.Option value={500000}>最大500K字符</Select.Option>
             </Select>
           </Space>
         </div>
