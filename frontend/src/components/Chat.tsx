@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Input, Button, List, Avatar, Typography, Select, Space, Dropdown, Menu, Modal, Spin } from 'antd';
+import { Input, Button, List, Avatar, Typography, Select, Space, Dropdown, Menu, Modal, Spin, Tooltip } from 'antd';
 import { SendOutlined, PlusCircleOutlined, GithubOutlined, SettingOutlined, EditOutlined, PictureOutlined, FileOutlined, DatabaseOutlined, DeleteOutlined, LoadingOutlined, RobotOutlined, RedoOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import './Chat.css';
@@ -71,7 +71,7 @@ const Chat: React.FC = () => {
       setConversations(response.data);
       if (response.data.length > 0) {
         setCurrentConversationId(response.data[0].id);
-        setCurrentConversationTitle(response.data[0].title);        
+        setCurrentConversationTitle(response.data[0].title);
       }
     } catch (error) {
       console.error('Error fetching conversations:', error);
@@ -90,37 +90,37 @@ const Chat: React.FC = () => {
   };
 
   const fetchItemList = async () => {
-  try {
-    let response;
-    if (listType === 'models') {
-      response = await axios.get('/models');
-      const runningModels = response.data.filter((model: any) => model.status === 'running').map((model: any) => model.name);
-      setItemList(runningModels);
-      if (runningModels.length > 0 && !selectedItem) {
-        setSelectedItem(runningModels[0]);
+    try {
+      let response;
+      if (listType === 'models') {
+        response = await axios.get('/models');
+        const runningModels = response.data.filter((model: any) => model.status === 'running').map((model: any) => model.name);
+        setItemList(runningModels);
+        if (runningModels.length > 0 && !selectedItem) {
+          setSelectedItem(runningModels[0]);
+        }
+      } else {
+        response = await axios.get('/rags');
+        const runningRags = response.data.filter((rag: any) => rag.status === 'running').map((rag: any) => rag.name);
+        setItemList(runningRags);
+        if (runningRags.length > 0 && !selectedItem) {
+          setSelectedItem(runningRags[0]);
+        }
       }
-    } else {
-      response = await axios.get('/rags');
-      const runningRags = response.data.filter((rag: any) => rag.status === 'running').map((rag: any) => rag.name);
-      setItemList(runningRags);
-      if (runningRags.length > 0 && !selectedItem) {
-        setSelectedItem(runningRags[0]);
-      }
+    } catch (error) {
+      console.error('Error fetching item list:', error);
     }
-  } catch (error) {
-    console.error('Error fetching item list:', error);
-  }
-};
+  };
 
-useEffect(() => {
-  fetchItemList();
-}, []);
+  useEffect(() => {
+    fetchItemList();
+  }, []);
 
   const handleSendMessage = async () => {
     if (inputMessage.trim() && currentConversationId) {
-      const newUserMessage: Message = { 
-        role: 'user', 
-        content: inputMessage, 
+      const newUserMessage: Message = {
+        role: 'user',
+        content: inputMessage,
         timestamp: new Date().toISOString(),
         id: Math.random().toString(36).substring(7)
       };
@@ -154,7 +154,7 @@ useEffect(() => {
           const requestId = streamResponse.data.request_id;
           let currentIndex = 0;
           let assistantMessage = '';
-          
+
           // Add initial assistant message
           const tempMessage = { role: 'assistant' as const, content: '', timestamp: new Date().toISOString() };
           setMessages(prevMessages => [...prevMessages, tempMessage]);
@@ -170,34 +170,34 @@ useEffect(() => {
             }
 
             for (const event of events) {
-            if (event.event === 'error') {
-              // Clear countdown on error
-              if (countdownInterval) {
-                clearInterval(countdownInterval);
-                setCountdownInterval(null);
-              }
-              setCountdown(null);
-              throw new Error(event.content);
-            }
-
-              if (event.event === 'chunk') {
-              // Clear countdown on first content
-              if (!assistantMessage) {
+              if (event.event === 'error') {
+                // Clear countdown on error
                 if (countdownInterval) {
                   clearInterval(countdownInterval);
                   setCountdownInterval(null);
                 }
                 setCountdown(null);
+                throw new Error(event.content);
               }
-              assistantMessage += event.content;
-              // Update the last message with new content
-              setMessages(prevMessages => 
-                prevMessages.map((msg, index) => 
-                  index === prevMessages.length - 1 
-                    ? { ...msg, content: assistantMessage }
-                    : msg
-                )
-              );
+
+              if (event.event === 'chunk') {
+                // Clear countdown on first content
+                if (!assistantMessage) {
+                  if (countdownInterval) {
+                    clearInterval(countdownInterval);
+                    setCountdownInterval(null);
+                  }
+                  setCountdown(null);
+                }
+                assistantMessage += event.content;
+                // Update the last message with new content
+                setMessages(prevMessages =>
+                  prevMessages.map((msg, index) =>
+                    index === prevMessages.length - 1
+                      ? { ...msg, content: assistantMessage }
+                      : msg
+                  )
+                );
                 currentIndex = event.index + 1;
               }
 
@@ -238,7 +238,7 @@ useEffect(() => {
 
     try {
       await axios.put(`/chat/conversations/${conv.id}`, { title: editingTitle });
-      setConversations(conversations.map(c => 
+      setConversations(conversations.map(c =>
         c.id === conv.id ? { ...c, title: editingTitle } : c
       ));
       if (currentConversationId === conv.id) {
@@ -290,19 +290,19 @@ useEffect(() => {
   return (
     <div className="chat-container">
       <div className="sidebar">
-        <Button 
-          type="primary" 
-          icon={<PlusCircleOutlined />} 
+        <Button
+          type="primary"
+          icon={<PlusCircleOutlined />}
           style={{ marginBottom: 20, width: '100%' }}
           onClick={async () => {
-            try {              
+            try {
               const response = await axios.post("/chat/conversations", {
                 title: "新的聊天"
               });
               const newConversation: Conversation = {
                 id: response.data.id,
                 title: response.data.title,
-                time: response.data.created_at,                
+                time: response.data.created_at,
                 messages: response.data.messages.length
               };
               setConversations([newConversation, ...conversations]);
@@ -319,11 +319,11 @@ useEffect(() => {
         </Button>
         {conversations.map((conv) => (
           <Dropdown overlay={menu(conv)} trigger={['contextMenu']} key={conv.id}>
-            <div 
+            <div
               className={`conversation-item ${currentConversationId === conv.id ? 'active' : ''}`}
               onClick={() => {
                 setCurrentConversationId(conv.id);
-                setCurrentConversationTitle(conv.title);                
+                setCurrentConversationTitle(conv.title);
               }}
               onDoubleClick={() => handleTitleDoubleClick(conv)}
             >
@@ -355,160 +355,162 @@ useEffect(() => {
           className="message-list"
           dataSource={messages}
           renderItem={(item: Message) => (
-      <List.Item>
-        <List.Item.Meta
-          avatar={<Avatar icon={item.role === 'user' ? <EditOutlined /> : <RobotOutlined />} />}
-          title={
-            <Typography.Text strong style={{ color: item.role === 'user' ? '#1890ff' : '#52c41a' }}>
-              {item.role === 'user' ? 'You' : 'Assistant'}
-            </Typography.Text>
-          }
-          description={
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-              <div style={{ flex: 1 }}>
-                {isLoading && messages.indexOf(item) === messages.length - 1 ? (
-                  <div>
-                    <Typography.Text>
-                      Assistant is typing...
-                    </Typography.Text>
-                    <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} />
-                    {countdown !== null && (
-                      <Typography.Text style={{ marginLeft: 10 }}>
-                        思考中...{countdown}s
-                      </Typography.Text>
-                    )}
-                  </div>
-                ) : (
-                  <Typography.Text style={{ color: item.role === 'user' ? '#096dd9' : '#389e0d' }}>
-                    <ReactMarkdown
-                      components={{
-                        code({ inline, className, children, ...props }: any) {
-                          const match = /language-(\w+)/.exec(className || '');
-                          return !inline && match ? (
-                            <CodeBlock
-                              language={match[1]}
-                              value={String(children).replace(/\n$/, '')}
-                              {...props}
-                            />
-                          ) : (
-                            <code className={className} {...props}>
-                              {children}
-                            </code>
-                          );
-                        },
-                      }}
-                    >
-                      {item.content}
-                    </ReactMarkdown>
+            <List.Item>
+              <List.Item.Meta
+                avatar={<Avatar icon={item.role === 'user' ? <EditOutlined /> : <RobotOutlined />} />}
+                title={
+                  <Typography.Text strong style={{ color: item.role === 'user' ? '#1890ff' : '#52c41a' }}>
+                    {item.role === 'user' ? 'You' : 'Assistant'}
                   </Typography.Text>
-                )}
-              </div>
-              {item.role === 'user' && (
-                <Button
-                  icon={<RedoOutlined />}
-                  type="text"
-                  onClick={async () => {
-                    // 找到当前消息后面的所有消息
-                    const currentIndex = messages.findIndex(msg => msg.id === item.id);
-                    if (currentIndex === -1) return;
-                    
-                    // 获取并保留到当前消息的所有消息
-                    const previousMessages = messages.slice(0, currentIndex + 1);
-                    setMessages(previousMessages);
-                    
-                    // 重新发送请求获取回复
-                    setIsLoading(true);
-                    setCountdown(120);
-                    const interval = setInterval(() => {
-                      setCountdown((prev) => {
-                        if (prev === null || prev <= 0) {
-                          clearInterval(interval);
-                          return null;
-                        }
-                        return prev - 1;
-                      });
-                    }, 1000);
-                    setCountdownInterval(interval);
+                }
+                description={
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                    <div style={{ flex: 1 }}>
+                      {isLoading && messages.indexOf(item) === messages.length - 1 ? (
+                        <div>
+                          <Typography.Text>
+                            Assistant is typing...
+                          </Typography.Text>
+                          <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} />
+                          {countdown !== null && (
+                            <Typography.Text style={{ marginLeft: 10 }}>
+                              思考中...{countdown}s
+                            </Typography.Text>
+                          )}
+                        </div>
+                      ) : (
+                        <Typography.Text style={{ color: item.role === 'user' ? '#096dd9' : '#389e0d' }}>
+                          <ReactMarkdown
+                            components={{
+                              code({ inline, className, children, ...props }: any) {
+                                const match = /language-(\w+)/.exec(className || '');
+                                return !inline && match ? (
+                                  <CodeBlock
+                                    language={match[1]}
+                                    value={String(children).replace(/\n$/, '')}
+                                    {...props}
+                                  />
+                                ) : (
+                                  <code className={className} {...props}>
+                                    {children}
+                                  </code>
+                                );
+                              },
+                            }}
+                          >
+                            {item.content}
+                          </ReactMarkdown>
+                        </Typography.Text>
+                      )}
+                    </div>
+                    {item.role === 'user' && (
+                      <Tooltip title="重新发送">
+                        <Button
+                          icon={<RedoOutlined />}
+                          type="text"
+                          onClick={async () => {
+                            // 找到当前消息后面的所有消息
+                            const currentIndex = messages.findIndex(msg => msg.id === item.id);
+                            if (currentIndex === -1) return;
 
-                    try {
-                      const streamResponse = await axios.post(`/chat/conversations/${currentConversationId}/messages/stream`, {
-                        conversation_id: currentConversationId,
-                        message: item,
-                        list_type: listType,
-                        selected_item: selectedItem
-                      });
+                            // 获取并保留到当前消息的所有消息
+                            const previousMessages = messages.slice(0, currentIndex + 1);
+                            setMessages(previousMessages);
 
-                      if (streamResponse.data && streamResponse.data.request_id) {
-                        const requestId = streamResponse.data.request_id;
-                        let currentIndex = 0;
-                        let assistantMessage = '';
-                        
-                        const tempMessage = { role: 'assistant' as const, content: '', timestamp: new Date().toISOString() };
-                        setMessages(prev => [...prev, tempMessage]);
+                            // 重新发送请求获取回复
+                            setIsLoading(true);
+                            setCountdown(120);
+                            const interval = setInterval(() => {
+                              setCountdown((prev) => {
+                                if (prev === null || prev <= 0) {
+                                  clearInterval(interval);
+                                  return null;
+                                }
+                                return prev - 1;
+                              });
+                            }, 1000);
+                            setCountdownInterval(interval);
 
-                        while (true) {
-                          const eventsResponse = await axios.get(`/chat/conversations/events/${requestId}/${currentIndex}`);
-                          const events = eventsResponse.data.events;
+                            try {
+                              const streamResponse = await axios.post(`/chat/conversations/${currentConversationId}/messages/stream`, {
+                                conversation_id: currentConversationId,
+                                message: item,
+                                list_type: listType,
+                                selected_item: selectedItem
+                              });
 
-                          if (!events || events.length === 0) {
-                            await new Promise(resolve => setTimeout(resolve, 100));
-                            continue;
-                          }
+                              if (streamResponse.data && streamResponse.data.request_id) {
+                                const requestId = streamResponse.data.request_id;
+                                let currentIndex = 0;
+                                let assistantMessage = '';
 
-                          for (const event of events) {
-                            if (event.event === 'error') {
+                                const tempMessage = { role: 'assistant' as const, content: '', timestamp: new Date().toISOString() };
+                                setMessages(prev => [...prev, tempMessage]);
+
+                                while (true) {
+                                  const eventsResponse = await axios.get(`/chat/conversations/events/${requestId}/${currentIndex}`);
+                                  const events = eventsResponse.data.events;
+
+                                  if (!events || events.length === 0) {
+                                    await new Promise(resolve => setTimeout(resolve, 100));
+                                    continue;
+                                  }
+
+                                  for (const event of events) {
+                                    if (event.event === 'error') {
+                                      if (countdownInterval) {
+                                        clearInterval(countdownInterval);
+                                        setCountdownInterval(null);
+                                      }
+                                      setCountdown(null);
+                                      throw new Error(event.content);
+                                    }
+
+                                    if (event.event === 'chunk') {
+                                      if (!assistantMessage) {
+                                        if (countdownInterval) {
+                                          clearInterval(countdownInterval);
+                                          setCountdownInterval(null);
+                                        }
+                                        setCountdown(null);
+                                      }
+                                      assistantMessage += event.content;
+                                      setMessages(prevMessages =>
+                                        prevMessages.map((msg, index) =>
+                                          index === prevMessages.length - 1
+                                            ? { ...msg, content: assistantMessage }
+                                            : msg
+                                        )
+                                      );
+                                      currentIndex = event.index + 1;
+                                    }
+
+                                    if (event.event === 'done') {
+                                      return;
+                                    }
+                                  }
+                                }
+                              }
+                            } catch (error) {
+                              console.error('Error refreshing message:', error);
+                              message.error('Failed to refresh message');
+                              setMessages(prevMessages => prevMessages.slice(0, -1));
+                            } finally {
+                              setIsLoading(false);
                               if (countdownInterval) {
                                 clearInterval(countdownInterval);
                                 setCountdownInterval(null);
                               }
                               setCountdown(null);
-                              throw new Error(event.content);
                             }
-
-                            if (event.event === 'chunk') {
-                              if (!assistantMessage) {
-                                if (countdownInterval) {
-                                  clearInterval(countdownInterval);
-                                  setCountdownInterval(null);
-                                }
-                                setCountdown(null);
-                              }
-                              assistantMessage += event.content;
-                              setMessages(prevMessages => 
-                                prevMessages.map((msg, index) => 
-                                  index === prevMessages.length - 1 
-                                    ? { ...msg, content: assistantMessage }
-                                    : msg
-                                )
-                              );
-                              currentIndex = event.index + 1;
-                            }
-
-                            if (event.event === 'done') {
-                              return;
-                            }
-                          }
-                        }
-                      }
-                    } catch (error) {
-                      console.error('Error refreshing message:', error);
-                      message.error('Failed to refresh message');
-                      setMessages(prevMessages => prevMessages.slice(0, -1));
-                    } finally {
-                      setIsLoading(false);
-                      if (countdownInterval) {
-                        clearInterval(countdownInterval);
-                        setCountdownInterval(null);
-                      }
-                      setCountdown(null);
-                    }
-                  }}
-                />
-              )}
-            </div>
-          }
-        />
-      </List.Item>
+                          }}
+                        />
+                      </Tooltip>
+                    )}
+                  </div>
+                }
+              />
+            </List.Item>
           )}
         />
         <div ref={messagesEndRef} />
