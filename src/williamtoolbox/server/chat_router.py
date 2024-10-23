@@ -30,7 +30,7 @@ async def add_message(conversation_id: str, request: AddMessageRequest):
     # Add timestamp to the last user message
     request.messages[-1]["timestamp"] = datetime.now().isoformat()
     # Replace the entire conversation messages with the new messages
-    conversation["messages"] = request.messages
+    conversation["messages"] = [msg.model_dump() for msg in request.messages]
 
     list_type = request.list_type
     selected_item = request.selected_item
@@ -111,12 +111,14 @@ async def add_message_stream(conversation_id: str, request: AddMessageRequest):
         raise HTTPException(status_code=404, detail="Conversation not found")
 
     # Replace the entire conversation messages with the full message history
-    conversation["messages"] = request.messages
+    conversation["messages"] = [msg.model_dump() for msg in request.messages]
     await save_chat_data(chat_data)
     response_message_id = str(uuid.uuid4())
 
     asyncio.create_task(
-        process_message_stream(request_id, request, conversation, response_message_id)
+        process_message_stream(
+            request_id, request, conversation, response_message_id, chat_data=chat_data
+        )
     )
 
     return AddMessageResponse(
@@ -149,11 +151,11 @@ async def get_message_events(request_id: str, index: int):
 
 async def process_message_stream(
     request_id: str,
-    request: AddMessageRequest, 
+    request: AddMessageRequest,
     conversation: Conversation,
     response_message_id: str,
+    chat_data: ChatData,
 ):
-
     file_path = await get_event_file_path(request_id)
     idx = 0
     async with aiofiles.open(file_path, "w") as event_file:
@@ -167,8 +169,8 @@ async def process_message_stream(
                 response = await client.chat.completions.create(
                     model=request.selected_item,
                     messages=[
-                        {"role": msg["role"], "content": msg["content"]} 
-                        for msg in request.messages
+                        {"role": msg["role"], "content": msg["content"]}
+                        for msg in conversation["messages"]
                     ],
                     stream=True,
                     max_tokens=4096,
@@ -255,10 +257,12 @@ async def process_message_stream(
                 s += event["content"]
 
     # Add the assistant's response to the messages list
-    conversation["messages"] = request.messages + [{
-        "id": response_message_id,
-        "role": "assistant",
-        "content": s,
-        "timestamp": datetime.now().isoformat(),
-    }]
+    conversation["messages"] = [msg.model_dump() for msg in request.messages] + [
+        {
+            "id": response_message_id,
+            "role": "assistant",
+            "content": s,
+            "timestamp": datetime.now().isoformat(),
+        }
+    ]
     await save_chat_data(chat_data)
