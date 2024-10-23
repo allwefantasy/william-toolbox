@@ -71,13 +71,30 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
   };
 
   // 监听滚动事件来控制自动滚动
-  const handleCloseLogModal = () => {
+  // Create a ref for the log content container
+const logContentRef = useRef<HTMLPreElement>(null);
+
+const handleCloseLogModal = () => {
     if (logPolling) {
       clearInterval(logPolling);
       setLogPolling(null);
     }
     setLogModal(prev => ({ ...prev, visible: false }));
   };
+
+// Function to scroll to bottom
+const scrollToBottom = () => {
+    if (logContentRef.current) {
+      logContentRef.current.scrollTop = logContentRef.current.scrollHeight;
+    }
+};
+
+// Update useEffect to scroll when content changes
+useEffect(() => {
+    if (logModal.visible) {
+      scrollToBottom();
+    }
+}, [logModal.content]);
 
   useEffect(() => {
     fetchRAGs();
@@ -252,18 +269,21 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
         width={800}
         bodyStyle={{ maxHeight: '500px', overflow: 'auto' }}
       >
-        <pre style={{ 
-          whiteSpace: 'pre-wrap', 
-          wordWrap: 'break-word',
-          maxHeight: '450px',
-          overflowY: 'auto',
-          backgroundColor: '#f5f5f5',
-          padding: '12px',
-          borderRadius: '4px',
-          fontSize: '12px',
-          lineHeight: '1.5',
-          fontFamily: 'monospace'
-        }}>
+        <pre 
+          ref={logContentRef}
+          style={{ 
+            whiteSpace: 'pre-wrap', 
+            wordWrap: 'break-word',
+            maxHeight: '450px',
+            overflowY: 'auto',
+            backgroundColor: '#f5f5f5',
+            padding: '12px',
+            borderRadius: '4px',
+            fontSize: '12px',
+            lineHeight: '1.5',
+            fontFamily: 'monospace'
+          }}
+        >
           {logModal.content || 'No logs available'}
         </pre>
       </Modal>
