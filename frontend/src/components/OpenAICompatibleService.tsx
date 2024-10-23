@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Form, Input, Button, message, Card, Typography, Space, Switch } from 'antd';
-import { RocketOutlined } from '@ant-design/icons';
+import { RocketOutlined, SyncOutlined } from '@ant-design/icons';
 
 const { Title } = Typography;
 
@@ -9,6 +9,7 @@ const OpenAICompatibleService: React.FC = () => {
   const [form] = Form.useForm();
   const [isRunning, setIsRunning] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchServiceStatus();
@@ -16,11 +17,14 @@ const OpenAICompatibleService: React.FC = () => {
 
   const fetchServiceStatus = async () => {
     try {
+      setRefreshing(true);
       const response = await axios.get('/openai-compatible-service/status');
       setIsRunning(response.data.isRunning);
     } catch (error) {
       console.error('Error fetching service status:', error);
       message.error('获取服务状态失败');
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -60,9 +64,18 @@ const OpenAICompatibleService: React.FC = () => {
           <Input type="number" disabled={isRunning} />
         </Form.Item>
         <Form.Item>
-          <Button type="primary" htmlType="submit" loading={loading}>
-            {isRunning ? '停止服务' : '启动服务'}
-          </Button>
+          <Space>
+            <Button type="primary" htmlType="submit" loading={loading}>
+              {isRunning ? '停止服务' : '启动服务'}
+            </Button>
+            <Button 
+              icon={<SyncOutlined spin={refreshing} />}
+              onClick={fetchServiceStatus}
+              disabled={refreshing}
+            >
+              刷新状态
+            </Button>
+          </Space>
         </Form.Item>
       </Form>
     </Card>

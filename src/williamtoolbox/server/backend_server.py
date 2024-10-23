@@ -162,7 +162,22 @@ async def stop_openai_compatible_service():
 @app.get("/openai-compatible-service/status")
 async def get_openai_compatible_service_status():
     config = await load_config()
-    is_running = "openaiServerList" in config and len(config["openaiServerList"]) > 0
+    is_running = False
+    if "openaiServerList" in config and len(config["openaiServerList"]) > 0:
+        # 获取存储的pid
+        server = config["openaiServerList"][0]
+        pid = server.get("pid")
+        if pid:
+            try:
+                # 检查进程是否存在
+                process = psutil.Process(pid)
+                is_running = process.is_running()
+            except psutil.NoSuchProcess:
+                is_running = False
+                # 进程不存在,清理配置
+                config["openaiServerList"] = []
+                await save_config(config)
+    
     return {"isRunning": is_running}
 
 
