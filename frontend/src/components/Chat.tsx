@@ -148,7 +148,7 @@ const Chat: React.FC = () => {
         // Call the stream endpoint  
         const streamResponse = await axios.post(`/chat/conversations/${currentConversationId}/messages/stream`, {
           conversation_id: currentConversationId,
-          message: newUserMessage,
+          messages: [...messages, newUserMessage], // Send full message history
           list_type: listType,
           selected_item: selectedItem
         });

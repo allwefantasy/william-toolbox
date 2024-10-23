@@ -145,19 +145,10 @@ async def get_message_events(request_id: str, index: int):
 
 async def process_message_stream(
     request_id: str,
-    request: AddMessageRequest,
+    request: AddMessageRequest, 
     conversation: Conversation,
     response_message_id: str,
 ):
-    chat_data = await load_chat_data()
-    conversation = next(
-        (
-            conv
-            for conv in chat_data["conversations"]
-            if conv["id"] == conversation["id"]
-        ),
-        None,
-    )
 
     file_path = await get_event_file_path(request_id)
     idx = 0
@@ -172,8 +163,8 @@ async def process_message_stream(
                 response = await client.chat.completions.create(
                     model=request.selected_item,
                     messages=[
-                        {"role": msg["role"], "content": msg["content"]}
-                        for msg in conversation["messages"]
+                        {"role": msg["role"], "content": msg["content"]} 
+                        for msg in request.messages
                     ],
                     stream=True,
                     max_tokens=4096,

@@ -34,7 +34,7 @@ class ChatData(BaseModel):
 
 
 class AddMessageRequest(BaseModel):
-    message: Message
+    messages: List[Message]  # Change to accept full message history
     list_type: str
     selected_item: str
 
