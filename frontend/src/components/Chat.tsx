@@ -33,6 +33,8 @@ const Chat: React.FC = () => {
   const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [countdownInterval, setCountdownInterval] = useState<NodeJS.Timeout | null>(null);
 
   const [listType, setListType] = useState<'models' | 'rags'>('models');
   const [selectedItem, setSelectedItem] = useState<string>('');
@@ -119,8 +121,21 @@ useEffect(() => {
       setInputMessage('');
       setIsLoading(true);
 
+      // Start 120s countdown
+      setCountdown(120);
+      const interval = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev === null || prev <= 0) {
+            clearInterval(interval);
+            return null;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      setCountdownInterval(interval);
+
       try {
-        // Call the stream endpoint
+        // Call the stream endpoint  
         const streamResponse = await axios.post(`/chat/conversations/${currentConversationId}/messages/stream`, {
           conversation_id: currentConversationId,
           message: newUserMessage,
@@ -148,20 +163,34 @@ useEffect(() => {
             }
 
             for (const event of events) {
-              if (event.event === 'error') {
-                throw new Error(event.content);
+            if (event.event === 'error') {
+              // Clear countdown on error
+              if (countdownInterval) {
+                clearInterval(countdownInterval);
+                setCountdownInterval(null);
               }
+              setCountdown(null);
+              throw new Error(event.content);
+            }
 
               if (event.event === 'chunk') {
-                assistantMessage += event.content;
-                // Update the last message with new content
-                setMessages(prevMessages => 
-                  prevMessages.map((msg, index) => 
-                    index === prevMessages.length - 1 
-                      ? { ...msg, content: assistantMessage }
-                      : msg
-                  )
-                );
+              // Clear countdown on first content
+              if (!assistantMessage) {
+                if (countdownInterval) {
+                  clearInterval(countdownInterval);
+                  setCountdownInterval(null);
+                }
+                setCountdown(null);
+              }
+              assistantMessage += event.content;
+              // Update the last message with new content
+              setMessages(prevMessages => 
+                prevMessages.map((msg, index) => 
+                  index === prevMessages.length - 1 
+                    ? { ...msg, content: assistantMessage }
+                    : msg
+                )
+              );
                 currentIndex = event.index + 1;
               }
 
@@ -178,6 +207,12 @@ useEffect(() => {
         setMessages(prevMessages => prevMessages.slice(0, -1));
       } finally {
         setIsLoading(false);
+        // Clear countdown
+        if (countdownInterval) {
+          clearInterval(countdownInterval);
+          setCountdownInterval(null);
+        }
+        setCountdown(null);
       }
     }
   };
@@ -323,7 +358,14 @@ useEffect(() => {
           }
           description={
             item.content === 'Assistant is typing...' ? (
-              <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} />
+              <>
+                <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} />
+                {countdown !== null && (
+                  <Typography.Text style={{ marginLeft: 10 }}>
+                    思考中...{countdown}s
+                  </Typography.Text>
+                )}
+              </>
             ) : (
               <Typography.Text style={{ color: item.role === 'user' ? '#096dd9' : '#389e0d' }}>
                 <ReactMarkdown
