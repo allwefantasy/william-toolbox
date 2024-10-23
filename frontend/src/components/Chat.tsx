@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Input, Button, List, Avatar, Typography, Select, Space, Dropdown, Menu, Modal, Spin } from 'antd';
+import { Input, Button, List, Avatar, Typography, Select, Space, Dropdown, Menu, Modal, Spin, Tooltip } from 'antd';
 import { SendOutlined, PlusCircleOutlined, GithubOutlined, SettingOutlined, EditOutlined, PictureOutlined, FileOutlined, DatabaseOutlined, DeleteOutlined, LoadingOutlined, RobotOutlined, RedoOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import './Chat.css';
@@ -404,10 +404,11 @@ useEffect(() => {
                 )}
               </div>
               {item.role === 'user' && (
-                <Button
-                  icon={<RedoOutlined />}
-                  type="text"
-                  onClick={async () => {
+                <Tooltip title="重新生成回答">
+                  <Button
+                    icon={<RedoOutlined />}
+                    type="text"
+                    onClick={async () => {
                     // 找到当前消息后面的所有消息
                     const currentIndex = messages.findIndex(msg => msg.id === item.id);
                     if (currentIndex === -1) return;
