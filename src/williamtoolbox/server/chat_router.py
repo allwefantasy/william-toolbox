@@ -266,3 +266,31 @@ async def process_message_stream(
         }
     ]
     await save_chat_data(chat_data)
+
+
+@router.put("/chat/conversations/{conversation_id}")
+async def update_conversation(conversation_id: str, request: Conversation):
+    """Update an existing conversation with new data."""
+    chat_data = await load_chat_data()
+    
+    # Find and update the conversation
+    for conv in chat_data["conversations"]:
+        if conv["id"] == conversation_id:
+            conv.update({
+                "title": request.title,
+                "messages": [msg.model_dump() for msg in request.messages],
+                "updated_at": datetime.now().isoformat()
+            })
+            await save_chat_data(chat_data)
+            return conv
+            
+    raise HTTPException(status_code=404, detail="Conversation not found")
+
+@router.delete("/chat/conversations/{conversation_id}")
+async def delete_conversation(conversation_id: str):
+    chat_data = await load_chat_data()
+    chat_data["conversations"] = [
+        conv for conv in chat_data["conversations"] if conv["id"] != conversation_id
+    ]
+    await save_chat_data(chat_data)
+    return {"message": "Conversation deleted successfully"}
