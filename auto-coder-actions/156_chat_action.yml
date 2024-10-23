@@ -1,0 +1,22 @@
+auto_merge: editblock
+chat_model: qwen_vl
+code_model: qwen_vl
+context: '下面是对上面文件按分组给到的一些描述，当用户的需求正好匹配描述的时候，参考描述来做修改：
+
+
+  '
+human_as_model: true
+include_file:
+- ./base/base.yml
+include_project_structure: true
+project_type: py
+query: '<Form.Item name="pretrained_model_type" label="预训练模型类型" initialValue="saas/openai"
+  rules={[{ required: true }]}> 提供一个帮助icon, 用户点击后弹出一个文档说明,说明内容为:如果你需要部署私有模型,可以选择 custom/模型名称
+  并且合理配置 推理后端以及 GPU 数'
+silence: true
+skip_build_index: false
+skip_confirm: true
+skip_filter_index: true
+urls:
+- /Users/allwefantasy/projects/william-toolbox/src/williamtoolbox/server/proxy_server.py
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/components/CreateModel.tsx

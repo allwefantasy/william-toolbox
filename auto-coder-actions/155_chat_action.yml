@@ -1,0 +1,21 @@
+auto_merge: editblock
+chat_model: qwen_vl
+code_model: qwen_vl
+context: '下面是对上面文件按分组给到的一些描述，当用户的需求正好匹配描述的时候，参考描述来做修改：
+
+
+  '
+human_as_model: true
+include_file:
+- ./base/base.yml
+include_project_structure: true
+project_type: py
+query: 'pretrained_model_type 参考 支持下拉框和自定义输入. 下拉为 openai,对应的为 saas/openai  通义千问: saas/qianwen_vl  calude:
+  saas/claude , 默认显示 saas/openai'
+silence: true
+skip_build_index: false
+skip_confirm: true
+skip_filter_index: true
+urls:
+- /Users/allwefantasy/projects/william-toolbox/src/williamtoolbox/server/proxy_server.py
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/components/CreateModel.tsx

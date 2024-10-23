@@ -1,0 +1,35 @@
+auto_merge: editblock
+chat_model: qwen_vl
+code_model: qwen_vl
+context: '下面是对上面文件按分组给到的一些描述，当用户的需求正好匹配描述的时候，参考描述来做修改：
+
+
+  '
+human_as_model: true
+include_file:
+- ./base/base.yml
+include_project_structure: true
+project_type: py
+query: '@frontend/src/components/Chat.tsx 右侧会话列表中,邮件单击弹出删除菜单,删除会话'
+silence: true
+skip_build_index: true
+skip_confirm: true
+skip_filter_index: true
+urls:
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/components/CreateModel.tsx
+- /Users/allwefantasy/projects/william-toolbox/src/williamtoolbox/server/backend_server.py
+- /Users/allwefantasy/projects/william-toolbox/config.json
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/index.tsx
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/components/ModelList.tsx
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/App.test.tsx
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/App.tsx
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/components/RAGList.tsx
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/components/CreateRAG.tsx
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/index.css
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/App.css
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/components/ConfigAdd.tsx
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/components/ConfigList.tsx
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/components/ConfigEdit.tsx
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/components/OpenAICompatibleService.tsx
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/components/Chat.tsx
+- .auto-coder/libs/llm_friendly_packages/github.com/allwefantasy/openai-python/README.md

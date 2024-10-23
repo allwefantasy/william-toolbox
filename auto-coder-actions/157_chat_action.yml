@@ -1,0 +1,22 @@
+auto_merge: editblock
+chat_model: qwen_vl
+code_model: qwen_vl
+context: '下面是对上面文件按分组给到的一些描述，当用户的需求正好匹配描述的时候，参考描述来做修改：
+
+
+  '
+human_as_model: true
+include_file:
+- ./base/base.yml
+include_project_structure: true
+project_type: py
+query: saasBaseUrls pretrainedModelTypes 放在 config.json 文件里,然后通过 @src/williamtoolbox/server/backend_server.py
+  中提供一个新的接口后去conifg信息, @frontend/src/components/CreateModel.tsx 初始化的获取该信息
+silence: true
+skip_build_index: false
+skip_confirm: true
+skip_filter_index: true
+urls:
+- /Users/allwefantasy/projects/william-toolbox/src/williamtoolbox/server/proxy_server.py
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/components/CreateModel.tsx
+- /Users/allwefantasy/projects/william-toolbox/src/williamtoolbox/server/backend_server.py

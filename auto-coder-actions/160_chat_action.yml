@@ -1,0 +1,22 @@
+auto_merge: editblock
+chat_model: qwen_vl
+code_model: qwen_vl
+context: '下面是对上面文件按分组给到的一些描述，当用户的需求正好匹配描述的时候，参考描述来做修改：
+
+
+  '
+human_as_model: true
+include_file:
+- ./base/base.yml
+include_project_structure: true
+project_type: py
+query: config.json 目前已经提供过了 /config 接口,现在增加增删改查,放在 其他功能 的子菜单中,提供多个页面分别完成.
+silence: true
+skip_build_index: false
+skip_confirm: true
+skip_filter_index: true
+urls:
+- /Users/allwefantasy/projects/william-toolbox/src/williamtoolbox/server/proxy_server.py
+- /Users/allwefantasy/projects/william-toolbox/frontend/src/components/CreateModel.tsx
+- /Users/allwefantasy/projects/william-toolbox/src/williamtoolbox/server/backend_server.py
+- /Users/allwefantasy/projects/william-toolbox/config.json
