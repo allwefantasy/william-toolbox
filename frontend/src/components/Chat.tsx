@@ -409,12 +409,16 @@ const Chat: React.FC = () => {
                           icon={<RedoOutlined />}
                           type="text"
                           onClick={async () => {
-                            // 找到当前消息后面的所有消息
+                            // 找到当前用户消息以及紧跟其后的系统回复
                             const currentIndex = messages.findIndex(msg => msg.id === item.id);
                             if (currentIndex === -1) return;
 
-                            // 获取并保留到当前消息的所有消息
-                            const previousMessages = messages.slice(0, currentIndex + 1);
+                            // 假设每个用户消息后面都跟着一个系统回复
+                            // 移除当前用户消息后的系统回复,但保留更后面的消息
+                            const previousMessages = [...messages];
+                            if (currentIndex + 1 < previousMessages.length) {
+                              previousMessages.splice(currentIndex + 1, 1);
+                            }
                             setMessages(previousMessages);
 
                             // 重新发送请求获取回复
