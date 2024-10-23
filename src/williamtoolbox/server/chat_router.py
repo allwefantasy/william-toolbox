@@ -26,8 +26,8 @@ async def add_message(conversation_id: str, request: AddMessageRequest):
     if conversation is None:
         raise HTTPException(status_code=404, detail="Conversation not found")
 
-    request.message.timestamp = datetime.now().isoformat()
-    conversation["messages"].append(request.message.model_dump())
+    request.messages[-1]["timestamp"] = datetime.now().isoformat()
+    conversation["messages"].append(request.messages[-1])
 
     list_type = request.list_type
     selected_item = request.selected_item
@@ -35,30 +35,30 @@ async def add_message(conversation_id: str, request: AddMessageRequest):
     # 根据 list_type 和 selected_item 选择合适的模型或 RAG
     try:
         config = await load_config()
-        openai_server = config.get("openaiServerList", [{}])[0]
-        base_url = f"http://{openai_server.get('host', 'localhost')}:{openai_server.get('port', 8000)}/v1"
-        client = AsyncOpenAI(base_url=base_url, api_key="xxxx")
-
         if list_type == "models":
+            openai_server = config.get("openaiServerList", [{}])[0]
+            base_url = f"http://{openai_server.get('host', 'localhost')}:{openai_server.get('port', 8000)}/v1"
+            client = AsyncOpenAI(base_url=base_url, api_key="xxxx")
+
             response = await client.chat.completions.create(
                 model=selected_item,
                 messages=[
                     {"role": msg["role"], "content": msg["content"]}
-                    for msg in conversation["messages"]
+                    for msg in request.messages
                 ],
                 max_tokens=4096,
             )
             assistant_message = response.choices[0].message
         elif list_type == "rags":
-            rags = load_rags_from_json()
+            rags = await load_rags_from_json()
             if not selected_item in rags:
                 logger.error(f"RAG {selected_item} not found")
                 raise ValueError(f"RAG {selected_item} not found")
 
             rag_info = rags.get(selected_item, {})
-            openai_server = rag_info.get("host", "localhost")
+            host = rag_info.get("host", "localhost")
             port = rag_info.get("port", 8000)
-            base_url = f"http://{openai_server}:{port}/v1"
+            base_url = f"http://{host}:{port}/v1"
             client = AsyncOpenAI(base_url=base_url, api_key="xxxx")
 
             response = await client.chat.completions.create(
@@ -67,7 +67,7 @@ async def add_message(conversation_id: str, request: AddMessageRequest):
                 ),  # Use a default model if not specified
                 messages=[
                     {"role": msg["role"], "content": msg["content"]}
-                    for msg in conversation["messages"]
+                    for msg in request.messages
                 ],
                 max_tokens=4096,
             )
