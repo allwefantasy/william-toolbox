@@ -287,6 +287,22 @@ async def update_conversation(conversation_id: str, request: Conversation):
             
     raise HTTPException(status_code=404, detail="Conversation not found")
 
+@router.put("/chat/conversations/{conversation_id}/title")
+async def update_conversation_title(conversation_id: str, title: str):
+    """Update only the title of an existing conversation."""
+    chat_data = await load_chat_data()
+    
+    # Find and update the conversation title
+    for conv in chat_data["conversations"]:
+        if conv["id"] == conversation_id:
+            logger.info(f"Updating title for conversation {conversation_id}")
+            conv["title"] = title
+            conv["updated_at"] = datetime.now().isoformat()
+            await save_chat_data(chat_data)
+            return {"message": "Title updated successfully", "title": title}
+            
+    raise HTTPException(status_code=404, detail="Conversation not found")
+
 @router.delete("/chat/conversations/{conversation_id}")
 async def delete_conversation(conversation_id: str):
     chat_data = await load_chat_data()

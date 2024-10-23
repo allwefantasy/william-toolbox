@@ -91,3 +91,6 @@ class ModelInfo(BaseModel):
 class CreateConversationRequest(BaseModel):
     title: str
 
+class UpdateTitleRequest(BaseModel):
+    title: str
+
