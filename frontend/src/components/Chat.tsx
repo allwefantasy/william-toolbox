@@ -27,6 +27,100 @@ interface Conversation {
 }
 
 const Chat: React.FC = () => {
+  const handleRegenerateResponse = async (message: Message) => {
+    const messageIndex = messages.findIndex(msg => msg.id === message.id);
+    if (messageIndex === -1) return;
+    
+    const messagesToSend = messages.slice(0, messageIndex + 1);
+    setIsLoading(true);
+    
+    try {
+      const streamResponse = await axios.post(`/chat/conversations/${currentConversationId}/messages/stream`, {
+        conversation_id: currentConversationId,
+        messages: messagesToSend,
+        list_type: listType,
+        selected_item: selectedItem
+      });
+
+      if (streamResponse.data && streamResponse.data.request_id) {
+        const requestId = streamResponse.data.request_id;
+        let currentIndex = 0;
+        let assistantMessage = '';
+        
+        const assistant_message_id = streamResponse.data.response_message_id;
+        setResponseMessageId(assistant_message_id);
+
+        const nextMessage = messages[messageIndex + 1];
+        let newMessages;
+        if (nextMessage && nextMessage.role === 'assistant') {
+          newMessages = [
+            ...messages.slice(0, messageIndex + 1),
+            { id: assistant_message_id, role: 'assistant', content: '', timestamp: new Date().toISOString() },
+            ...messages.slice(messageIndex + 2)
+          ];
+        } else {
+          newMessages = [
+            ...messages.slice(0, messageIndex + 1),
+            { id: assistant_message_id, role: 'assistant', content: '', timestamp: new Date().toISOString() },
+            ...messages.slice(messageIndex + 1)
+          ];
+        }
+        setMessages(newMessages);
+
+        while (true) {
+          const eventsResponse = await axios.get(`/chat/conversations/events/${requestId}/${currentIndex}`);
+          const events = eventsResponse.data.events;
+
+          if (!events || events.length === 0) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            continue;
+          }
+
+          for (const event of events) {
+            if (event.event === 'error') {
+              throw new Error(event.content);
+            }
+
+            if (event.event === 'chunk') {
+              assistantMessage += event.content;
+              setMessages(prevMessages =>
+                prevMessages.map(msg => {
+                  if (msg.id === assistant_message_id) {
+                    return { ...msg, content: assistantMessage };
+                  }
+                  return msg;
+                })
+              );
+              currentIndex = event.index + 1;
+            }
+
+            if (event.event === 'done') {
+              // Update conversation after regeneration is complete
+              try {
+                await axios.put(`/chat/conversations/${currentConversationId}`, {
+                  id: currentConversationId,
+                  title: currentConversationTitle,
+                  messages: newMessages,
+                  created_at: conversation?.created_at || new Date().toISOString(),
+                  updated_at: new Date().toISOString()
+                });
+              } catch (error) {
+                console.error('Error updating conversation:', error);
+                message.error('Failed to update conversation');
+              }
+              return;
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error regenerating response:', error);
+      message.error('Failed to regenerate response');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
@@ -413,84 +507,7 @@ const Chat: React.FC = () => {
                             <Button
                               type="text"
                               icon={<RedoOutlined />}
-                              onClick={async () => {
-                                const messageIndex = messages.findIndex(msg => msg.id === item.id);
-                                if (messageIndex === -1) return;
-                                
-                                const messagesToSend = messages.slice(0, messageIndex + 1);
-                                setIsLoading(true);
-                                
-                                try {
-                                  const streamResponse = await axios.post(`/chat/conversations/${currentConversationId}/messages/stream`, {
-                                    conversation_id: currentConversationId,
-                                    messages: messagesToSend,
-                                    list_type: listType,
-                                    selected_item: selectedItem
-                                  });
-
-                                  if (streamResponse.data && streamResponse.data.request_id) {
-                                    const requestId = streamResponse.data.request_id;
-                                    let currentIndex = 0;
-                                    let assistantMessage = '';
-                                    
-                                    const assistant_message_id = streamResponse.data.response_message_id;
-                                    setResponseMessageId(assistant_message_id);
-
-                                    const nextMessage = messages[messageIndex + 1];
-                                    if (nextMessage && nextMessage.role === 'assistant') {
-                                      setMessages(prevMessages => [
-                                        ...prevMessages.slice(0, messageIndex + 1),
-                                        { id: assistant_message_id, role: 'assistant', content: '', timestamp: new Date().toISOString() },
-                                        ...prevMessages.slice(messageIndex + 2)
-                                      ]);
-                                    } else {
-                                      setMessages(prevMessages => [
-                                        ...prevMessages.slice(0, messageIndex + 1),
-                                        { id: assistant_message_id, role: 'assistant', content: '', timestamp: new Date().toISOString() },
-                                        ...prevMessages.slice(messageIndex + 1)
-                                      ]);
-                                    }
-
-                                    while (true) {
-                                      const eventsResponse = await axios.get(`/chat/conversations/events/${requestId}/${currentIndex}`);
-                                      const events = eventsResponse.data.events;
-
-                                      if (!events || events.length === 0) {
-                                        await new Promise(resolve => setTimeout(resolve, 100));
-                                        continue;
-                                      }
-
-                                      for (const event of events) {
-                                        if (event.event === 'error') {
-                                          throw new Error(event.content);
-                                        }
-
-                                        if (event.event === 'chunk') {
-                                          assistantMessage += event.content;
-                                          setMessages(prevMessages =>
-                                            prevMessages.map(msg => {
-                                              if (msg.id === assistant_message_id) {
-                                                return { ...msg, content: assistantMessage };
-                                              }
-                                              return msg;
-                                            })
-                                          );
-                                          currentIndex = event.index + 1;
-                                        }
-
-                                        if (event.event === 'done') {
-                                          return;
-                                        }
-                                      }
-                                    }
-                                  }
-                                } catch (error) {
-                                  console.error('Error regenerating response:', error);
-                                  message.error('Failed to regenerate response');
-                                } finally {
-                                  setIsLoading(false);
-                                }
-                              }}
+                              onClick={() => handleRegenerateResponse(item)}
                               style={{ marginLeft: '8px' }}
                             />
                           </Tooltip>
