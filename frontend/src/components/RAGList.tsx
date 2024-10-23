@@ -51,8 +51,17 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
       content: '',
       title: `${ragName} ${logType === 'out' ? 'Standard Output' : 'Standard Error'}`,
     });
-    setLogOffsets({ [`${ragName}-${logType}`]: 0 }); // Reset offset for new log view
     
+    try {
+      // 先获取最新的offset
+      const initialResponse = await axios.get(`/rags/${ragName}/logs/${logType}`);
+      const initialOffset = initialResponse.data.offset || 0;
+      setLogOffsets({ [`${ragName}-${logType}`]: initialOffset });
+    } catch (error) {
+      console.error('Error getting initial offset:', error);
+      setLogOffsets({ [`${ragName}-${logType}`]: 0 });
+    }
+
     // Start polling logs
     if (logPolling) {
       clearInterval(logPolling);
