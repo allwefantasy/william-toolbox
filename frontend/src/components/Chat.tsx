@@ -190,14 +190,15 @@ const Chat: React.FC = () => {
                   setCountdown(null);
                 }
                 assistantMessage += event.content;
-                // Update the last message with new content
-                setMessages(prevMessages =>
-                  prevMessages.map((msg, index) =>
-                    index === prevMessages.length - 1
-                      ? { ...msg, content: assistantMessage }
-                      : msg
-                  )
-                );
+            // Update the assistant message at the correct position
+            setMessages(prevMessages =>
+              prevMessages.map((msg, index) => {
+                if (index === messageIndex + 1 && msg.role === 'assistant') {
+                  return { ...msg, content: assistantMessage };
+                }
+                return msg;
+              })
+            );
                 currentIndex = event.index + 1;
               }
 
@@ -414,10 +415,30 @@ const Chat: React.FC = () => {
                             if (currentIndex === -1) return;
 
                             // 假设每个用户消息后面都跟着一个系统回复
-                            // 移除当前用户消息后的系统回复,但保留更后面的消息
+                            // 找到当前消息及其后的系统回复
                             const previousMessages = [...messages];
-                            if (currentIndex + 1 < previousMessages.length) {
-                              previousMessages.splice(currentIndex + 1, 1);
+                            const messageIndex = currentIndex;
+                            let assistantIndex = -1;
+                            // 我们需要找到紧接着这条消息的系统回复
+                            if (messageIndex + 1 < previousMessages.length && 
+                                previousMessages[messageIndex + 1].role === 'assistant') {
+                                assistantIndex = messageIndex + 1;
+                            }
+                            
+                            // 更新系统回复内容
+                            if (assistantIndex !== -1) {
+                                previousMessages[assistantIndex] = {
+                                    ...previousMessages[assistantIndex],
+                                    content: ''  // 清空内容以显示加载状态
+                                };
+                            } else {
+                                // 如果找不到现有的系统回复，在用户消息后添加一个空的系统回复
+                                previousMessages.splice(messageIndex + 1, 0, {
+                                    role: 'assistant',
+                                    content: '',
+                                    timestamp: new Date().toISOString()
+                                });
+                                assistantIndex = messageIndex + 1;
                             }
                             setMessages(previousMessages);
 
@@ -498,7 +519,20 @@ const Chat: React.FC = () => {
                             } catch (error) {
                               console.error('Error refreshing message:', error);
                               message.error('Failed to refresh message');
-                              setMessages(prevMessages => prevMessages.slice(0, -1));
+                              // 如果发生错误，恢复到原来的系统回复
+                              setMessages(prevMessages => {
+                                const updatedMessages = [...prevMessages];
+                                const assistantIndex = updatedMessages.findIndex(
+                                  (msg, idx) => idx > messageIndex && msg.role === 'assistant'
+                                );
+                                if (assistantIndex !== -1) {
+                                  updatedMessages[assistantIndex] = {
+                                    ...updatedMessages[assistantIndex],
+                                    content: '发送失败，请重试'
+                                  };
+                                }
+                                return updatedMessages;
+                              });
                             } finally {
                               setIsLoading(false);
                               if (countdownInterval) {
