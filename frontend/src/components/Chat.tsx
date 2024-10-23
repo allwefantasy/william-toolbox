@@ -15,7 +15,8 @@ const { Title } = Typography;
 interface Message {
   role: 'user' | 'assistant';
   content: string;
-  id?: string;
+  timestamp: string;
+  id?: string;  // Add this line
 }
 
 interface Conversation {
@@ -117,9 +118,12 @@ useEffect(() => {
 
   const handleSendMessage = async () => {
     if (inputMessage.trim() && currentConversationId) {
-      const newUserMessage = { role: 'user' as const, content: inputMessage, timestamp: new Date().toISOString() };
-      const messageId = Math.random().toString(36).substring(7); // 生成一个简单的随机ID
-      newUserMessage.id = messageId;
+      const newUserMessage: Message = { 
+        role: 'user', 
+        content: inputMessage, 
+        timestamp: new Date().toISOString(),
+        id: Math.random().toString(36).substring(7)
+      };
       setMessages([...messages, newUserMessage]);
       setInputMessage('');
       setIsLoading(true);
