@@ -68,14 +68,12 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
 
     const fetchLogs = async () => {
       try {
-        const response = await axios.get(`/rags/${ragName}/logs/${logType}/0`);
+        // 直接请求最新的10000个字符
+        const response = await axios.get(`/rags/${ragName}/logs/${logType}/-10000`);
         if (response.data.content) {
-          // 获取最新的10000个字符
-          const content = response.data.content;
-          const latestContent = content.slice(-10000);
           setLogModal(prev => ({
             ...prev,
-            content: latestContent
+            content: response.data.content
           }));
         }
       } catch (error) {
