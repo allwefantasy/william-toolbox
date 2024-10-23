@@ -371,8 +371,7 @@ const Chat: React.FC = () => {
                 }
                 description={
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                    <div style={{ flex: 1 }}>
-                      {item.id} / {response_message_id}
+                    <div style={{ flex: 1 }}>                      
                       {isLoading && item.id === response_message_id && (
                         <div>
                           <Typography.Text>
@@ -408,18 +407,7 @@ const Chat: React.FC = () => {
                           {item.content}
                         </ReactMarkdown>
                       </Typography.Text>
-                    </div>
-                    {item.role === 'user' && (
-                      <Tooltip title="重新发送">
-                        <Button
-                          icon={<RedoOutlined />}
-                          type="text"
-                          onClick={async () => {
-
-                          }}
-                        />
-                      </Tooltip>
-                    )}
+                    </div>                    
                   </div>
                 }
               />

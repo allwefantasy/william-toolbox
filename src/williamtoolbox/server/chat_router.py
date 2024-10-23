@@ -46,6 +46,7 @@ async def add_message(conversation_id: str, request: AddMessageRequest):
                     {"role": msg["role"], "content": msg["content"]}
                     for msg in conversation["messages"]
                 ],
+                max_tokens=4096,
             )
             assistant_message = response.choices[0].message
         elif list_type == "rags":
@@ -68,6 +69,7 @@ async def add_message(conversation_id: str, request: AddMessageRequest):
                     {"role": msg["role"], "content": msg["content"]}
                     for msg in conversation["messages"]
                 ],
+                max_tokens=4096,
             )
             assistant_message = response.choices[0].message
         else:
@@ -174,6 +176,7 @@ async def process_message_stream(
                         for msg in conversation["messages"]
                     ],
                     stream=True,
+                    max_tokens=4096,
                 )
 
                 async for chunk in response:
@@ -205,6 +208,7 @@ async def process_message_stream(
                         for msg in conversation["messages"]
                     ],
                     stream=True,
+                    max_tokens=4096,
                 )
 
                 async for chunk in response:
