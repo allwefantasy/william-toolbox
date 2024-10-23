@@ -26,8 +26,11 @@ async def add_message(conversation_id: str, request: AddMessageRequest):
     if conversation is None:
         raise HTTPException(status_code=404, detail="Conversation not found")
 
+    # Instead of appending the last message, we use the full messages list from the request
+    # Add timestamp to the last user message
     request.messages[-1]["timestamp"] = datetime.now().isoformat()
-    conversation["messages"].append(request.messages[-1])
+    # Replace the entire conversation messages with the new messages
+    conversation["messages"] = request.messages
 
     list_type = request.list_type
     selected_item = request.selected_item
@@ -107,7 +110,8 @@ async def add_message_stream(conversation_id: str, request: AddMessageRequest):
     if conversation is None:
         raise HTTPException(status_code=404, detail="Conversation not found")
 
-    conversation["messages"].append(request.message.model_dump())
+    # Replace the entire conversation messages with the full message history
+    conversation["messages"] = request.messages
     await save_chat_data(chat_data)
     response_message_id = str(uuid.uuid4())
 
@@ -250,12 +254,11 @@ async def process_message_stream(
             if event["event"] == "chunk":
                 s += event["content"]
 
-    conversation["messages"].append(
-        {
-            "id": response_message_id,
-            "role": "assistant",
-            "content": s,
-            "timestamp": datetime.now().isoformat(),
-        }
-    )
+    # Add the assistant's response to the messages list
+    conversation["messages"] = request.messages + [{
+        "id": response_message_id,
+        "role": "assistant",
+        "content": s,
+        "timestamp": datetime.now().isoformat(),
+    }]
     await save_chat_data(chat_data)
