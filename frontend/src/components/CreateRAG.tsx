@@ -16,6 +16,8 @@ interface FormValues {
   required_exts: string;
   disable_inference_enhance: boolean;
   inference_deep_thought: boolean;
+  enable_hybrid_index: boolean;
+  hybrid_index_max_output_tokens: number;
 }
 
 interface Model {
@@ -48,13 +50,15 @@ const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
 
   const showModal = () => {
     setIsModalVisible(true);
-    form.setFieldsValue({ 
+      form.setFieldsValue({ 
       rag_doc_filter_relevance: 2.0,
       host: '0.0.0.0',
       port: 8000,
       required_exts: '',
       disable_inference_enhance: false,
-      inference_deep_thought: false
+      inference_deep_thought: false,
+      enable_hybrid_index: false,
+      hybrid_index_max_output_tokens: 1000000
     });
   };
 
@@ -142,6 +146,26 @@ const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
             initialValue={false}
           >
             <Switch />
+          </Form.Item>
+          <Form.Item 
+            name="enable_hybrid_index" 
+            label={
+              <span>
+                启用混合索引
+                <Tag color="blue" style={{ marginLeft: '8px' }}>Pro</Tag>
+              </span>
+            } 
+            valuePropName="checked" 
+            initialValue={false}
+          >
+            <Switch />
+          </Form.Item>
+          <Form.Item 
+            name="hybrid_index_max_output_tokens" 
+            label="混合索引最大输出令牌数" 
+            initialValue={1000000}
+          >
+            <InputNumber min={1} max={10000000} />
           </Form.Item>
         </Form>
       </Modal>
