@@ -151,8 +151,7 @@ const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
             name="enable_hybrid_index" 
             label={
               <span>
-                启用混合索引
-                <Tag color="blue" style={{ marginLeft: '8px' }}>Pro</Tag>
+                启用混合索引加速                
               </span>
             } 
             valuePropName="checked" 
