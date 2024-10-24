@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Button, Modal, Form, Input, InputNumber, Select, message, Switch, Tag } from 'antd';
+import { Button, Modal, Form, Input, InputNumber, Select, message, Switch, Tag, Tooltip } from 'antd';
+import { QuestionCircleOutlined } from '@ant-design/icons';
 import { PlusOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
@@ -152,6 +153,9 @@ const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
             label={
               <span>
                 启用混合索引加速                
+                <Tooltip title="使用此功能需要先通过 byzerllm storage start 启动一个加速引擎以及创建一个名字为 emb 的向量模型">
+                  <QuestionCircleOutlined style={{ marginLeft: 8 }} />
+                </Tooltip>
               </span>
             } 
             valuePropName="checked" 
