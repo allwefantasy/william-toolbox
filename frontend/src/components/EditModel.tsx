@@ -64,9 +64,20 @@ const EditModel: React.FC<EditModelProps> = ({ visible, modelData, onClose, onUp
         form.setFieldValue('infer_params', params);
       }
 
-      // Set backend type and update form accordingly
-      const backend = deployCommand.infer_backend || InferBackend.SaaS;
-      setSelectedBackend(backend);
+      // Determine and set the backend type
+      let backend = deployCommand.infer_backend;
+      
+      // If no backend is specified but we have saas parameters, default to SaaS
+      if (!backend && deployCommand.infer_params && Object.keys(deployCommand.infer_params).some(key => key.startsWith('saas.'))) {
+        backend = InferBackend.SaaS;
+      }
+      
+      // Default to SaaS if no backend is specified
+      backend = backend || InferBackend.SaaS;
+      
+      // Update form and state
+      form.setFieldValue('infer_backend', backend);
+      setSelectedBackend(backend as InferBackend);
       
       // If it's a SaaS backend, ensure the SaaS fields are visible
       if (backend === InferBackend.SaaS) {
