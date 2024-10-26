@@ -340,6 +340,11 @@ async def manage_rag(rag_name: str, action: str):
         if rag_info["inference_deep_thought"]:
             command += f" --inference_deep_thought"
 
+        if "enable_hybrid_index" in rag_info and rag_info["enable_hybrid_index"]:
+            command += f" --enable_hybrid_index"
+            if "hybrid_index_max_output_tokens" in rag_info:
+                command += f" --hybrid_index_max_output_tokens {rag_info['hybrid_index_max_output_tokens']}"
+
         logger.info(f"manage rag {rag_name} with command: {command}")
         try:
             # Create logs directory if it doesn't exist
