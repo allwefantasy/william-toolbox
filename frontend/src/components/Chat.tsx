@@ -219,14 +219,39 @@ const Chat: React.FC = () => {
     fetchItemList();
   }, []);
 
-  const handleSendMessage = async () => {
-    if (inputMessage.trim() && currentConversationId) {
-      const newUserMessage: Message = {
-        role: 'user',
-        content: inputMessage,
-        timestamp: new Date().toISOString(),
-        id: Math.random().toString(36)
-      };
+const checkOpenAIService = async () => {
+  if (listType === 'models') {
+    // 检查 OpenAI 兼容服务状态
+    try {
+      const response = await axios.get('/openai-compatible-service/status');
+      if (!response.data.isRunning) {
+        MessageBox.error('请先启动 OpenAI 兼容服务');
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error('Error checking OpenAI service status:', error);
+      MessageBox.error('检查 OpenAI 兼容服务状态失败');
+      return false;
+    }
+  }
+  return true;
+};
+
+const handleSendMessage = async () => {
+  if (inputMessage.trim() && currentConversationId) {
+    // 检查 OpenAI 兼容服务状态
+    const canProceed = await checkOpenAIService();
+    if (!canProceed) {
+      return;
+    }
+
+    const newUserMessage: Message = {
+      role: 'user',
+      content: inputMessage,
+      timestamp: new Date().toISOString(),
+      id: Math.random().toString(36)
+    };
       setMessages([...messages, newUserMessage]);
       setInputMessage('');
       setIsLoading(true);
