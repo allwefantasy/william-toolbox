@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Table, Button, message, Card, Typography, Space, Tag, Modal } from 'antd';
-import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, RocketOutlined, RedoOutlined } from '@ant-design/icons';
+import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, RocketOutlined, RedoOutlined, EditOutlined } from '@ant-design/icons';
 
 const { Title } = Typography;
 
 interface Model {
   name: string;
   status: 'stopped' | 'running';
+  deploy_command?: any;
 }
 
 interface ModelListProps {
@@ -39,6 +40,8 @@ const ModelList: React.FC<ModelListProps> = ({ refreshTrigger }) => {
   const [refreshing, setRefreshing] = useState<{ [key: string]: boolean }>({});
   const [actionLoading, setActionLoading] = useState<{ [key: string]: boolean }>({});
   const [countdowns, setCountdowns] = useState<{ [key: string]: number | undefined }>({});
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [currentModel, setCurrentModel] = useState<Model | null>(null);
 
   useEffect(() => {
     fetchModels();
@@ -159,6 +162,13 @@ const ModelList: React.FC<ModelListProps> = ({ refreshTrigger }) => {
             刷新状态
           </Button>
           <Button
+            icon={<EditOutlined />}
+            onClick={() => handleEdit(record)}
+            disabled={record.status === 'running'}
+          >
+            编辑
+          </Button>
+          <Button
             type="primary"
             danger
             onClick={() => handleDelete(record.name)}
@@ -172,7 +182,19 @@ const ModelList: React.FC<ModelListProps> = ({ refreshTrigger }) => {
   ];
 
   return (
-    <Card>
+    <>
+      <EditModel
+        visible={editModalVisible}
+        modelData={currentModel}
+        onClose={() => {
+          setEditModalVisible(false);
+          setCurrentModel(null);
+        }}
+        onUpdate={() => {
+          fetchModels();
+        }}
+      />
+      <Card>
       <Title level={2}>
         <Space>
           <RocketOutlined />
@@ -188,6 +210,7 @@ const ModelList: React.FC<ModelListProps> = ({ refreshTrigger }) => {
         bordered
       />
     </Card>
+    </>
   );
 };
 

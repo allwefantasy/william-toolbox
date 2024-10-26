@@ -28,6 +28,8 @@ app = FastAPI()
 app.include_router(chat_router)
 from .rag_router import router as rag_router
 app.include_router(rag_router)
+from .model_router import router as model_router
+app.include_router(model_router)
 # Add CORS middleware with restricted origins
 app.add_middleware(
     CORSMiddleware,
