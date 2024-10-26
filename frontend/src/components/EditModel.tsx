@@ -134,6 +134,7 @@ const EditModel: React.FC<EditModelProps> = ({ visible, modelData, onClose, onUp
   
       // Replace infer_params in values
       values.infer_params = infer_params;
+      values.name = modelData.name;
 
       await axios.put(`/models/${modelData.name}`, values);
       message.success('模型更新成功');
