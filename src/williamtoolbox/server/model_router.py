@@ -6,6 +6,17 @@ from loguru import logger
 
 router = APIRouter()
 
+@router.get("/models/{model_name}")
+async def get_model(model_name: str):
+    """Get detailed information for a specific model."""
+    models = await load_models_from_json()
+    
+    if model_name not in models:
+        raise HTTPException(status_code=404, detail=f"Model {model_name} not found")
+        
+    return models[model_name]
+
+
 @router.put("/models/{model_name}")
 async def update_model(model_name: str, request: AddModelRequest):
     """Update an existing model."""

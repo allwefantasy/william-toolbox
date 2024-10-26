@@ -31,11 +31,12 @@ const EditModel: React.FC<EditModelProps> = ({ visible, modelData, onClose, onUp
     fetchConfig();
   }, []);
 
-  useEffect(() => {    
-    if (visible && modelData) {
-      // Extract values from deploy_command
-      const deployCommand = modelData.deploy_command || {};
-      
+  const fetchModelDetails = async (modelName: string) => {
+    try {
+      const response = await axios.get(`/models/${modelName}`);
+      const fullModelData = response.data;
+      const deployCommand = fullModelData.deploy_command || {};
+
       // Set base form values
       form.setFieldsValue({
         pretrained_model_type: deployCommand.pretrained_model_type,
@@ -75,8 +76,17 @@ const EditModel: React.FC<EditModelProps> = ({ visible, modelData, onClose, onUp
           'saas.model': deployCommand.infer_params?.['saas.model'],
         });
       }
+    } catch (error) {
+      console.error('Error fetching model details:', error);
+      message.error('获取模型详情失败');
     }
-  }, [visible, modelData, form]);
+  };
+
+  useEffect(() => {    
+    if (visible && modelData?.name) {
+      fetchModelDetails(modelData.name);
+    }
+  }, [visible, modelData?.name]);
 
   const fetchConfig = async () => {
     try {
