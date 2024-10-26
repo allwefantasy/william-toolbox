@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Table, Button, message, Card, Typography, Space, Tag, Modal } from 'antd';
 import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, RocketOutlined, RedoOutlined, EditOutlined } from '@ant-design/icons';
+import EditModel from './EditModel';
 
 const { Title } = Typography;
 
@@ -111,6 +112,11 @@ const ModelList: React.FC<ModelListProps> = ({ refreshTrigger }) => {
     } finally {
       setRefreshing(prev => ({ ...prev, [modelName]: false }));
     }
+  };
+
+  const handleEdit = (model: Model) => {
+    setCurrentModel(model);
+    setEditModalVisible(true);
   };
 
   const columns = [
