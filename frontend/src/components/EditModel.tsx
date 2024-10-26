@@ -31,7 +31,7 @@ const EditModel: React.FC<EditModelProps> = ({ visible, modelData, onClose, onUp
     fetchConfig();
   }, []);
 
-  useEffect(() => {
+  useEffect(() => {    
     if (visible && modelData) {
       // Extract values from deploy_command
       const deployCommand = modelData.deploy_command || {};
