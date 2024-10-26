@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import EditRAG from './EditRAG';
 import axios from 'axios';
 import { Table, Button, message, Card, Typography, Space, Tag, Tooltip, Modal, Select } from 'antd';
-import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, DatabaseOutlined, FileOutlined, ExclamationCircleOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, DatabaseOutlined, FileOutlined,EditOutlined, ExclamationCircleOutlined, DeleteOutlined } from '@ant-design/icons';
 
 const { Title, Paragraph } = Typography;
 
@@ -333,8 +333,9 @@ useEffect(() => {
         >
           {logModal.content || 'No logs available'}
         </pre>
-      </Modal>
-    </Card>
+        </Modal>
+      </Card>
+    </>
   );
 };
 
