@@ -35,6 +35,8 @@ const EditModel: React.FC<EditModelProps> = ({ visible, modelData, onClose, onUp
     if (visible && modelData) {
       // Extract values from deploy_command
       const deployCommand = modelData.deploy_command || {};
+      
+      // Set base form values
       form.setFieldsValue({
         pretrained_model_type: deployCommand.pretrained_model_type,
         cpus_per_worker: deployCommand.cpus_per_worker,
@@ -45,12 +47,15 @@ const EditModel: React.FC<EditModelProps> = ({ visible, modelData, onClose, onUp
         infer_backend: deployCommand.infer_backend,
       });
 
-      // Set infer_params if they exist
+      // Handle infer_params
       if (deployCommand.infer_params) {
         const params = [];
         for (const [key, value] of Object.entries(deployCommand.infer_params)) {
           if (key.startsWith('saas.')) {
             form.setFieldValue(key, value);
+            if (key === 'saas.base_url') {
+              setSelectedBaseUrl(value as string);
+            }
           } else {
             params.push({ key, value });
           }
@@ -58,9 +63,20 @@ const EditModel: React.FC<EditModelProps> = ({ visible, modelData, onClose, onUp
         form.setFieldValue('infer_params', params);
       }
 
-      setSelectedBackend(deployCommand.infer_backend || InferBackend.SaaS);
+      // Set backend type and update form accordingly
+      const backend = deployCommand.infer_backend || InferBackend.SaaS;
+      setSelectedBackend(backend);
+      
+      // If it's a SaaS backend, ensure the SaaS fields are visible
+      if (backend === InferBackend.SaaS) {
+        form.setFieldsValue({
+          'saas.base_url': deployCommand.infer_params?.['saas.base_url'],
+          'saas.api_key': deployCommand.infer_params?.['saas.api_key'],
+          'saas.model': deployCommand.infer_params?.['saas.model'],
+        });
+      }
     }
-  }, [visible, modelData]);
+  }, [visible, modelData, form]);
 
   const fetchConfig = async () => {
     try {
