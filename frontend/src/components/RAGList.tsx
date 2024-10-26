@@ -162,9 +162,7 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
                 if (!found) {
                   message.error('服务启动超时，请检查日志');
                 }
-              } catch (error) {
-                message.error('服务启动失败：' + (error.message || '未知错误'));
-              } finally {
+              }  finally {
                 // 确保清除loading消息
                 message.destroy();
               }
