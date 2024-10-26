@@ -37,7 +37,7 @@ const EditModel: React.FC<EditModelProps> = ({ visible, modelData, onClose, onUp
       const deployCommand = modelData.deploy_command || {};
       
       // Set base form values
-      form.setFieldsValue({
+      const baseValues = {
         pretrained_model_type: deployCommand.pretrained_model_type,
         cpus_per_worker: deployCommand.cpus_per_worker,
         gpus_per_worker: deployCommand.gpus_per_worker,
@@ -45,36 +45,44 @@ const EditModel: React.FC<EditModelProps> = ({ visible, modelData, onClose, onUp
         worker_concurrency: deployCommand.worker_concurrency,
         model_path: deployCommand.model_path,
         infer_backend: deployCommand.infer_backend,
-      });
+      };
 
-      // Handle infer_params
+      // Handle infer_params and SaaS fields
       if (deployCommand.infer_params) {
         const params = [];
+        const saasFields = {};
         for (const [key, value] of Object.entries(deployCommand.infer_params)) {
           if (key.startsWith('saas.')) {
-            form.setFieldValue(key, value);
+            saasFields[key] = value;
             if (key === 'saas.base_url') {
               setSelectedBaseUrl(value as string);
+              // 设置 pretrainedModelType 默认值
+              if (value === 'https://api.deepseek.com/beta') {
+                baseValues.pretrained_model_type = 'saas/openai';
+              } else if (value === 'https://dashscope.aliyuncs.com/compatible-mode/v1') {
+                baseValues.pretrained_model_type = 'saas/qianwen';
+              } else if (value === 'https://api.moonshot.cn/v1') {
+                baseValues.pretrained_model_type = 'saas/openai';
+              }
             }
           } else {
             params.push({ key, value });
           }
         }
-        form.setFieldValue('infer_params', params);
+
+        // Set all form values together
+        form.setFieldsValue({
+          ...baseValues,
+          ...saasFields,
+          infer_params: params,
+        });
+      } else {
+        form.setFieldsValue(baseValues);
       }
 
-      // Set backend type and update form accordingly
+      // Set backend type
       const backend = deployCommand.infer_backend || InferBackend.SaaS;
       setSelectedBackend(backend);
-      
-      // If it's a SaaS backend, ensure the SaaS fields are visible
-      if (backend === InferBackend.SaaS) {
-        form.setFieldsValue({
-          'saas.base_url': deployCommand.infer_params?.['saas.base_url'],
-          'saas.api_key': deployCommand.infer_params?.['saas.api_key'],
-          'saas.model': deployCommand.infer_params?.['saas.model'],
-        });
-      }
     }
   }, [visible, modelData, form]);
 
