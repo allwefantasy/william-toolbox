@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import EditRAG from './EditRAG';
 import axios from 'axios';
 import { Table, Button, message, Card, Typography, Space, Tag, Tooltip, Modal, Select } from 'antd';
 import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, DatabaseOutlined, FileOutlined, ExclamationCircleOutlined, DeleteOutlined } from '@ant-design/icons';
@@ -38,6 +39,8 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
   // State for managing log auto-scrolling
   
   const [logPolling, setLogPolling] = useState<NodeJS.Timeout | null>(null);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [currentRAG, setCurrentRAG] = useState<RAG | null>(null);
     
   const showLogModal = async (ragName: string, logType: string) => {
     setLogModal({
@@ -264,12 +267,32 @@ useEffect(() => {
           >
             删除
           </Button>
+          <Button
+            icon={<EditOutlined />}
+            onClick={() => {
+              setCurrentRAG(record);
+              setEditModalVisible(true);
+            }}
+            disabled={record.status === 'running'}
+          >
+            编辑
+          </Button>
         </Space>
       ),
     },
   ];
 
   return (
+    <>
+      <EditRAG
+        visible={editModalVisible}
+        ragData={currentRAG}
+        onClose={() => {
+          setEditModalVisible(false);
+          setCurrentRAG(null);
+        }}
+        onUpdate={fetchRAGs}
+      />
     <Card>
       <Title level={2}>
         <Space>

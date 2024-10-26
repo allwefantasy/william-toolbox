@@ -6,6 +6,7 @@ import traceback
 from typing import Dict, Any
 from pathlib import Path
 from ..storage.json_file import load_rags_from_json, save_rags_to_json
+from .request_types import AddRAGRequest
 
 router = APIRouter()
 
@@ -39,6 +40,37 @@ async def delete_rag(rag_name: str):
     
     return {"message": f"RAG {rag_name} deleted successfully"}
 
+@router.get("/rags/{rag_name}")
+async def get_rag(rag_name: str):
+    """Get detailed information for a specific RAG."""
+    rags = await load_rags_from_json()
+    
+    if rag_name not in rags:
+        raise HTTPException(status_code=404, detail=f"RAG {rag_name} not found")
+        
+    return rags[rag_name]
+
+@router.put("/rags/{rag_name}")
+async def update_rag(rag_name: str, request: AddRAGRequest):
+    """Update an existing RAG."""
+    rags = await load_rags_from_json()
+    
+    if rag_name not in rags:
+        raise HTTPException(status_code=404, detail=f"RAG {rag_name} not found")
+        
+    rag_info = rags[rag_name]
+    if rag_info['status'] == 'running':
+        raise HTTPException(
+            status_code=400, 
+            detail="Cannot update a running RAG. Please stop it first."
+        )
+    
+    # Update the RAG configuration
+    rag_info.update(request.model_dump())
+    rags[rag_name] = rag_info
+    await save_rags_to_json(rags)
+    
+    return {"message": f"RAG {rag_name} updated successfully"}
 
 @router.get("/rags/{rag_name}/logs/{log_type}/{offset}")
 async def get_rag_logs(rag_name: str, log_type: str, offset: int = 0) -> Dict[str, Any]:
