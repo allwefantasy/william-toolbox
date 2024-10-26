@@ -69,6 +69,12 @@ const Chat: React.FC = () => {
   }, [currentConversationId]);
 
   const handleRegenerateResponse = async (message: Message) => {
+    
+    const canProceed = await checkOpenAIService();
+    if (!canProceed) {
+      return;
+    }
+
     const messageIndex = messages.findIndex(msg => msg.id === message.id);
     if (messageIndex === -1) return;
     
@@ -225,7 +231,7 @@ const checkOpenAIService = async () => {
     try {
       const response = await axios.get('/openai-compatible-service/status');
       if (!response.data.isRunning) {
-        MessageBox.error('请先启动 OpenAI 兼容服务');
+        MessageBox.error('OpenAI 兼容服务未启动，点击菜单， 模型列表/OpenAI 兼容服务 启动对应的服务');
         return false;
       }
       return true;
