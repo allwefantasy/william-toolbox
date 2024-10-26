@@ -260,7 +260,7 @@ useEffect(() => {
                 onOk: () => handleAction(record.name, 'delete')
               });
             }}
-            disabled={record.status === 'running'}
+            disabled={record.status !== 'stopped'}
           >
             删除
           </Button>
