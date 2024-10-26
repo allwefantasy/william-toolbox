@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import EditRAG from './EditRAG';
 import axios from 'axios';
 import { Table, Button, message, Card, Typography, Space, Tag, Tooltip, Modal, Select } from 'antd';
-import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, DatabaseOutlined, FileOutlined,EditOutlined, ExclamationCircleOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, DatabaseOutlined, FileOutlined, EditOutlined, ExclamationCircleOutlined, DeleteOutlined } from '@ant-design/icons';
 
 const { Title, Paragraph } = Typography;
 
@@ -37,11 +37,11 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
     title: '',
   });
   // State for managing log auto-scrolling
-  
+
   const [logPolling, setLogPolling] = useState<NodeJS.Timeout | null>(null);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [currentRAG, setCurrentRAG] = useState<RAG | null>(null);
-    
+
   const showLogModal = async (ragName: string, logType: string) => {
     setLogModal({
       visible: true,
@@ -67,7 +67,7 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
 
     // 立即获取一次日志
     await fetchLogs();
-    
+
     // 每3秒轮询一次
     const interval = setInterval(fetchLogs, 3000);
     setLogPolling(interval);
@@ -75,9 +75,9 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
 
   // 监听滚动事件来控制自动滚动
   // Create a ref for the log content container
-const logContentRef = useRef<HTMLPreElement>(null);
+  const logContentRef = useRef<HTMLPreElement>(null);
 
-const handleCloseLogModal = () => {
+  const handleCloseLogModal = () => {
     if (logPolling) {
       clearInterval(logPolling);
       setLogPolling(null);
@@ -85,19 +85,19 @@ const handleCloseLogModal = () => {
     setLogModal(prev => ({ ...prev, visible: false }));
   };
 
-// Function to scroll to bottom
-const scrollToBottom = () => {
+  // Function to scroll to bottom
+  const scrollToBottom = () => {
     if (logContentRef.current) {
       logContentRef.current.scrollTop = logContentRef.current.scrollHeight;
     }
-};
+  };
 
-// Update useEffect to scroll when content changes
-useEffect(() => {
+  // Update useEffect to scroll when content changes
+  useEffect(() => {
     if (logModal.visible) {
       scrollToBottom();
     }
-}, [logModal.content]);
+  }, [logModal.content]);
 
   useEffect(() => {
     fetchRAGs();
@@ -128,14 +128,13 @@ useEffect(() => {
         const response = await axios.post(`/rags/${ragName}/${action}`);
         if (response.data.message) {
           message.success(response.data.message);
-          await fetchRAGs();
-
           // 当action是start时,开始轮询日志
           if (action === 'start') {
+            ##MARK
             const startTime = Date.now();
             const timeout = 45000; // 45 seconds
             const pollInterval = 1000; // 每秒轮询一次
-            
+
             while (Date.now() - startTime < timeout) {
               // 检查err和out日志
               const [errResponse, outResponse] = await Promise.all([
@@ -155,10 +154,8 @@ useEffect(() => {
               // 等待一段时间后再次轮询
               await new Promise(resolve => setTimeout(resolve, pollInterval));
             }
-
-            // 如果超时,最后再获取一次状态
-            await fetchRAGs();
           }
+          await fetchRAGs();
         }
       }
     } catch (error) {
@@ -241,15 +238,15 @@ useEffect(() => {
       title: '当前状态',
       dataIndex: 'status',
       key: 'status',
-        render: (status: string, record: RAG) => (
-          <Space direction="vertical">
-            <Tag color={status === 'running' ? 'green' : 'red'}>
-              {status === 'running' ? '运行中' : '已停止'}
-            </Tag>
-            PID: {record.process_id}
-          </Space>
-        ),
-      },
+      render: (status: string, record: RAG) => (
+        <Space direction="vertical">
+          <Tag color={status === 'running' ? 'green' : 'red'}>
+            {status === 'running' ? '运行中' : '已停止'}
+          </Tag>
+          PID: {record.process_id}
+        </Space>
+      ),
+    },
     {
       title: '操作',
       key: 'action',
@@ -327,46 +324,46 @@ useEffect(() => {
         }}
         onUpdate={fetchRAGs}
       />
-    <Card>
-      <Title level={2}>
-        <Space>
-          <DatabaseOutlined />
-          RAG列表
-        </Space>
-      </Title>
-      <Table 
-        columns={columns} 
-        dataSource={rags} 
-        rowKey="name" 
-        loading={loading}
-        pagination={false}
-        bordered
-      />
-      <Modal
-        title={logModal.title}
-        visible={logModal.visible}
-        onCancel={handleCloseLogModal}
-        footer={null}
-        width={800}
-        bodyStyle={{ maxHeight: '500px', overflow: 'auto' }}
-      >
-        <pre 
-          ref={logContentRef}
-          style={{ 
-            whiteSpace: 'pre-wrap', 
-            wordWrap: 'break-word',
-            maxHeight: '450px',
-            overflowY: 'auto',
-            backgroundColor: '#f5f5f5',
-            padding: '12px',
-            borderRadius: '4px',
-            fontSize: '12px',
-            lineHeight: '1.5',
-            fontFamily: 'monospace'
-          }}
+      <Card>
+        <Title level={2}>
+          <Space>
+            <DatabaseOutlined />
+            RAG列表
+          </Space>
+        </Title>
+        <Table
+          columns={columns}
+          dataSource={rags}
+          rowKey="name"
+          loading={loading}
+          pagination={false}
+          bordered
+        />
+        <Modal
+          title={logModal.title}
+          visible={logModal.visible}
+          onCancel={handleCloseLogModal}
+          footer={null}
+          width={800}
+          bodyStyle={{ maxHeight: '500px', overflow: 'auto' }}
         >
-          {logModal.content || 'No logs available'}
-        </pre>
+          <pre
+            ref={logContentRef}
+            style={{
+              whiteSpace: 'pre-wrap',
+              wordWrap: 'break-word',
+              maxHeight: '450px',
+              overflowY: 'auto',
+              backgroundColor: '#f5f5f5',
+              padding: '12px',
+              borderRadius: '4px',
+              fontSize: '12px',
+              lineHeight: '1.5',
+              fontFamily: 'monospace'
+            }}
+          >
+            {logModal.content || 'No logs available'}
+          </pre>
         </Modal>
       </Card>
     </>
