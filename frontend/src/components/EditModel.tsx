@@ -31,61 +31,10 @@ const EditModel: React.FC<EditModelProps> = ({ visible, modelData, onClose, onUp
     fetchConfig();
   }, []);
 
-  const fetchModelData = async (modelName: string) => {
-    try {
-      const response = await axios.get(`/models/${modelName}`);
-      const fullModelData = response.data;
-      const deployCommand = fullModelData.deploy_command || {};
-      
-      // Set form values with fetched data
-      form.setFieldsValue({
-        pretrained_model_type: deployCommand.pretrained_model_type,
-        cpus_per_worker: deployCommand.cpus_per_worker,
-        gpus_per_worker: deployCommand.gpus_per_worker,
-        num_workers: deployCommand.num_workers,
-        worker_concurrency: deployCommand.worker_concurrency,
-        model_path: deployCommand.model_path,
-        infer_backend: deployCommand.infer_backend,
-      });
-
-      // Handle infer_params
-      if (deployCommand.infer_params) {
-        const params = [];
-        for (const [key, value] of Object.entries(deployCommand.infer_params)) {
-          if (key.startsWith('saas.')) {
-            form.setFieldValue(key, value);
-            if (key === 'saas.base_url') {
-              setSelectedBaseUrl(value as string);
-            }
-          } else {
-            params.push({ key, value });
-          }
-        }
-        form.setFieldValue('infer_params', params);
-      }
-
-      // Set backend type and update form accordingly
-      const backend = deployCommand.infer_backend || InferBackend.SaaS;
-      setSelectedBackend(backend);
-      
-      // If it's a SaaS backend, ensure the SaaS fields are visible
-      if (backend === InferBackend.SaaS) {
-        form.setFieldsValue({
-          'saas.base_url': deployCommand.infer_params?.['saas.base_url'],
-          'saas.api_key': deployCommand.infer_params?.['saas.api_key'],
-          'saas.model': deployCommand.infer_params?.['saas.model'],
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching model data:', error);
-      message.error('获取模型数据失败');
-    }
-  };
-
   useEffect(() => {    
-    if (visible && modelData?.name) {
-      fetchModelData(modelData.name);
-    }
+    if (visible && modelData) {
+      // Extract values from deploy_command
+      const deployCommand = modelData.deploy_command || {};
       
       // Set base form values
       form.setFieldsValue({
