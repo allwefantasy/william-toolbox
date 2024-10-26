@@ -129,6 +129,36 @@ useEffect(() => {
         if (response.data.message) {
           message.success(response.data.message);
           await fetchRAGs();
+
+          // 当action是start时,开始轮询日志
+          if (action === 'start') {
+            const startTime = Date.now();
+            const timeout = 45000; // 45 seconds
+            const pollInterval = 1000; // 每秒轮询一次
+            
+            while (Date.now() - startTime < timeout) {
+              // 检查err和out日志
+              const [errResponse, outResponse] = await Promise.all([
+                axios.get(`/rags/${ragName}/logs/err/-10000`),
+                axios.get(`/rags/${ragName}/logs/out/-10000`)
+              ]);
+
+              const errContent = errResponse.data.content || '';
+              const outContent = outResponse.data.content || '';
+
+              // 检查是否包含成功运行的标志
+              if (errContent.includes('Uvicorn running on') || outContent.includes('Uvicorn running on')) {
+                await fetchRAGs();
+                return;
+              }
+
+              // 等待一段时间后再次轮询
+              await new Promise(resolve => setTimeout(resolve, pollInterval));
+            }
+
+            // 如果超时,最后再获取一次状态
+            await fetchRAGs();
+          }
         }
       }
     } catch (error) {
