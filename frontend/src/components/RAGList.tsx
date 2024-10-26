@@ -128,33 +128,47 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
         const response = await axios.post(`/rags/${ragName}/${action}`);
         if (response.data.message) {
           message.success(response.data.message);
-          // 当action是start时,开始轮询日志
-          if (action === 'start') {
-            ##MARK
-            const startTime = Date.now();
-            const timeout = 45000; // 45 seconds
-            const pollInterval = 1000; // 每秒轮询一次
+            // 当action是start时,开始轮询日志
+            if (action === 'start') {
+              message.loading('正在启动服务...', 0);
+              const startTime = Date.now();
+              const timeout = 45000; // 45 seconds
+              const pollInterval = 1000; // 每秒轮询一次
+              let found = false;
 
-            while (Date.now() - startTime < timeout) {
-              // 检查err和out日志
-              const [errResponse, outResponse] = await Promise.all([
-                axios.get(`/rags/${ragName}/logs/err/-10000`),
-                axios.get(`/rags/${ragName}/logs/out/-10000`)
-              ]);
+              try {
+                while (Date.now() - startTime < timeout) {
+                  // 检查err和out日志
+                  const [errResponse, outResponse] = await Promise.all([
+                    axios.get(`/rags/${ragName}/logs/err/-10000`),
+                    axios.get(`/rags/${ragName}/logs/out/-10000`)
+                  ]);
 
-              const errContent = errResponse.data.content || '';
-              const outContent = outResponse.data.content || '';
+                  const errContent = errResponse.data.content || '';
+                  const outContent = outResponse.data.content || '';
 
-              // 检查是否包含成功运行的标志
-              if (errContent.includes('Uvicorn running on') || outContent.includes('Uvicorn running on')) {
-                await fetchRAGs();
-                return;
+                  // 检查是否包含成功运行的标志
+                  if (errContent.includes('Uvicorn running on') || outContent.includes('Uvicorn running on')) {
+                    message.success('服务启动成功');
+                    found = true;
+                    await fetchRAGs();
+                    break;
+                  }
+
+                  // 等待一段时间后再次轮询
+                  await new Promise(resolve => setTimeout(resolve, pollInterval));
+                }
+
+                if (!found) {
+                  message.error('服务启动超时，请检查日志');
+                }
+              } catch (error) {
+                message.error('服务启动失败：' + (error.message || '未知错误'));
+              } finally {
+                // 确保清除loading消息
+                message.destroy();
               }
-
-              // 等待一段时间后再次轮询
-              await new Promise(resolve => setTimeout(resolve, pollInterval));
             }
-          }
           await fetchRAGs();
         }
       }
