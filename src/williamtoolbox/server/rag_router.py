@@ -68,6 +68,7 @@ async def update_rag(rag_name: str, request: AddRAGRequest):
     # Update the RAG configuration
     rag_info.update(request.model_dump())
     rags[rag_name] = rag_info
+    logger.info(f"RAG {rag_name} updated: {rag_info}")
     await save_rags_to_json(rags)
     
     return {"message": f"RAG {rag_name} updated successfully"}

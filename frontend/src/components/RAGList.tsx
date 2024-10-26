@@ -129,13 +129,13 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
       } else {
         if (action === 'start') {
           setStartingRags(prev => ({ ...prev, [ragName]: true }));
-          message.loading('正在启动服务...', 0);
+          message.loading('正在检测服务是否可以服务,请耐心等待(最多持续45秒)...', 0);
         }
-        
+
         const response = await axios.post(`/rags/${ragName}/${action}`);
         if (response.data.message) {
           message.success(response.data.message);
-          
+
           if (action === 'start') {
             const startTime = Date.now();
             const timeout = 45000; // 45 seconds
@@ -166,15 +166,17 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
               }
 
               if (!found) {
-                message.error('服务启动超时，请检查日志');
+                showLogModal(ragName, 'err');
               }
+              await fetchRAGs();              
             } finally {
               // 清除loading消息和启动状态
               message.destroy();
               setStartingRags(prev => ({ ...prev, [ragName]: false }));
             }
+          } else {
+            await fetchRAGs();
           }
-          await fetchRAGs();
         }
       }
     } catch (error) {

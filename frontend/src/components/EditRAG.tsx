@@ -66,7 +66,6 @@ const EditRAG: React.FC<EditRAGProps> = ({ visible, ragData, onClose, onUpdate }
     try {
       const values = await form.validateFields();
       values.name = ragData.name;
-      
       await axios.put(`/rags/${ragData.name}`, values);
       message.success('RAG更新成功');
       onUpdate();

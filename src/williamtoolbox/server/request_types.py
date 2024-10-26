@@ -61,6 +61,8 @@ class AddRAGRequest(BaseModel):
     required_exts: str = Field(default="")
     disable_inference_enhance: bool = Field(default=False)
     inference_deep_thought: bool = Field(default=False)
+    enable_hybrid_index: bool = Field(default=False)
+    hybrid_index_max_output_tokens: int = Field(default=1000000)
     model_config = {"protected_namespaces": ()}  
 
 
