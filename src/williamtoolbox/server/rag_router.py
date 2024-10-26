@@ -5,8 +5,40 @@ from loguru import logger
 import traceback
 from typing import Dict, Any
 from pathlib import Path
+from ..storage.json_file import load_rags_from_json, save_rags_to_json
 
 router = APIRouter()
+
+@router.delete("/rags/{rag_name}")
+async def delete_rag(rag_name: str):
+    """Delete a RAG service."""
+    rags = await load_rags_from_json()
+    
+    if rag_name not in rags:
+        raise HTTPException(status_code=404, detail=f"RAG {rag_name} not found")
+        
+    rag_info = rags[rag_name]
+    if rag_info['status'] == 'running':
+        raise HTTPException(
+            status_code=400, 
+            detail="Cannot delete a running RAG. Please stop it first."
+        )
+    
+    # Delete the RAG
+    del rags[rag_name]
+    await save_rags_to_json(rags)
+    
+    # Try to delete log files if they exist
+    try:
+        log_files = [f"logs/{rag_name}.out", f"logs/{rag_name}.err"]
+        for log_file in log_files:
+            if os.path.exists(log_file):
+                os.remove(log_file)
+    except Exception as e:
+        logger.warning(f"Failed to delete log files for RAG {rag_name}: {str(e)}")
+    
+    return {"message": f"RAG {rag_name} deleted successfully"}
+
 
 @router.get("/rags/{rag_name}/logs/{log_type}/{offset}")
 async def get_rag_logs(rag_name: str, log_type: str, offset: int = 0) -> Dict[str, Any]:

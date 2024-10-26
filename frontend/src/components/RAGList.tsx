@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Table, Button, message, Card, Typography, Space, Tag, Tooltip, Modal, Select } from 'antd';
-import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, DatabaseOutlined, FileOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, DatabaseOutlined, FileOutlined, ExclamationCircleOutlined, DeleteOutlined } from '@ant-design/icons';
 
 const { Title, Paragraph } = Typography;
 
@@ -113,19 +113,27 @@ useEffect(() => {
     }
   };
 
-  const handleAction = async (ragName: string, action: 'start' | 'stop') => {
+  const handleAction = async (ragName: string, action: 'start' | 'stop' | 'delete') => {
     try {
-      const response = await axios.post(`/rags/${ragName}/${action}`);
-      if (response.data.message) {
-        message.success(response.data.message);
-        await fetchRAGs();
+      if (action === 'delete') {
+        const response = await axios.delete(`/rags/${ragName}`);
+        if (response.data.message) {
+          message.success(response.data.message);
+          await fetchRAGs();
+        }
+      } else {
+        const response = await axios.post(`/rags/${ragName}/${action}`);
+        if (response.data.message) {
+          message.success(response.data.message);
+          await fetchRAGs();
+        }
       }
     } catch (error) {
       console.error(`Error ${action}ing RAG:`, error);
       if (axios.isAxiosError(error) && error.response) {
-        message.error(`${action === 'start' ? '启动' : '停止'}RAG失败: ${error.response.data.detail}`);
+        message.error(`${action === 'start' ? '启动' : action === 'stop' ? '停止' : '删除'}RAG失败: ${error.response.data.detail}`);
       } else {
-        message.error(`${action === 'start' ? '启动' : '停止'}RAG失败`);
+        message.error(`${action === 'start' ? '启动' : action === 'stop' ? '停止' : '删除'}RAG失败`);
       }
     }
   };
@@ -239,6 +247,22 @@ useEffect(() => {
             onClick={() => showLogModal(record.name, 'err')}
           >
             标准错误
+          </Button>
+          <Button
+            danger
+            icon={<DeleteOutlined />}
+            onClick={() => {
+              Modal.confirm({
+                title: '确认删除',
+                content: '你确定要删除这个RAG服务吗？',
+                okText: '确认',
+                cancelText: '取消',
+                onOk: () => handleAction(record.name, 'delete')
+              });
+            }}
+            disabled={record.status === 'running'}
+          >
+            删除
           </Button>
         </Space>
       ),
