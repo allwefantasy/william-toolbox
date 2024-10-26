@@ -224,60 +224,64 @@ useEffect(() => {
       title: '操作',
       key: 'action',
       render: (_: any, record: RAG) => (
-        <Space size="middle">
-          <Button
-            type={record.status === 'stopped' ? 'primary' : 'default'}
-            icon={record.status === 'stopped' ? <PoweroffOutlined /> : <PauseCircleOutlined />}
-            onClick={() => handleAction(record.name, record.status === 'stopped' ? 'start' : 'stop')}
-          >
-            {record.status === 'stopped' ? '启动' : '停止'}
-          </Button>
-          <Button
-            icon={<SyncOutlined spin={refreshing[record.name]} />}
-            onClick={() => refreshStatus(record.name)}
-            disabled={refreshing[record.name]}
-          >
-            刷新状态
-          </Button>
-          <Button
-            icon={<FileOutlined />}
-            onClick={() => showLogModal(record.name, 'out')}
-          >
-            标准输出
-          </Button>
-          <Button
-            icon={<ExclamationCircleOutlined />}
-            onClick={() => showLogModal(record.name, 'err')}
-          >
-            标准错误
-          </Button>
-          <Button
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => {
-              Modal.confirm({
-                title: '确认删除',
-                content: '你确定要删除这个RAG服务吗？',
-                okText: '确认',
-                cancelText: '取消',
-                onOk: () => handleAction(record.name, 'delete')
-              });
-            }}
-            disabled={record.status !== 'stopped'}
-          >
-            删除
-          </Button>
-          <Button
-            icon={<EditOutlined />}
-            onClick={() => {
-              setCurrentRAG(record);
-              setEditModalVisible(true);
-            }}
-            disabled={record.status === 'running'}
-          >
-            编辑
-          </Button>
-        </Space>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <Space size="small">
+            <Button
+              type={record.status === 'stopped' ? 'primary' : 'default'}
+              icon={record.status === 'stopped' ? <PoweroffOutlined /> : <PauseCircleOutlined />}
+              onClick={() => handleAction(record.name, record.status === 'stopped' ? 'start' : 'stop')}
+            >
+              {record.status === 'stopped' ? '启动' : '停止'}
+            </Button>
+            <Button
+              icon={<SyncOutlined spin={refreshing[record.name]} />}
+              onClick={() => refreshStatus(record.name)}
+              disabled={refreshing[record.name]}
+            >
+              刷新状态
+            </Button>
+            <Button
+              icon={<FileOutlined />}
+              onClick={() => showLogModal(record.name, 'out')}
+            >
+              标准输出
+            </Button>
+            <Button
+              icon={<ExclamationCircleOutlined />}
+              onClick={() => showLogModal(record.name, 'err')}
+            >
+              标准错误
+            </Button>
+          </Space>
+          <Space size="small">
+            <Button
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => {
+                Modal.confirm({
+                  title: '确认删除',
+                  content: '你确定要删除这个RAG服务吗？',
+                  okText: '确认',
+                  cancelText: '取消',
+                  onOk: () => handleAction(record.name, 'delete')
+                });
+              }}
+              disabled={record.status !== 'stopped'}
+            >
+              删除
+            </Button>
+            <Button
+              icon={<EditOutlined />}
+              onClick={() => {
+                setCurrentRAG(record);
+                setEditModalVisible(true);
+              }}
+              disabled={record.status === 'running'}
+            >
+              编辑
+            </Button>
+          </Space>
+        </div>
       ),
     },
   ];
