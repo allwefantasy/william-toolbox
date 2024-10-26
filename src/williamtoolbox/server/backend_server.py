@@ -246,6 +246,21 @@ async def list_models():
         for name, info in supported_models.items()
     ]
 
+@app.delete("/models/{model_name}")
+async def delete_model(model_name: str):
+    """Delete a model from the supported models list."""
+    if model_name not in supported_models:
+        raise HTTPException(status_code=404, detail=f"Model {model_name} not found")
+    
+    # Check if the model is running
+    if supported_models[model_name]["status"] == "running":
+        raise HTTPException(status_code=400, detail="Cannot delete a running model")
+    
+    # Delete the model from supported_models
+    del supported_models[model_name]
+    await save_models_to_json(supported_models)
+    return {"message": f"Model {model_name} deleted successfully"}
+
 
 @app.post("/models/add")
 async def add_model(model: AddModelRequest):

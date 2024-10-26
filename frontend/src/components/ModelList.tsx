@@ -15,6 +15,25 @@ interface ModelListProps {
 }
 
 const ModelList: React.FC<ModelListProps> = ({ refreshTrigger }) => {
+  const handleDelete = async (modelName: string) => {
+    Modal.confirm({
+      title: '确认删除',
+      content: '你确定要删除这个模型吗？',
+      okText: '确认',
+      cancelText: '取消',
+      async onOk() {
+        try {
+          await axios.delete(`/models/${modelName}`);
+          message.success('模型删除成功');
+          fetchModels();
+        } catch (error) {
+          console.error('Error deleting model:', error);
+          message.error('删除模型失败');
+        }
+      },
+    });
+  };
+
   const [models, setModels] = useState<Model[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState<{ [key: string]: boolean }>({});
@@ -138,6 +157,14 @@ const ModelList: React.FC<ModelListProps> = ({ refreshTrigger }) => {
             disabled={refreshing[record.name]}
           >
             刷新状态
+          </Button>
+          <Button
+            type="primary"
+            danger
+            onClick={() => handleDelete(record.name)}
+            disabled={record.status === 'running'}
+          >
+            删除
           </Button>
         </Space>
       ),
