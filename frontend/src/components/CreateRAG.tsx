@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Button, Modal, Form, Input, InputNumber, Select, message, Switch, Tag, Tooltip, AutoComplete } from 'antd';
 import { QuestionCircleOutlined } from '@ant-design/icons';
-import { PlusOutlined, FolderOutlined } from '@ant-design/icons';
+import { PlusOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
 
@@ -137,34 +137,7 @@ const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
             )}
           </Form.Item>
           <Form.Item name="doc_dir" label="文档目录" rules={[{ required: true }]}>
-            <Input.Group compact>
-              <Input 
-                style={{ width: 'calc(100% - 40px)' }} 
-                readOnly 
-                placeholder="选择文档目录"
-              />
-              <Button 
-                icon={<FolderOutlined />}
-                onClick={() => {
-                  // 调用 electron 的文件选择对话框
-                  const input = document.createElement('input');
-                  input.type = 'file';
-                  input.webkitdirectory = true;
-                  input.directory = true;
-                  
-                  input.onchange = (e) => {
-                    const files = e.target.files;
-                    if (files && files.length > 0) {
-                      // 获取选择的目录路径
-                      const path = files[0].path.substring(0, files[0].path.lastIndexOf('/'));
-                      form.setFieldsValue({ doc_dir: path });
-                    }
-                  };
-                  
-                  input.click();
-                }}
-              />
-            </Input.Group>
+            <Input />
           </Form.Item>
           <Form.Item name="rag_doc_filter_relevance" label="文档过滤相关度" initialValue={2.0}>
             <InputNumber min={0} step={0.1} max={10} />
