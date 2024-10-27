@@ -18,9 +18,15 @@ import ReactFlow, {
 import dagre from 'dagre';
 import 'reactflow/dist/style.css';
 import { Card, Typography, Button, Space, Tag } from 'antd';
-import { CodeOutlined, NumberOutlined } from '@ant-design/icons';
+import { CodeOutlined, NumberOutlined, FileOutlined } from '@ant-design/icons';
+import { useState } from 'react';
 
 const { Text } = Typography;
+
+interface FileChange {
+  path: string;
+  change_type: 'added' | 'modified';
+}
 
 interface Query {
   query: string;
@@ -28,6 +34,7 @@ interface Query {
   response?: string;
   urls?: string[];
   file_number: number;
+  file_changes?: FileChange[];
 }
 
 interface WorkflowViewProps {
@@ -36,6 +43,8 @@ interface WorkflowViewProps {
 }
 
 const CustomNode = ({ data }: any) => {
+  const [showChanges, setShowChanges] = useState(false);
+
   return (
     <Card 
       size="small" 
@@ -56,13 +65,15 @@ const CustomNode = ({ data }: any) => {
       }
       extra={
         data.response && (
-          <Button 
-            icon={<CodeOutlined />} 
-            type="link" 
-            onClick={() => data.onShowDiff(data.response)}
-          >
-            查看变更
-          </Button>
+          <Space>
+            <Button 
+              icon={<CodeOutlined />} 
+              type="link" 
+              onClick={() => data.onShowDiff(data.response)}
+            >
+              查看变更
+            </Button>
+          </Space>
         )
       }
       style={{ 
@@ -73,14 +84,49 @@ const CustomNode = ({ data }: any) => {
       }}
       bodyStyle={{ backgroundColor: '#fafafa' }}
     >
-      <Text ellipsis={{ tooltip: data.query }}>
+      <Text ellipsis={{ tooltip: data.query }} style={{ marginBottom: 8 }}>
         {data.query.length > 100 ? `${data.query.slice(0, 100)}...` : data.query}
       </Text>
-      {data.urls && data.urls.length > 0 && (
-        <div style={{ marginTop: 8 }}>
-          <Tag color="green">{data.urls.length} 个相关文件</Tag>
-        </div>
-      )}
+      <Space direction="vertical" style={{ width: '100%' }}>
+        <Space wrap>
+          {data.urls && data.urls.length > 0 && (
+            <Tag color="green">{data.urls.length} 个相关文件</Tag>
+          )}
+          {data.file_changes && data.file_changes.length > 0 && (
+            <Button 
+              size="small" 
+              icon={<FileOutlined />}
+              onClick={() => setShowChanges(!showChanges)}
+              type="link"
+            >
+              {showChanges ? '收起变更' : '查看变更'}({data.file_changes.length}个文件)
+            </Button>
+          )}
+        </Space>
+
+        {showChanges && data.file_changes && (
+          <div style={{ 
+            marginTop: 4,
+            maxHeight: '100px',
+            overflowY: 'auto',
+            padding: '4px',
+            backgroundColor: '#f5f5f5',
+            borderRadius: '4px'
+          }}>
+            {data.file_changes.map((change, index) => (
+              <Tag 
+                key={index}
+                color={change.change_type === 'added' ? 'green' : 'blue'}
+                style={{ margin: '2px', maxWidth: '100%' }}
+              >
+                <Text ellipsis style={{ maxWidth: 200 }}>
+                  {change.change_type === 'added' ? '+' : 'M'} {change.path}
+                </Text>
+              </Tag>
+            ))}
+          </div>
+        )}
+      </Space>
     </Card>
   );
 };
