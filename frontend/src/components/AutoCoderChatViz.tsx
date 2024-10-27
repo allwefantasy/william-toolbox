@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Input, Button, List, Card, Typography, message, Modal, Space, Radio } from 'antd';
+import { Input, Button, List, Card, Typography, message, Modal, Space, Radio, Tag } from 'antd';
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism"; 
 import { FolderOutlined, MessageOutlined, CodeOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
@@ -29,8 +29,7 @@ const AutoCoderChatViz: React.FC = () => {
   const [currentUrls, setCurrentUrls] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'list' | 'workflow' | 'animated'>('list');
 
-  const showDiff = async (response: string | undefined) => {
-    alert(projectPath);
+  const showDiff = async (response: string | undefined) => {    
     if (!projectPath || !response) return;
 
     try {
