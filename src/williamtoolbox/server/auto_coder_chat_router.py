@@ -1,8 +1,10 @@
 from fastapi import APIRouter, HTTPException
 import os
 import yaml
+import subprocess
 from typing import List, Optional
 from datetime import datetime
+from pathlib import Path
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -37,6 +39,61 @@ class FileContentResponse(BaseModel):
     success: bool
     message: str = ""
     content: Optional[str] = None
+
+class CommitDiffResponse(BaseModel):
+    success: bool
+    message: str = ""
+    diff: Optional[str] = None
+
+@router.get("/auto-coder-chat/commit-diff/{response_id}", response_model=CommitDiffResponse)
+async def get_commit_diff(path: str, response_id: str):
+    """根据response_id获取对应的git commit diff"""
+    if not os.path.exists(path):
+        return CommitDiffResponse(
+            success=False,
+            message="项目路径不存在"
+        )
+
+    try:
+        # 切换到项目目录
+        original_dir = os.getcwd()
+        os.chdir(path)
+        
+        # 查找包含特定response message的commit
+        cmd = [
+            "git", "log", "--grep", f"message={response_id}",
+            "--format=%H", "-n", "1"
+        ]
+        commit_hash = subprocess.check_output(cmd, universal_newlines=True).strip()
+        
+        if not commit_hash:
+            return CommitDiffResponse(
+                success=False,
+                message=f"找不到对应的commit: {response_id}"
+            )
+            
+        # 获取该commit与其父commit之间的diff
+        cmd = ["git", "show", "--patch", commit_hash]
+        diff = subprocess.check_output(cmd, universal_newlines=True)
+        
+        return CommitDiffResponse(
+            success=True,
+            diff=diff
+        )
+        
+    except subprocess.CalledProcessError as e:
+        return CommitDiffResponse(
+            success=False,
+            message=f"执行git命令时出错: {str(e)}"
+        )
+    except Exception as e:
+        return CommitDiffResponse(
+            success=False,
+            message=f"获取commit diff时出错: {str(e)}"
+        )
+    finally:
+        # 恢复原始工作目录
+        os.chdir(original_dir)
 
 @router.get("/auto-coder-chat/validate-and-load", response_model=ValidationResponseWithFileNumbers)
 async def validate_and_load_queries(path: str):
