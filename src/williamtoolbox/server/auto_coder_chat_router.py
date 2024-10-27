@@ -34,13 +34,13 @@ async def validate_and_load_queries(path: str):
         )
     
     queries = []
-    auto_coder_dir = os.path.join(path, ".auto-coder")
+    auto_coder_dir = os.path.join(path, "actions")
     
-    # 遍历.auto-coder目录下的所有yaml文件
+    # 遍历actions目录下的所有yaml文件
     try:
         for root, _, files in os.walk(auto_coder_dir):
             for file in files:
-                if file.endswith(('.yml', '.yaml')):
+                if file.endswith(('chat_action.yml')):
                     file_path = os.path.join(root, file)
                     with open(file_path, 'r', encoding='utf-8') as f:
                         try:
