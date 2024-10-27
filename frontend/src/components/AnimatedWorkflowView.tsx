@@ -16,7 +16,13 @@ interface Query {
   query: string;
   timestamp?: string;
   response?: string;
-  urls?: string[];  
+  urls?: string[];
+  file_number: number;  
+}
+
+interface FileChanges {
+  response_id: string;
+  changes?: FileChange[];
 }
 
 interface AnimatedWorkflowViewProps {
@@ -29,6 +35,7 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentSubStep, setCurrentSubStep] = useState(0);
   const [currentDiff, setCurrentDiff] = useState('');
+  const [currentFileChanges, setCurrentFileChanges] = useState<FileChange[]>([]);
   const [sortedQueries, setSortedQueries] = useState<Query[]>([]);
 
   useEffect(() => {
@@ -59,8 +66,14 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
   useEffect(() => {
     const loadDiffAndChanges = async () => {
       if (currentSubStep === 2 && sortedQueries[currentStep]?.response) {
-        const diff = await onShowDiff(sortedQueries[currentStep].response);
-        setCurrentDiff(diff);
+        const response = sortedQueries[currentStep].response;
+        const diff = await onShowDiff(response);
+        if (typeof diff === 'string') {
+          setCurrentDiff(diff);
+        } else if (typeof diff === 'object' && diff.diff && diff.file_changes) {
+          setCurrentDiff(diff.diff);
+          setCurrentFileChanges(diff.file_changes);
+        }
       }
     };
     loadDiffAndChanges();
@@ -75,6 +88,7 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
     setCurrentSubStep(0);
     setIsPlaying(false);
     setCurrentDiff('');
+    setCurrentFileChanges([]);
   }, []);
 
   const renderContent = () => {
@@ -106,9 +120,9 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
         return (
           <div className="animated-content">
             <Title level={4}>代码变更</Title>
-            {currentQuery.file_changes && (
+            {currentFileChanges && currentFileChanges.length > 0 && (
               <div className="file-changes-list">
-                {currentQuery.file_changes.map((change, index) => (
+                {currentFileChanges.map((change, index) => (
                   <Tag 
                     key={index} 
                     color={change.change_type === 'added' ? 'green' : 'blue'}
