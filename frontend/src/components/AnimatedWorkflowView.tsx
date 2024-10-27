@@ -80,7 +80,7 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
   };
 
   const renderContent = () => {
-    const currentQuery = sortedQueries[currentStep];
+    const currentQuery = sortedQueries[currentStep];    
     if (!currentQuery) return null;
 
     switch (currentSubStep) {
@@ -159,7 +159,7 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
             icon: <FileOutlined />,
           },
           {
-            title: '查询内容',
+            title: '需求',
             icon: <MessageOutlined />,
           },
           {
