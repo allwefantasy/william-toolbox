@@ -11,7 +11,8 @@ import ReactFlow, {
   Position,
   MiniMap,
   useReactFlow,
-  BackgroundVariant
+  BackgroundVariant,
+  ReactFlowProvider
 } from 'reactflow';
 import dagre from 'dagre';
 import 'reactflow/dist/style.css';
@@ -188,19 +189,20 @@ const WorkflowView: React.FC<WorkflowViewProps> = ({ queries, onShowDiff }) => {
 
   return (
     <div style={{ height: '70vh', border: '1px solid #ddd', borderRadius: '4px' }}>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        nodeTypes={nodeTypes}
-        fitView
-        onInit={onInit}
-        minZoom={0.1}
-        maxZoom={1.5}
-        defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
-        proOptions={{ hideAttribution: true }}
-      >
+      <ReactFlowProvider>
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          nodeTypes={nodeTypes}
+          fitView
+          onInit={onInit}
+          minZoom={0.1}
+          maxZoom={1.5}
+          defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
+          proOptions={{ hideAttribution: true }}
+        >
         <Background color="#aaa" gap={16} variant={BackgroundVariant.Dots} />
         <Controls />
         <MiniMap 
@@ -216,7 +218,8 @@ const WorkflowView: React.FC<WorkflowViewProps> = ({ queries, onShowDiff }) => {
             <Text type="secondary">按照文件编号顺序自动布局,可拖拽调整位置</Text>
           </Card>
         </Panel>
-      </ReactFlow>
+        </ReactFlow>
+      </ReactFlowProvider>
     </div>
   );
 };
