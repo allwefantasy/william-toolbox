@@ -44,10 +44,15 @@ class FileContentResponse(BaseModel):
     message: str = ""
     content: Optional[str] = None
 
+class FileChange(BaseModel):
+    path: str  
+    change_type: str   # "added" 或 "modified"
+
 class CommitDiffResponse(BaseModel):
     success: bool
     message: str = ""
     diff: Optional[str] = None
+    file_changes: Optional[List[FileChange]] = None
 
 @router.get("/auto-coder-chat/commit-diff/{response_id}", response_model=CommitDiffResponse)
 async def get_commit_diff(path: str, response_id: str):
@@ -88,20 +93,47 @@ async def get_commit_diff(path: str, response_id: str):
         logger.info(f"使用commit: {target_commit.hexsha}")
         
         # 获取diff
+        # 获取变更的文件列表
+        file_changes = []
         if target_commit.parents:
             parent = target_commit.parents[0]
             logger.info(f"对比commit {target_commit.hexsha[:8]} 与其父commit {parent.hexsha[:8]}")
             diff = repo.git.diff(parent.hexsha, target_commit.hexsha)
+            
+            # 获取变更的文件
+            diff_index = parent.diff(target_commit)
+            
+            for diff_item in diff_index:
+                if diff_item.new_file:
+                    file_changes.append(FileChange(
+                        path=diff_item.b_path,
+                        change_type="added"
+                    ))
+                else:
+                    file_changes.append(FileChange(
+                        path=diff_item.b_path,
+                        change_type="modified"
+                    ))
         else:
             logger.info("这是初始commit，获取完整diff")
             diff = repo.git.show(target_commit.hexsha)
+            
+            # 对于初始commit,所有文件都是新增的
+            for item in target_commit.tree.traverse():
+                if item.type == 'blob':  # 只处理文件,不处理目录
+                    file_changes.append(FileChange(
+                        path=item.path,
+                        change_type="added"
+                    ))
         
-        logger.info("成功获取diff内容")
+        logger.info("成功获取diff内容和文件变更列表")
         logger.debug(f"Diff内容预览: {diff[:200]}...")
+        logger.debug(f"变更文件数量: {len(file_changes)}")
         
         return CommitDiffResponse(
             success=True,
-            diff=diff
+            diff=diff,
+            file_changes=file_changes
         )
         
     except git.exc.GitCommandError as e:
