@@ -35,13 +35,22 @@ const AutoCoderChatViz: React.FC = () => {
     try {
       const encodedPath = encodeURIComponent(projectPath);
       const encodedResponse = encodeURIComponent(response);
-      const resp = await axios.get(`/auto-coder-chat/commit-diff/${encodedResponse}?path=${encodedPath}`);
+      const response = await axios.get(`/auto-coder-chat/commit-diff/${encodedResponse}?path=${encodedPath}`);
       
-      if (resp.data.success) {
-        setCurrentDiff(resp.data.diff);
+      if (response.data.success) {
+        setCurrentDiff(response.data.diff);
+        if(response.data.file_changes) {
+          // 更新当前查询的file_changes
+          setQueries(queries.map(q => {
+            if(q.response === response) {
+              return {...q, file_changes: response.data.file_changes};
+            }
+            return q;
+          }));
+        }
         setDiffModalVisible(true);
       } else {
-        message.error(resp.data.message || '获取diff失败');
+        message.error(response.data.message || '获取diff失败');
       }
     } catch (error) {
       console.error('Error fetching diff:', error);
