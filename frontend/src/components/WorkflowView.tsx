@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import 'reactflow/dist/style.css';
 import ReactFlow, { 
   Node,
   Edge,
@@ -160,16 +161,15 @@ const WorkflowViewContent: React.FC<WorkflowViewProps> = ({ queries, onShowDiff 
     const nextNode = sortedQueries[i + 1];
     
     // 只有当file_number连续时才创建边
-    if (nextNode.file_number === currentNode.file_number + 1) {
-      initialEdges.push({
-        id: `e${currentNode.file_number}-${nextNode.file_number}`,
-        source: currentNode.file_number.toString(),
-        target: nextNode.file_number.toString(),
-        type: 'smoothstep',
-        animated: true,
-        style: { stroke: '#1890ff', strokeWidth: 2 },
-      });
-    }
+    // 不需要检查连续性，创建所有边
+    initialEdges.push({
+      id: `e${currentNode.file_number}-${nextNode.file_number}`,
+      source: currentNode.file_number.toString(),
+      target: nextNode.file_number.toString(),
+      type: 'smoothstep',
+      animated: true,
+      style: { stroke: '#1890ff', strokeWidth: 2 },
+    });
   }
 
   // 使用dagre计算布局
