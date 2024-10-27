@@ -6,8 +6,6 @@ import os
 import argparse
 import subprocess
 from typing import List, Dict
-from pydantic import BaseModel, Field
-import json
 import subprocess
 import os
 import signal
@@ -18,8 +16,6 @@ import traceback
 import psutil
 from datetime import datetime
 import uuid
-from openai import AsyncOpenAI
-import json
 from .request_types import *
 from ..storage.json_file import *
 from .chat_router import router as chat_router
@@ -42,15 +38,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-
-# Add this new endpoint
-
-
-
-
-
 
 
 @app.get("/rags", response_model=List[Dict[str, Any]])

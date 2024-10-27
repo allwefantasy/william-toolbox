@@ -1,6 +1,7 @@
 import os
 import json
 import aiofiles
+
 # Path to the chat.json file
 CHAT_JSON_PATH = "chat.json"
 
@@ -16,7 +17,7 @@ async def load_chat_data():
 
 # Function to save chat data to JSON file
 async def save_chat_data(data):
-    async with aiofiles.open(CHAT_JSON_PATH, "w") as f:        
+    async with aiofiles.open(CHAT_JSON_PATH, "w") as f:
         content = json.dumps(data, ensure_ascii=False)
         await f.write(content)
 
@@ -27,8 +28,16 @@ async def load_config():
     if os.path.exists(config_path):
         async with aiofiles.open(config_path, "r") as f:
             content = await f.read()
-            return json.loads(content)
-    return {}
+            v = json.loads(content)
+            if "saasBaseUrls" not in v:
+                v["saasBaseUrls"] = []
+            if "pretrainedModelTypes" not in v:
+                v["pretrainedModelTypes"] = []
+            if "commons" not in v:
+                v["commons"] = []
+            return v
+    return {"saasBaseUrls": [], "pretrainedModelTypes": [], "commons": []}
+
 
 async def save_config(config):
     """Save the configuration to file."""
@@ -65,6 +74,7 @@ def b_load_models_from_json():
             return json.loads(content)
     return {}
 
+
 def b_save_models_to_json(models):
     with open(MODELS_JSON_PATH, "w") as f:
         content = json.dumps(models, ensure_ascii=False)
@@ -85,6 +95,7 @@ async def save_rags_to_json(rags):
     async with aiofiles.open(RAGS_JSON_PATH, "w") as f:
         content = json.dumps(rags, ensure_ascii=False)
         await f.write(content)
+
 
 async def get_event_file_path(request_id: str) -> str:
     os.makedirs("chat_events", exist_ok=True)
