@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Input, Button, List, Card, Typography, message, Modal,Space } from 'antd';
+import { Input, Button, List, Card, Typography, message, Modal, Space } from 'antd';
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism"; 
-import { FolderOutlined, MessageOutlined, CodeOutlined } from '@ant-design/icons';
+import { FolderOutlined, MessageOutlined, CodeOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
 import axios from 'axios';
 
 const { Title, Text } = Typography;
@@ -19,6 +19,7 @@ interface Query {
 const AutoCoderChatViz: React.FC = () => {
   const [projectPath, setProjectPath] = useState<string>('');
   const [queries, setQueries] = useState<Query[]>([]);
+  const [isAscending, setIsAscending] = useState<boolean>(false);
   const [loading, setLoading] = useState(false);
   const [diffModalVisible, setDiffModalVisible] = useState<boolean>(false);
   const [currentDiff, setCurrentDiff] = useState<string>('');
@@ -109,9 +110,20 @@ const AutoCoderChatViz: React.FC = () => {
       </Modal>
 
       <Card>
-        <Title level={3}>
-          <FolderOutlined /> Auto-Coder Chat 可视化
-        </Title>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <Title level={3} style={{ margin: 0 }}>
+            <FolderOutlined /> Auto-Coder Chat 可视化
+          </Title>
+          <Button 
+            icon={isAscending ? <SortAscendingOutlined /> : <SortDescendingOutlined />}
+            onClick={() => {
+              setIsAscending(!isAscending);
+              setQueries([...queries].reverse());
+            }}
+          >
+            {isAscending ? '升序' : '降序'}
+          </Button>
+        </div>
         <div style={{ marginBottom: '20px' }}>
           <Input.Search
             placeholder="请输入项目路径"
