@@ -219,9 +219,9 @@ const AutoCoderChatViz: React.FC = () => {
               onChange={(e) => setViewMode(e.target.value)}
               buttonStyle="solid"
             >
-              <Radio.Button value="list">列表视图</Radio.Button>
-              <Radio.Button value="workflow">工作流视图</Radio.Button>
               <Radio.Button value="animated">动画视图</Radio.Button>
+              <Radio.Button value="list">列表视图</Radio.Button>
+              <Radio.Button value="workflow">工作流视图</Radio.Button>              
             </Radio.Group>
             {viewMode === 'list' && (
               <Button 

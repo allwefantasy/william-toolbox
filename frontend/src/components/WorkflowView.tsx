@@ -113,7 +113,7 @@ const CustomNode = ({ data }: any) => {
             backgroundColor: '#f5f5f5',
             borderRadius: '4px'
           }}>
-            {data.file_changes.map((change, index) => (
+            {data.file_changes.map((change: FileChange, index: number) => (
               <Tag 
                 key={index}
                 color={change.change_type === 'added' ? 'green' : 'blue'}
@@ -207,7 +207,7 @@ const WorkflowViewContent: React.FC<WorkflowViewProps> = ({ queries, onShowDiff 
     const nextNode = sortedQueries[i + 1];
     
     // 只有当file_number连续时才创建边
-    // 不需要检查连续性，创建所有边
+    // 不需要检查连续性，创建所边
     initialEdges.push({
       id: `e${currentNode.file_number}-${nextNode.file_number}`,
       source: currentNode.file_number.toString(),
