@@ -7,12 +7,18 @@ import './AnimatedWorkflowView.css';
 
 const { Text, Title } = Typography;
 
+interface FileChange {
+  path: string;
+  change_type: 'added' | 'modified';
+}
+
 interface Query {
   query: string;
   timestamp?: string;
   response?: string;
   urls?: string[];
   file_number: number;
+  file_changes?: FileChange[];
 }
 
 interface AnimatedWorkflowViewProps {
@@ -102,6 +108,22 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
         return (
           <div className="animated-content">
             <Title level={4}>代码变更</Title>
+            {currentQuery.file_changes && (
+              <div className="file-changes-list">
+                {currentQuery.file_changes.map((change, index) => (
+                  <Tag 
+                    key={index} 
+                    color={change.change_type === 'added' ? 'green' : 'blue'}
+                    style={{ marginBottom: '8px' }}
+                  >
+                    <Space>
+                      {change.change_type === 'added' ? <span>+</span> : <span>M</span>}
+                      <Text>{change.path}</Text>
+                    </Space>
+                  </Tag>
+                ))}
+              </div>
+            )}
             <SyntaxHighlighter
               language="diff"
               style={vscDarkPlus}
