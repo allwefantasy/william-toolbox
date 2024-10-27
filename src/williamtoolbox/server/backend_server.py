@@ -32,6 +32,8 @@ from .model_router import router as model_router
 app.include_router(model_router)
 from .openai_service_router import router as openai_service_router
 app.include_router(openai_service_router)
+from .config_router import router as config_router
+app.include_router(config_router)
 # Add CORS middleware with restricted origins
 app.add_middleware(
     CORSMiddleware,
@@ -44,61 +46,7 @@ app.add_middleware(
 
 
 # Add this new endpoint
-@app.get("/config")
-async def get_config():
-    """Get the configuration information."""
-    config = await load_config()
-    return config
 
-
-@app.post("/config")
-async def add_config_item(item: dict):
-    """Add a new configuration item."""
-    config = await load_config()
-    for key, value in item.items():
-        if key in config:
-            config[key].extend(value)
-        else:
-            config[key] = value
-    await save_config(config)
-    return {"message": "Configuration item added successfully"}
-
-
-@app.put("/config/{key}")
-async def update_config_item(key: str, item: dict):
-    """Update an existing configuration item."""
-    config = await load_config()
-    if key not in config:
-        raise HTTPException(status_code=404, detail="Configuration item not found")
-
-    updated_items = item.get(key, [])
-    if not isinstance(updated_items, list):
-        raise HTTPException(status_code=400, detail="Invalid data format")
-
-    # Update existing items and add new ones
-    existing_values = {i["value"] for i in config[key]}
-    for updated_item in updated_items:
-        if updated_item["value"] in existing_values:
-            for i, existing_item in enumerate(config[key]):
-                if existing_item["value"] == updated_item["value"]:
-                    config[key][i] = updated_item
-                    break
-        else:
-            config[key].append(updated_item)
-
-    await save_config(config)
-    return {"message": "Configuration items updated successfully"}
-
-
-@app.delete("/config/{key}")
-async def delete_config_item(key: str):
-    """Delete a configuration item."""
-    config = await load_config()
-    if key not in config:
-        raise HTTPException(status_code=404, detail="Configuration item not found")
-    del config[key]
-    await save_config(config)
-    return {"message": "Configuration item deleted successfully"}
 
 
 
