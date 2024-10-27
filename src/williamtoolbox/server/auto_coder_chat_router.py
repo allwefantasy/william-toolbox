@@ -45,56 +45,79 @@ class CommitDiffResponse(BaseModel):
     message: str = ""
     diff: Optional[str] = None
 
+import git
+
 @router.get("/auto-coder-chat/commit-diff/{response_id}", response_model=CommitDiffResponse)
 async def get_commit_diff(path: str, response_id: str):
     """根据response_id获取对应的git commit diff"""
+    logger.info(f"开始处理commit diff请求 - 路径: {path}, response_id: {response_id}")
+    
     if not os.path.exists(path):
+        logger.error(f"项目路径不存在: {path}")
         return CommitDiffResponse(
             success=False,
             message="项目路径不存在"
         )
 
     try:
-        # 切换到项目目录
-        original_dir = os.getcwd()
-        os.chdir(path)
-        
+        logger.info("初始化Git仓库")
+        repo = git.Repo(path)
+        logger.info(f"Git仓库初始化成功: {repo.git_dir}")
+
         # 查找包含特定response message的commit
-        cmd = [
-            "git", "log", "--grep", f"message={response_id}",
-            "--format=%H", "-n", "1"
-        ]
+        search_pattern = f"message={response_id}"
+        logger.info(f"开始搜索commit - 搜索模式: {search_pattern}")
         
-        commit_hash = subprocess.check_output(cmd, universal_newlines=True).strip()
+        matching_commits = []
+        for commit in repo.iter_commits():
+            if search_pattern in commit.message:
+                matching_commits.append(commit)
+                logger.info(f"找到匹配的commit: {commit.hexsha} - {commit.message[:100]}")
         
-        if not commit_hash:
+        if not matching_commits:
+            logger.warning(f"未找到匹配的commit: {response_id}")
             return CommitDiffResponse(
                 success=False,
                 message=f"找不到对应的commit: {response_id}"
             )
-            
-        # 获取该commit与其父commit之间的diff
-        cmd = ["git", "show", "--patch", commit_hash]
-        diff = subprocess.check_output(cmd, universal_newlines=True)
+        
+        # 使用第一个匹配的commit
+        target_commit = matching_commits[0]
+        logger.info(f"使用commit: {target_commit.hexsha}")
+        
+        # 获取diff
+        if target_commit.parents:
+            parent = target_commit.parents[0]
+            logger.info(f"对比commit {target_commit.hexsha[:8]} 与其父commit {parent.hexsha[:8]}")
+            diff = repo.git.diff(parent.hexsha, target_commit.hexsha)
+        else:
+            logger.info("这是初始commit，获取完整diff")
+            diff = repo.git.show(target_commit.hexsha)
+        
+        logger.info("成功获取diff内容")
+        logger.debug(f"Diff内容预览: {diff[:200]}...")
         
         return CommitDiffResponse(
             success=True,
             diff=diff
         )
         
-    except subprocess.CalledProcessError as e:
+    except git.exc.GitCommandError as e:
+        error_msg = f"Git命令执行错误: {str(e)}"
+        logger.error(error_msg)
+        logger.error(f"Git命令详细错误: {e.stderr}")
         return CommitDiffResponse(
             success=False,
-            message=f"执行git命令时出错: {str(e)}"
+            message=error_msg
         )
     except Exception as e:
+        error_msg = f"获取commit diff时出错: {str(e)}"
+        logger.error(error_msg)
+        logger.error(f"详细错误信息: {traceback.format_exc()}")
         return CommitDiffResponse(
             success=False,
-            message=f"获取commit diff时出错: {str(e)}"
+            message=error_msg
         )
-    finally:
-        # 恢复原始工作目录
-        os.chdir(original_dir)
 
 @router.get("/auto-coder-chat/validate-and-load", response_model=ValidationResponseWithFileNumbers)
 async def validate_and_load_queries(path: str):
