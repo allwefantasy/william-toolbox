@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Input, Button, List, Card, Typography, message, Modal, Space } from 'antd';
+import { Input, Button, List, Card, Typography, message, Modal, Space, Radio } from 'antd';
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism"; 
 import { FolderOutlined, MessageOutlined, CodeOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
@@ -21,6 +21,7 @@ const AutoCoderChatViz: React.FC = () => {
   const [queries, setQueries] = useState<Query[]>([]);
   const [isAscending, setIsAscending] = useState<boolean>(false);
   const [loading, setLoading] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'workflow'>('list');
   const [diffModalVisible, setDiffModalVisible] = useState<boolean>(false);
   const [currentDiff, setCurrentDiff] = useState<string>('');
   const [contextModalVisible, setContextModalVisible] = useState<boolean>(false);
@@ -85,7 +86,10 @@ const AutoCoderChatViz: React.FC = () => {
               <Text copyable>{url}</Text>
             </List.Item>
           )}
-        />
+          />
+        ) : (
+          <WorkflowView queries={queries} onShowDiff={showDiff} />
+        )}
       </Modal>
 
       <Modal
@@ -114,15 +118,25 @@ const AutoCoderChatViz: React.FC = () => {
           <Title level={3} style={{ margin: 0 }}>
             <FolderOutlined /> Auto-Coder Chat 可视化
           </Title>
-          <Button 
-            icon={isAscending ? <SortAscendingOutlined /> : <SortDescendingOutlined />}
-            onClick={() => {
-              setIsAscending(!isAscending);
-              setQueries([...queries].reverse());
-            }}
-          >
-            {isAscending ? '升序' : '降序'}
-          </Button>
+          <Space>
+            <Radio.Group 
+              value={viewMode} 
+              onChange={(e) => setViewMode(e.target.value)}
+              buttonStyle="solid"
+            >
+              <Radio.Button value="list">列表视图</Radio.Button>
+              <Radio.Button value="workflow">工作流视图</Radio.Button>
+            </Radio.Group>
+            <Button 
+              icon={isAscending ? <SortAscendingOutlined /> : <SortDescendingOutlined />}
+              onClick={() => {
+                setIsAscending(!isAscending);
+                setQueries([...queries].reverse());
+              }}
+            >
+              {isAscending ? '升序' : '降序'}
+            </Button>
+          </Space>
         </div>
         <div style={{ marginBottom: '20px' }}>
           <Input.Search
@@ -136,9 +150,10 @@ const AutoCoderChatViz: React.FC = () => {
           />
         </div>
 
-        <List
-          dataSource={queries}
-          renderItem={(item, index) => (
+        {viewMode === 'list' ? (
+          <List
+            dataSource={queries}
+            renderItem={(item, index) => (
             <List.Item>
               <Card 
                 style={{ width: '100%' }}
