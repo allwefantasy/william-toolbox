@@ -89,7 +89,11 @@ const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
       onRAGAdded(); // Call the callback to refresh the RAG list
     } catch (error) {
       console.error('Error adding RAG:', error);
-      message.error('添加RAG失败');
+      if (axios.isAxiosError(error) && error.response) {
+        message.error(`添加RAG失败: ${error.response.data.detail}`);
+      } else {
+        message.error('添加RAG失败');
+      }
     }
   };
 
