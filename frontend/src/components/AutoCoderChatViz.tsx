@@ -24,7 +24,7 @@ const AutoCoderChatViz: React.FC = () => {
   const [isAscending, setIsAscending] = useState<boolean>(false);
   const [loading, setLoading] = useState(false);
   const [diffModalVisible, setDiffModalVisible] = useState<boolean>(false);
-  const [currentDiff, setCurrentDiff] = useState<string>('');
+  const [currentDiff, setCurrentDiff] = useState<{diff: string, file_changes?: Array<{path: string, change_type: string}>}>({diff: ''});
   const [contextModalVisible, setContextModalVisible] = useState<boolean>(false);
   const [currentUrls, setCurrentUrls] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'list' | 'workflow' | 'animated'>('list');
@@ -38,17 +38,20 @@ const AutoCoderChatViz: React.FC = () => {
       const encodedResponseId = encodeURIComponent(response);
       const diffResponse = await axios.get(`/auto-coder-chat/commit-diff/${encodedResponseId}?path=${encodedPath}`);
       
-      if (diffResponse.data.success) {
-        setCurrentDiff(diffResponse.data.diff);
-        if(diffResponse.data.file_changes) {
-          // 更新当前查询的file_changes
-          setQueries(prevQueries => prevQueries.map(q => {
-            if(q.response === response) {
-              return {...q, file_changes: diffResponse.data.file_changes};
-            }
-            return q;
-          }));
-        }
+        if (diffResponse.data.success) {
+          setCurrentDiff({
+            diff: diffResponse.data.diff,
+            file_changes: diffResponse.data.file_changes
+          });
+          if(diffResponse.data.file_changes) {
+            // 更新当前查询的file_changes
+            setQueries(prevQueries => prevQueries.map(q => {
+              if(q.response === response) {
+                return {...q, file_changes: diffResponse.data.file_changes};
+              }
+              return q;
+            }));
+          }
         setDiffModalVisible(true);
       } else {
         message.error(diffResponse.data.message || '获取diff失败');
@@ -195,18 +198,41 @@ const AutoCoderChatViz: React.FC = () => {
         width={800}
         footer={null}
       >
-        <SyntaxHighlighter
-          language="diff"
-          style={vscDarkPlus}
-          customStyle={{
-            padding: '12px',
-            borderRadius: '4px', 
-            overflow: 'auto',
-            maxHeight: '500px'
-          }}
-        >
-          {currentDiff}
-        </SyntaxHighlighter>
+        <div>
+          {currentDiff.file_changes && currentDiff.file_changes.length > 0 && (
+            <div style={{ 
+              marginBottom: '16px',
+              padding: '8px',
+              background: '#f5f5f5',
+              borderRadius: '4px'
+            }}>
+              {currentDiff.file_changes.map((change, index) => (
+                <Tag 
+                  key={index} 
+                  color={change.change_type === 'added' ? 'green' : 'blue'}
+                  style={{ marginBottom: '8px', marginRight: '8px' }}
+                >
+                  <Space>
+                    {change.change_type === 'added' ? <span>+</span> : <span>M</span>}
+                    <Text>{change.path}</Text>
+                  </Space>
+                </Tag>
+              ))}
+            </div>
+          )}
+          <SyntaxHighlighter
+            language="diff"
+            style={vscDarkPlus}
+            customStyle={{
+              padding: '12px',
+              borderRadius: '4px', 
+              overflow: 'auto',
+              maxHeight: '500px'
+            }}
+          >
+            {currentDiff.diff}
+          </SyntaxHighlighter>
+        </div>
       </Modal>
 
       <Card>
