@@ -16,9 +16,7 @@ interface Query {
   query: string;
   timestamp?: string;
   response?: string;
-  urls?: string[];
-  file_number: number;
-  file_changes?: FileChange[];
+  urls?: string[];  
 }
 
 interface AnimatedWorkflowViewProps {
