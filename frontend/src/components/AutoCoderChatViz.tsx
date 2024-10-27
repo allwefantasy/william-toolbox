@@ -12,7 +12,8 @@ interface Query {
   query: string;
   timestamp?: string;
   response?: string;
-  urls?: string[];  // Add urls field
+  urls?: string[];
+  file_number: number;  // 添加文件编号字段
 }
 
 const AutoCoderChatViz: React.FC = () => {
@@ -131,15 +132,15 @@ const AutoCoderChatViz: React.FC = () => {
                 style={{ width: '100%' }}
                 title={
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <MessageOutlined style={{ marginRight: '8px' }} />
-                      Query #{index + 1}
-                      {item.timestamp && (
-                        <Text type="secondary" style={{ marginLeft: '10px', fontSize: '12px' }}>
-                          {item.timestamp}
-                        </Text>
-                      )}
-                    </div>
+                  <div>
+                    <MessageOutlined style={{ marginRight: '8px' }} />
+                    {`${item.file_number}_chat_action.yml`}
+                    {item.timestamp && (
+                      <Text type="secondary" style={{ marginLeft: '10px', fontSize: '12px' }}>
+                        {item.timestamp}
+                      </Text>
+                    )}
+                  </div>
                     <Space>
                       {item.urls && item.urls.length > 0 && (
                         <Button
