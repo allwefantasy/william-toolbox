@@ -7,6 +7,13 @@ from datetime import datetime
 from pathlib import Path
 from pydantic import BaseModel
 from loguru import logger
+import re
+import git
+from typing import Optional, Dict, Union, List
+from pydantic import BaseModel
+
+import hashlib
+import traceback
 
 router = APIRouter()
 
@@ -19,11 +26,6 @@ class ValidationResponse(BaseModel):
     message: str = ""
     queries: List[Query] = []
 
-import re
-from typing import Optional, Dict, Union, List
-from pydantic import BaseModel
-
-import hashlib
 
 class QueryWithFileNumber(BaseModel):
     query: str
@@ -46,8 +48,6 @@ class CommitDiffResponse(BaseModel):
     success: bool
     message: str = ""
     diff: Optional[str] = None
-
-import git
 
 @router.get("/auto-coder-chat/commit-diff/{response_id}", response_model=CommitDiffResponse)
 async def get_commit_diff(path: str, response_id: str):

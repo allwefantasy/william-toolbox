@@ -28,10 +28,10 @@ src/williamtoolbox/web/logo192.png
 src/williamtoolbox/web/logo512.png
 src/williamtoolbox/web/manifest.json
 src/williamtoolbox/web/robots.txt
-src/williamtoolbox/web/static/css/main.ba7d42b8.css
-src/williamtoolbox/web/static/css/main.ba7d42b8.css.map
-src/williamtoolbox/web/static/js/453.d855a71b.chunk.js
-src/williamtoolbox/web/static/js/453.d855a71b.chunk.js.map
-src/williamtoolbox/web/static/js/main.0bebd6f4.js
-src/williamtoolbox/web/static/js/main.0bebd6f4.js.LICENSE.txt
-src/williamtoolbox/web/static/js/main.0bebd6f4.js.map
+src/williamtoolbox/web/static/css/main.a9241a8c.css
+src/williamtoolbox/web/static/css/main.a9241a8c.css.map
+src/williamtoolbox/web/static/js/453.abd36b29.chunk.js
+src/williamtoolbox/web/static/js/453.abd36b29.chunk.js.map
+src/williamtoolbox/web/static/js/main.61e6d8a3.js
+src/williamtoolbox/web/static/js/main.61e6d8a3.js.LICENSE.txt
+src/williamtoolbox/web/static/js/main.61e6d8a3.js.map
