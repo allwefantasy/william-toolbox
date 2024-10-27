@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Button, Modal, Form, Input, InputNumber, Select, message, Switch, Tag, Tooltip } from 'antd';
+import { Button, Modal, Form, Input, InputNumber, Select, message, Switch, Tag, Tooltip, AutoComplete } from 'antd';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { PlusOutlined } from '@ant-design/icons';
 
@@ -34,10 +34,26 @@ const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm<FormValues>();
   const [models, setModels] = useState<Model[]>([]);
+  const [tokenizerPaths, setTokenizerPaths] = useState<Array<{value: string, label: string}>>([]);
 
   useEffect(() => {
     fetchModels();
+    fetchConfig();
   }, []);
+
+  const fetchConfig = async () => {
+    try {
+      const response = await axios.get('/config');
+      // Extract tokenizer paths from commons config
+      const tokenizerPathsFromCommons = response.data.commons?.filter((item: any) => 
+        item.value.includes('tokenizer.json')
+      ) || [];
+      setTokenizerPaths(tokenizerPathsFromCommons);
+    } catch (error) {
+      console.error('Error fetching config:', error);
+      message.error('Failed to fetch configuration');
+    }
+  };
 
   const fetchModels = async () => {
     try {
@@ -105,7 +121,16 @@ const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
             </Select>
           </Form.Item>
           <Form.Item name="tokenizer_path" label="Tokenizer路径" rules={[{ required: true }]}>
-            <Input />
+            {tokenizerPaths.length > 0 ? (
+              <AutoComplete
+                options={tokenizerPaths}
+                placeholder="选择或输入 Tokenizer 路径"
+              >
+                <Input />
+              </AutoComplete>
+            ) : (
+              <Input placeholder="输入 Tokenizer 路径" />
+            )}
           </Form.Item>
           <Form.Item name="doc_dir" label="文档目录" rules={[{ required: true }]}>
             <Input />
