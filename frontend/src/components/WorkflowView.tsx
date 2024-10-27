@@ -10,7 +10,8 @@ import ReactFlow, {
   useEdgesState,
   Position,
   MiniMap,
-  useReactFlow
+  useReactFlow,
+  BackgroundVariant
 } from 'reactflow';
 import dagre from 'dagre';
 import 'reactflow/dist/style.css';
@@ -200,7 +201,7 @@ const WorkflowView: React.FC<WorkflowViewProps> = ({ queries, onShowDiff }) => {
         defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
         proOptions={{ hideAttribution: true }}
       >
-        <Background color="#aaa" gap={16} variant="dots" />
+        <Background color="#aaa" gap={16} variant={BackgroundVariant.Dots} />
         <Controls />
         <MiniMap 
           nodeColor="#1890ff"
