@@ -20,10 +20,13 @@ import re
 from typing import Optional, Dict, Union, List
 from pydantic import BaseModel
 
+import hashlib
+
 class QueryWithFileNumber(BaseModel):
     query: str
     timestamp: Optional[str] = None
     file_number: int  # 新增文件编号字段
+    response: Optional[str] = None  # auto_coder_开头的文件名+md5值
 
 class ValidationResponseWithFileNumbers(BaseModel):
     success: bool
@@ -74,10 +77,15 @@ async def validate_and_load_queries(path: str):
                                         os.path.getmtime(file_path)
                                     ).strftime('%Y-%m-%d %H:%M:%S')
                                     
+                                    # 计算文件内容的md5值
+                                    file_md5 = hashlib.md5(open(file_path, 'rb').read()).hexdigest()
+                                    response_str = f"auto_coder_{file}_{file_md5}"
+                                    
                                     queries.append(QueryWithFileNumber(
                                         query=yaml_content['query'],
                                         timestamp=timestamp,
-                                        file_number=file_number
+                                        file_number=file_number,
+                                        response=response_str
                                     ))
                             except yaml.YAMLError:
                                 continue
