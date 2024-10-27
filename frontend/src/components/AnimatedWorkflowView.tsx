@@ -25,9 +25,14 @@ interface FileChanges {
   changes?: FileChange[];
 }
 
+interface DiffResponse {
+  diff: string;
+  file_changes: FileChange[];
+}
+
 interface AnimatedWorkflowViewProps {
   queries: Query[];
-  onShowDiff: (response: string | undefined) => Promise<string>;
+  onShowDiff: (response: string | undefined) => Promise<DiffResponse>;
 }
 
 const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, onShowDiff }) => {
@@ -67,13 +72,9 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
     const loadDiffAndChanges = async () => {
       if (currentSubStep === 2 && sortedQueries[currentStep]?.response) {
         const response = sortedQueries[currentStep].response;
-        const diff = await onShowDiff(response);
-        if (typeof diff === 'string') {
-          setCurrentDiff(diff);
-        } else if (typeof diff === 'object' && diff.diff && diff.file_changes) {
-          setCurrentDiff(diff.diff);
-          setCurrentFileChanges(diff.file_changes);
-        }
+        const diffResponse = await onShowDiff(response);
+        setCurrentDiff(diffResponse.diff);
+        setCurrentFileChanges(diffResponse.file_changes);
       }
     };
     loadDiffAndChanges();
