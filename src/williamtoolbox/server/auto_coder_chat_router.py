@@ -64,6 +64,7 @@ async def get_commit_diff(path: str, response_id: str):
             "git", "log", "--grep", f"message={response_id}",
             "--format=%H", "-n", "1"
         ]
+        
         commit_hash = subprocess.check_output(cmd, universal_newlines=True).strip()
         
         if not commit_hash:
