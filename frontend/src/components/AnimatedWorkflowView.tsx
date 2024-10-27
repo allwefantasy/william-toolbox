@@ -92,7 +92,16 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
     if (!currentQuery) return null;
 
     switch (currentSubStep) {
-      case 0: // 展示相关文件
+      case 0: // 展示查询内容
+        return (
+          <div className="animated-content">
+            <Title level={4}>查询内容</Title>
+            <Card className="query-card">
+              <pre>{currentQuery.query}</pre>
+            </Card>
+          </div>
+        );
+      case 1: // 展示相关文件
         return (
           <div className="animated-content">
             <Title level={4}>相关文件</Title>
@@ -101,15 +110,6 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
                 <FileOutlined /> {url}
               </Card>
             ))}
-          </div>
-        );
-      case 1: // 展示查询内容
-        return (
-          <div className="animated-content">
-            <Title level={4}>查询内容</Title>
-            <Card className="query-card">
-              <pre>{currentQuery.query}</pre>
-            </Card>
           </div>
         );
       case 2: // 展示Diff
@@ -163,12 +163,12 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
         current={currentSubStep}
         items={[
           {
-            title: '相关文件',
-            icon: <FileOutlined />,
-          },
-          {
             title: '需求',
             icon: <MessageOutlined />,
+          },
+          {
+            title: '相关文件',
+            icon: <FileOutlined />,
           },
           {
             title: '代码变更',
