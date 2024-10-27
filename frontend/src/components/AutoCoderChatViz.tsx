@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Input, Button, List, Card, Typography, message, Modal, Space } from 'antd';
+import { Input, Button, List, Card, Typography, message, Modal, Space, Radio } from 'antd';
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism"; 
 import { FolderOutlined, MessageOutlined, CodeOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
 import axios from 'axios';
+import WorkflowView from './WorkflowView';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -13,7 +14,7 @@ interface Query {
   timestamp?: string;
   response?: string;
   urls?: string[];
-  file_number: number;  // 添加文件编号字段
+  file_number: number;
 }
 
 const AutoCoderChatViz: React.FC = () => {
@@ -25,6 +26,7 @@ const AutoCoderChatViz: React.FC = () => {
   const [currentDiff, setCurrentDiff] = useState<string>('');
   const [contextModalVisible, setContextModalVisible] = useState<boolean>(false);
   const [currentUrls, setCurrentUrls] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<'list' | 'workflow'>('list');
 
   const showDiff = async (response: string | undefined) => {
     if (!projectPath || !response) return;
@@ -67,6 +69,77 @@ const AutoCoderChatViz: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const renderContent = () => {
+    if (viewMode === 'workflow') {
+      return <WorkflowView queries={queries} onShowDiff={showDiff} />;
+    }
+
+    return (
+      <List
+        dataSource={queries}
+        renderItem={(item, index) => (
+          <List.Item>
+            <Card 
+              style={{ width: '100%' }}
+              title={
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <MessageOutlined style={{ marginRight: '8px' }} />
+                  {`${item.file_number}_chat_action.yml`}
+                  {item.timestamp && (
+                    <Text type="secondary" style={{ marginLeft: '10px', fontSize: '12px' }}>
+                      {item.timestamp}
+                    </Text>
+                  )}
+                </div>
+                  <Space>
+                    {item.urls && item.urls.length > 0 && (
+                      <Button
+                        icon={<FolderOutlined />}
+                        type="link"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCurrentUrls(item.urls || []);
+                          setContextModalVisible(true);
+                        }}
+                      >
+                        查看上下文
+                      </Button>
+                    )}
+                    {item.response && (
+                      <Button 
+                        icon={<CodeOutlined />} 
+                        type="link"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (item.response) {
+                            showDiff(item.response);
+                          }
+                        }}
+                      >
+                        查看变更
+                      </Button>
+                    )}
+                  </Space>
+                </div>
+              }
+            >
+              <pre style={{ 
+                whiteSpace: 'pre-wrap',
+                wordWrap: 'break-word',
+                backgroundColor: '#f5f5f5',
+                padding: '12px',
+                borderRadius: '4px'
+              }}>
+                {item.query}
+              </pre>
+            </Card>
+          </List.Item>
+        )}
+      />
+    );
   };
 
   return (
@@ -114,15 +187,27 @@ const AutoCoderChatViz: React.FC = () => {
           <Title level={3} style={{ margin: 0 }}>
             <FolderOutlined /> Auto-Coder Chat 可视化
           </Title>
-          <Button 
-            icon={isAscending ? <SortAscendingOutlined /> : <SortDescendingOutlined />}
-            onClick={() => {
-              setIsAscending(!isAscending);
-              setQueries([...queries].reverse());
-            }}
-          >
-            {isAscending ? '升序' : '降序'}
-          </Button>
+          <Space>
+            <Radio.Group 
+              value={viewMode} 
+              onChange={(e) => setViewMode(e.target.value)}
+              buttonStyle="solid"
+            >
+              <Radio.Button value="list">列表视图</Radio.Button>
+              <Radio.Button value="workflow">工作流视图</Radio.Button>
+            </Radio.Group>
+            {viewMode === 'list' && (
+              <Button 
+                icon={isAscending ? <SortAscendingOutlined /> : <SortDescendingOutlined />}
+                onClick={() => {
+                  setIsAscending(!isAscending);
+                  setQueries([...queries].reverse());
+                }}
+              >
+                {isAscending ? '升序' : '降序'}
+              </Button>
+            )}
+          </Space>
         </div>
         <div style={{ marginBottom: '20px' }}>
           <Input.Search
@@ -136,68 +221,7 @@ const AutoCoderChatViz: React.FC = () => {
           />
         </div>
 
-        <List
-          dataSource={queries}
-          renderItem={(item, index) => (
-            <List.Item>
-              <Card 
-                style={{ width: '100%' }}
-                title={
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <MessageOutlined style={{ marginRight: '8px' }} />
-                    {`${item.file_number}_chat_action.yml`}
-                    {item.timestamp && (
-                      <Text type="secondary" style={{ marginLeft: '10px', fontSize: '12px' }}>
-                        {item.timestamp}
-                      </Text>
-                    )}
-                  </div>
-                    <Space>
-                      {item.urls && item.urls.length > 0 && (
-                        <Button
-                          icon={<FolderOutlined />}
-                          type="link"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setCurrentUrls(item.urls || []);
-                            setContextModalVisible(true);
-                          }}
-                        >
-                          查看上下文
-                        </Button>
-                      )}
-                      {item.response && (
-                        <Button 
-                          icon={<CodeOutlined />} 
-                          type="link"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (item.response) {
-                              showDiff(item.response);
-                            }
-                          }}
-                        >
-                          查看变更
-                        </Button>
-                      )}
-                    </Space>
-                  </div>
-                }
-              >
-                <pre style={{ 
-                  whiteSpace: 'pre-wrap',
-                  wordWrap: 'break-word',
-                  backgroundColor: '#f5f5f5',
-                  padding: '12px',
-                  borderRadius: '4px'
-                }}>
-                  {item.query}
-                </pre>
-              </Card>
-            </List.Item>
-          )}
-        />
+        {renderContent()}
       </Card>
     </div>
   );
