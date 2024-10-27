@@ -5,6 +5,7 @@ import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { FolderOutlined, MessageOutlined, CodeOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import WorkflowView from './WorkflowView';
+import AnimatedWorkflowView from './AnimatedWorkflowView';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -26,7 +27,7 @@ const AutoCoderChatViz: React.FC = () => {
   const [currentDiff, setCurrentDiff] = useState<string>('');
   const [contextModalVisible, setContextModalVisible] = useState<boolean>(false);
   const [currentUrls, setCurrentUrls] = useState<string[]>([]);
-  const [viewMode, setViewMode] = useState<'list' | 'workflow'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'workflow' | 'animated'>('list');
 
   const showDiff = async (response: string | undefined) => {
     if (!projectPath || !response) return;
@@ -74,6 +75,22 @@ const AutoCoderChatViz: React.FC = () => {
   const renderContent = () => {
     if (viewMode === 'workflow') {
       return <WorkflowView queries={queries} onShowDiff={showDiff} />;
+    } else if (viewMode === 'animated') {
+      return <AnimatedWorkflowView queries={queries} onShowDiff={async (response) => {
+        if (!projectPath || !response) return '';
+        try {
+          const encodedPath = encodeURIComponent(projectPath);
+          const encodedResponse = encodeURIComponent(response);
+          const resp = await axios.get(`/auto-coder-chat/commit-diff/${encodedResponse}?path=${encodedPath}`);
+          if (resp.data.success) {
+            return resp.data.diff;
+          }
+          return '';
+        } catch (error) {
+          console.error('Error fetching diff:', error);
+          return '';
+        }
+      }} />;
     }
 
     return (
@@ -195,6 +212,7 @@ const AutoCoderChatViz: React.FC = () => {
             >
               <Radio.Button value="list">列表视图</Radio.Button>
               <Radio.Button value="workflow">工作流视图</Radio.Button>
+              <Radio.Button value="animated">动画视图</Radio.Button>
             </Radio.Group>
             {viewMode === 'list' && (
               <Button 

@@ -1,0 +1,72 @@
+.animated-workflow-view {
+  padding: 24px;
+  background: #fff;
+  border-radius: 8px;
+  min-height: 600px;
+}
+
+.animated-content {
+  margin-top: 24px;
+  min-height: 400px;
+  animation: fadeIn 0.5s ease-in;
+}
+
+.content-container {
+  margin: 24px 0;
+  padding: 16px;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  min-height: 400px;
+}
+
+.file-card {
+  margin-bottom: 8px;
+  animation: slideIn 0.5s ease-in;
+}
+
+.query-card {
+  animation: slideIn 0.5s ease-in;
+}
+
+.query-card pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  margin: 0;
+  padding: 16px;
+  background: #f5f5f5;
+  border-radius: 4px;
+}
+
+.diff-highlighter {
+  margin-top: 16px;
+  max-height: 400px !important;
+  overflow: auto !important;
+  animation: slideIn 0.5s ease-in;
+}
+
+.progress-indicator {
+  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
