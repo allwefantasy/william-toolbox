@@ -22,18 +22,12 @@ import { CodeOutlined, NumberOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
 
-interface FileChange {
-  path: string;
-  change_type: 'added' | 'modified';
-}
-
 interface Query {
   query: string;
   timestamp?: string;
   response?: string;
   urls?: string[];
   file_number: number;
-  file_changes?: FileChange[];
 }
 
 interface WorkflowViewProps {
@@ -42,8 +36,6 @@ interface WorkflowViewProps {
 }
 
 const CustomNode = ({ data }: any) => {
-  const [showChanges, setShowChanges] = useState(false);
-
   return (
     <Card 
       size="small" 
@@ -64,15 +56,13 @@ const CustomNode = ({ data }: any) => {
       }
       extra={
         data.response && (
-          <Space>
-            <Button 
-              icon={<CodeOutlined />} 
-              type="link" 
-              onClick={() => data.onShowDiff(data.response)}
-            >
-              查看变更
-            </Button>
-          </Space>
+          <Button 
+            icon={<CodeOutlined />} 
+            type="link" 
+            onClick={() => data.onShowDiff(data.response)}
+          >
+            查看变更
+          </Button>
         )
       }
       style={{ 
@@ -86,36 +76,11 @@ const CustomNode = ({ data }: any) => {
       <Text ellipsis={{ tooltip: data.query }}>
         {data.query.length > 100 ? `${data.query.slice(0, 100)}...` : data.query}
       </Text>
-      <div style={{ marginTop: 8 }}>
-        <Space wrap>
-          {data.urls && data.urls.length > 0 && (
-            <Tag color="green">{data.urls.length} 个相关文件</Tag>
-          )}
-          {data.file_changes && data.file_changes.length > 0 && (
-            <Button 
-              size="small" 
-              onClick={() => setShowChanges(!showChanges)}
-              type="link"
-            >
-              {showChanges ? '收起变更' : '查看变更'}({data.file_changes.length}个文件)
-            </Button>
-          )}
-        </Space>
-
-        {showChanges && data.file_changes && (
-          <div style={{ marginTop: 8 }}>
-            {data.file_changes.map((change, index) => (
-              <Tag 
-                key={index}
-                color={change.change_type === 'added' ? 'green' : 'blue'}
-                style={{ margin: '2px' }}
-              >
-                {change.change_type === 'added' ? '+' : 'M'} {change.path}
-              </Tag>
-            ))}
-          </div>
-        )}
-      </div>
+      {data.urls && data.urls.length > 0 && (
+        <div style={{ marginTop: 8 }}>
+          <Tag color="green">{data.urls.length} 个相关文件</Tag>
+        </div>
+      )}
     </Card>
   );
 };
