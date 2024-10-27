@@ -30,6 +30,8 @@ from .openai_service_router import router as openai_service_router
 app.include_router(openai_service_router)
 from .config_router import router as config_router
 app.include_router(config_router)
+from .auto_coder_chat_router import router as auto_coder_chat_router
+app.include_router(auto_coder_chat_router)
 # Add CORS middleware with restricted origins
 app.add_middleware(
     CORSMiddleware,

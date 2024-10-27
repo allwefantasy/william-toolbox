@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { Layout, Menu, Typography, Space } from 'antd';
-import { RocketOutlined, AppstoreOutlined, DatabaseOutlined, SettingOutlined, MessageOutlined } from '@ant-design/icons';
+import { RocketOutlined, AppstoreOutlined, DatabaseOutlined, SettingOutlined, MessageOutlined, CodeOutlined } from '@ant-design/icons';
 import ModelList from './components/ModelList';
 import CreateModel from './components/CreateModel';
 import RAGList from './components/RAGList';
@@ -10,6 +10,7 @@ import ConfigAdd from './components/ConfigAdd';
 import ConfigEdit from './components/ConfigEdit';
 import OpenAICompatibleService from './components/OpenAICompatibleService';
 import Chat from './components/Chat';
+import AutoCoderChatViz from './components/AutoCoderChatViz';
 import './App.css';
 
 const { Header, Sider, Content } = Layout;
@@ -60,6 +61,8 @@ function App() {
         return <ConfigEdit onConfigUpdated={refreshConfigList} />;
       case '4':
         return <Chat />;
+      case '5':
+        return <AutoCoderChatViz />;
       default:
         return (
           <>
@@ -89,6 +92,9 @@ function App() {
           </SubMenu>
           <Menu.Item key="4" icon={<MessageOutlined />}>
             聊天
+          </Menu.Item>
+          <Menu.Item key="5" icon={<CodeOutlined />}>
+            Auto-Coder Chat 可视化
           </Menu.Item>
         </Menu>
       </Sider>
