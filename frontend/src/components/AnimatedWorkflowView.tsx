@@ -178,6 +178,13 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
           <Tag 
             key={query.file_number}
             color={currentStep === index ? 'blue' : 'default'}
+            style={{ cursor: 'pointer' }}
+            onClick={() => {
+              setCurrentStep(index);
+              setCurrentSubStep(0);
+              setIsPlaying(false);
+              setCurrentDiff('');
+            }}
           >
             #{query.file_number}
           </Tag>
