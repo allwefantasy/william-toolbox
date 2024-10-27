@@ -19,7 +19,7 @@ const AutoCoderChatViz: React.FC = () => {
   const [diffModalVisible, setDiffModalVisible] = useState<boolean>(false);
   const [currentDiff, setCurrentDiff] = useState<string>('');
 
-  const showDiff = async (response: string) => {
+  const showDiff = async (response: string | undefined) => {
     if (!projectPath || !response) return;
 
     try {
@@ -123,7 +123,9 @@ const AutoCoderChatViz: React.FC = () => {
                         type="link"
                         onClick={(e) => {
                           e.stopPropagation();
-                          showDiff(item.response);
+                          if (item.response) {
+                            showDiff(item.response);
+                          }
                         }}
                       >
                         查看变更
