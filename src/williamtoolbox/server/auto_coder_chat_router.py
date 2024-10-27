@@ -6,6 +6,7 @@ from typing import List, Optional
 from datetime import datetime
 from pathlib import Path
 from pydantic import BaseModel
+from loguru import logger
 
 router = APIRouter()
 
@@ -65,7 +66,7 @@ async def get_commit_diff(path: str, response_id: str):
         logger.info(f"Git仓库初始化成功: {repo.git_dir}")
 
         # 查找包含特定response message的commit
-        search_pattern = f"message={response_id}"
+        search_pattern = f"{response_id}"
         logger.info(f"开始搜索commit - 搜索模式: {search_pattern}")
         
         matching_commits = []
