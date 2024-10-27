@@ -59,25 +59,25 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
   }, [isPlaying, currentStep, currentSubStep, sortedQueries.length]);
 
   useEffect(() => {
-    const loadDiff = async () => {
+    const loadDiffAndChanges = async () => {
       if (currentSubStep === 2 && sortedQueries[currentStep]?.response) {
         const diff = await onShowDiff(sortedQueries[currentStep].response);
         setCurrentDiff(diff);
       }
     };
-    loadDiff();
-  }, [currentSubStep, currentStep, sortedQueries]);
+    loadDiffAndChanges();
+  }, [currentSubStep, currentStep, sortedQueries, onShowDiff]);
 
   const handlePlayPause = () => {
     setIsPlaying(!isPlaying);
   };
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     setCurrentStep(0);
     setCurrentSubStep(0);
     setIsPlaying(false);
     setCurrentDiff('');
-  };
+  }, []);
 
   const renderContent = () => {
     const currentQuery = sortedQueries[currentStep];    
