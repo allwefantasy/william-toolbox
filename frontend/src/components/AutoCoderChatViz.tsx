@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Input, Button, List, Card, Typography, message, Modal } from 'antd';
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism"; 
 import { FolderOutlined, MessageOutlined, CodeOutlined } from '@ant-design/icons';
 import axios from 'axios';
 
@@ -71,17 +73,18 @@ const AutoCoderChatViz: React.FC = () => {
         width={800}
         footer={null}
       >
-        <pre style={{
-          backgroundColor: '#f5f5f5',
-          padding: '12px',
-          borderRadius: '4px',
-          overflow: 'auto',
-          maxHeight: '500px',
-          whiteSpace: 'pre-wrap',
-          wordBreak: 'break-all'
-        }}>
+        <SyntaxHighlighter
+          language="diff"
+          style={vscDarkPlus}
+          customStyle={{
+            padding: '12px',
+            borderRadius: '4px', 
+            overflow: 'auto',
+            maxHeight: '500px'
+          }}
+        >
           {currentDiff}
-        </pre>
+        </SyntaxHighlighter>
       </Modal>
 
       <Card>
