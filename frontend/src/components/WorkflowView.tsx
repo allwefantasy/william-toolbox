@@ -137,7 +137,8 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => 
   return { nodes: layoutedNodes, edges };
 };
 
-const WorkflowView: React.FC<WorkflowViewProps> = ({ queries, onShowDiff }) => {
+// Move the main component implementation into a separate component
+const WorkflowViewContent: React.FC<WorkflowViewProps> = ({ queries, onShowDiff }) => {
   // 按file_number排序
   const sortedQueries = [...queries].sort((a, b) => a.file_number - b.file_number);
   
@@ -221,6 +222,15 @@ const WorkflowView: React.FC<WorkflowViewProps> = ({ queries, onShowDiff }) => {
         </ReactFlow>
       </ReactFlowProvider>
     </div>
+  );
+};
+
+// Create a wrapper component that provides the ReactFlow context
+const WorkflowView: React.FC<WorkflowViewProps> = (props) => {
+  return (
+    <ReactFlowProvider>
+      <WorkflowViewContent {...props} />
+    </ReactFlowProvider>
   );
 };
 
