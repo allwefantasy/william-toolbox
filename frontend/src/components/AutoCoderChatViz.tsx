@@ -12,6 +12,7 @@ interface Query {
   query: string;
   timestamp?: string;
   response?: string;
+  urls?: string[];  // Add urls field
 }
 
 const AutoCoderChatViz: React.FC = () => {
@@ -20,6 +21,8 @@ const AutoCoderChatViz: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [diffModalVisible, setDiffModalVisible] = useState<boolean>(false);
   const [currentDiff, setCurrentDiff] = useState<string>('');
+  const [contextModalVisible, setContextModalVisible] = useState<boolean>(false);
+  const [currentUrls, setCurrentUrls] = useState<string[]>([]);
 
   const showDiff = async (response: string | undefined) => {
     if (!projectPath || !response) return;
@@ -66,6 +69,23 @@ const AutoCoderChatViz: React.FC = () => {
 
   return (
     <div style={{ padding: '24px' }}>
+      <Modal
+        title="文件上下文"
+        visible={contextModalVisible}
+        onCancel={() => setContextModalVisible(false)}
+        width={600}
+        footer={null}
+      >
+        <List
+          dataSource={currentUrls || []}
+          renderItem={(url) => (
+            <List.Item>
+              <Text copyable>{url}</Text>
+            </List.Item>
+          )}
+        />
+      </Modal>
+
       <Modal
         title="Commit Diff"
         visible={diffModalVisible}
@@ -120,20 +140,35 @@ const AutoCoderChatViz: React.FC = () => {
                         </Text>
                       )}
                     </div>
-                    {item.response && (
-                      <Button 
-                        icon={<CodeOutlined />} 
-                        type="link"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (item.response) {
-                            showDiff(item.response);
-                          }
-                        }}
-                      >
-                        查看变更
-                      </Button>
-                    )}
+                    <Space>
+                      {item.urls && item.urls.length > 0 && (
+                        <Button
+                          icon={<FolderOutlined />}
+                          type="link"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCurrentUrls(item.urls || []);
+                            setContextModalVisible(true);
+                          }}
+                        >
+                          查看上下文
+                        </Button>
+                      )}
+                      {item.response && (
+                        <Button 
+                          icon={<CodeOutlined />} 
+                          type="link"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (item.response) {
+                              showDiff(item.response);
+                            }
+                          }}
+                        >
+                          查看变更
+                        </Button>
+                      )}
+                    </Space>
                   </div>
                 }
               >

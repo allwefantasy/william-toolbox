@@ -30,6 +30,7 @@ class QueryWithFileNumber(BaseModel):
     timestamp: Optional[str] = None
     file_number: int  # 新增文件编号字段
     response: Optional[str] = None  # auto_coder_开头的文件名+md5值
+    urls: Optional[List[str]] = None  # 添加urls字段
 
 class ValidationResponseWithFileNumbers(BaseModel):
     success: bool
@@ -163,11 +164,15 @@ async def validate_and_load_queries(path: str):
                                     file_md5 = hashlib.md5(open(file_path, 'rb').read()).hexdigest()
                                     response_str = f"auto_coder_{file}_{file_md5}"
                                     
+                                    # 从yaml内容中获取urls字段,如果不存在则为空列表
+                                    urls = yaml_content.get('urls', [])
+                                    
                                     queries.append(QueryWithFileNumber(
                                         query=yaml_content['query'],
                                         timestamp=timestamp,
                                         file_number=file_number,
-                                        response=response_str
+                                        response=response_str,
+                                        urls=urls
                                     ))
                             except yaml.YAMLError:
                                 continue
