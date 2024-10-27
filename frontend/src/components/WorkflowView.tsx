@@ -8,7 +8,9 @@ import ReactFlow, {
   NodeTypes,
   useNodesState,
   useEdgesState,
-  Position
+  Position,
+  MiniMap,
+  useReactFlow
 } from 'reactflow';
 import dagre from 'dagre';
 import 'reactflow/dist/style.css';
@@ -85,6 +87,7 @@ const nodeTypes = {
 };
 
 // 使用dagre库进行布局计算
+// 优化的布局算法
 const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => {
   const dagreGraph = new dagre.graphlib.Graph();
   dagreGraph.setDefaultEdgeLabel(() => ({}));
@@ -92,15 +95,20 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => 
   const nodeWidth = 320;
   const nodeHeight = 150;
   
-  // 设置图的布局方向和节点大小
-  dagreGraph.setGraph({ rankdir: direction, nodesep: 80, ranksep: 100 });
+  // 增大节点间距以优化展示
+  dagreGraph.setGraph({ 
+    rankdir: direction, 
+    nodesep: 100,  // 增加水平间距
+    ranksep: 150,  // 增加垂直间距
+    ranker: 'longest-path' // 使用最长路径算法优化布局
+  });
   
-  // 添加节点到dagre图
+  // 添加节点
   nodes.forEach((node) => {
     dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
   });
   
-  // 添加边到dagre图
+  // 添加边
   edges.forEach((edge) => {
     dagreGraph.setEdge(edge.source, edge.target);
   });
@@ -108,17 +116,19 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => 
   // 计算布局
   dagre.layout(dagreGraph);
   
-  // 应用计算后的位置到节点
+  // 应用计算后的位置
   const layoutedNodes = nodes.map((node) => {
     const nodeWithPosition = dagreGraph.node(node.id);
     return {
       ...node,
+      // 添加一些随机偏移量避免完全对齐
       position: {
-        x: nodeWithPosition.x - nodeWidth / 2,
-        y: nodeWithPosition.y - nodeHeight / 2,
+        x: nodeWithPosition.x - nodeWidth / 2 + Math.random() * 20 - 10,
+        y: nodeWithPosition.y - nodeHeight / 2 + Math.random() * 20 - 10,
       },
       sourcePosition: Position.Bottom,
       targetPosition: Position.Top,
+      draggable: true, // 允许节点拖拽
     };
   });
   
@@ -140,15 +150,24 @@ const WorkflowView: React.FC<WorkflowViewProps> = ({ queries, onShowDiff }) => {
     },
   }));
 
-  // 创建边 - 按file_number的顺序连接
-  const initialEdges: Edge[] = sortedQueries.slice(0, -1).map((query, index) => ({
-    id: `e${query.file_number}-${sortedQueries[index + 1].file_number}`,
-    source: query.file_number.toString(),
-    target: sortedQueries[index + 1].file_number.toString(),
-    type: 'smoothstep',
-    animated: true,
-    style: { stroke: '#1890ff', strokeWidth: 2 },
-  }));
+  // 智能创建边 - 基于file_number顺序连接
+  const initialEdges: Edge[] = [];
+  for (let i = 0; i < sortedQueries.length - 1; i++) {
+    const currentNode = sortedQueries[i];
+    const nextNode = sortedQueries[i + 1];
+    
+    // 只有当file_number连续时才创建边
+    if (nextNode.file_number === currentNode.file_number + 1) {
+      initialEdges.push({
+        id: `e${currentNode.file_number}-${nextNode.file_number}`,
+        source: currentNode.file_number.toString(),
+        target: nextNode.file_number.toString(),
+        type: 'smoothstep',
+        animated: true,
+        style: { stroke: '#1890ff', strokeWidth: 2 },
+      });
+    }
+  }
 
   // 使用dagre计算布局
   const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
@@ -159,6 +178,13 @@ const WorkflowView: React.FC<WorkflowViewProps> = ({ queries, onShowDiff }) => {
   const [nodes, setNodes, onNodesChange] = useNodesState(layoutedNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(layoutedEdges);
 
+  const { fitView } = useReactFlow();
+
+  // 自适应画布
+  const onInit = useCallback(() => {
+    fitView({ padding: 0.2 });
+  }, [fitView]);
+
   return (
     <div style={{ height: '70vh', border: '1px solid #ddd', borderRadius: '4px' }}>
       <ReactFlow
@@ -168,15 +194,25 @@ const WorkflowView: React.FC<WorkflowViewProps> = ({ queries, onShowDiff }) => {
         onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
         fitView
+        onInit={onInit}
         minZoom={0.1}
         maxZoom={1.5}
         defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
+        proOptions={{ hideAttribution: true }}
       >
-        <Background color="#aaa" gap={16} />
+        <Background color="#aaa" gap={16} variant="dots" />
         <Controls />
+        <MiniMap 
+          nodeColor="#1890ff"
+          maskColor="rgb(0, 0, 0, 0.1)"
+          style={{
+            backgroundColor: '#fff',
+            border: '1px solid #1890ff',
+          }}
+        />
         <Panel position="top-right">
           <Card size="small">
-            <Text type="secondary">按照文件编号顺序自动布局</Text>
+            <Text type="secondary">按照文件编号顺序自动布局,可拖拽调整位置</Text>
           </Card>
         </Panel>
       </ReactFlow>
