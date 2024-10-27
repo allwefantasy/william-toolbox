@@ -20,11 +20,6 @@ interface Query {
   file_number: number;  
 }
 
-interface FileChanges {
-  response_id: string;
-  changes?: FileChange[];
-}
-
 interface DiffResponse {
   diff: string;
   file_changes: FileChange[];
@@ -74,7 +69,7 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
         const response = sortedQueries[currentStep].response;
         const diffResponse = await onShowDiff(response);
         setCurrentDiff(diffResponse.diff);
-        setCurrentFileChanges(diffResponse.file_changes);
+        setCurrentFileChanges(diffResponse.file_changes);        
       }
     };
     loadDiffAndChanges();
@@ -137,13 +132,13 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
                 ))}
               </div>
             )}
-            <SyntaxHighlighter
+            {currentDiff && <SyntaxHighlighter
               language="diff"
               style={vscDarkPlus}
               className="diff-highlighter"
             >
               {currentDiff}
-            </SyntaxHighlighter>
+            </SyntaxHighlighter>}
           </div>
         );
       default:
@@ -195,7 +190,7 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
             onClick={() => {
               setCurrentStep(index);
               setCurrentSubStep(0);
-              setIsPlaying(false);
+              setIsPlaying(true);
               setCurrentDiff('');
             }}
           >

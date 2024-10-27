@@ -30,6 +30,7 @@ const AutoCoderChatViz: React.FC = () => {
   const [viewMode, setViewMode] = useState<'list' | 'workflow' | 'animated'>('list');
 
   const showDiff = async (response: string | undefined) => {
+    alert(projectPath);
     if (!projectPath || !response) return;
 
     try {
@@ -92,7 +93,7 @@ const AutoCoderChatViz: React.FC = () => {
           const encodedResponse = encodeURIComponent(response);
           const resp = await axios.get(`/auto-coder-chat/commit-diff/${encodedResponse}?path=${encodedPath}`);
           if (resp.data.success) {
-            return resp.data.diff;
+            return resp.data
           }
           return '';
         } catch (error) {
