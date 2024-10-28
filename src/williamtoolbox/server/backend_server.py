@@ -100,31 +100,34 @@ def deploy_command_to_string(cmd: DeployCommand) -> str:
 @app.get("/models", response_model=List[ModelInfo])
 async def list_models():
     """List all supported models and their current status."""
+    models = await load_models_from_json() or supported_models
     return [
         ModelInfo(name=name, status=info["status"])
-        for name, info in supported_models.items()
+        for name, info in models.items()
     ]
 
 @app.delete("/models/{model_name}")
 async def delete_model(model_name: str):
     """Delete a model from the supported models list."""
-    if model_name not in supported_models:
+    models = await load_models_from_json() or supported_models
+    if model_name not in models:
         raise HTTPException(status_code=404, detail=f"Model {model_name} not found")
     
     # Check if the model is running
-    if supported_models[model_name]["status"] == "running":
+    if models[model_name]["status"] == "running":
         raise HTTPException(status_code=400, detail="Cannot delete a running model")
     
     # Delete the model from supported_models
-    del supported_models[model_name]
-    await save_models_to_json(supported_models)
+    del models[model_name]
+    await save_models_to_json(models)
     return {"message": f"Model {model_name} deleted successfully"}
 
 
 @app.post("/models/add")
 async def add_model(model: AddModelRequest):
     """Add a new model to the supported models list."""
-    if model.name in supported_models:
+    models = await load_models_from_json() or supported_models
+    if model.name in models:
         raise HTTPException(
             status_code=400, detail=f"Model {model.name} already exists"
         )
@@ -148,8 +151,8 @@ async def add_model(model: AddModelRequest):
         "undeploy_command": f"byzerllm undeploy --model {model.name}",
     }
 
-    supported_models[model.name] = new_model
-    await save_models_to_json(supported_models)
+    models[model.name] = new_model
+    await save_models_to_json(models)
     return {"message": f"Model {model.name} added successfully"}
 
 
@@ -312,7 +315,8 @@ async def get_rag_status(rag_name: str):
 @app.post("/models/{model_name}/{action}")
 async def manage_model(model_name: str, action: str):
     """Start or stop a specified model."""
-    if model_name not in supported_models:
+    models = await load_models_from_json() or supported_models
+    if model_name not in models:
         raise HTTPException(status_code=404, detail=f"Model {model_name} not found")
 
     if action not in ["start", "stop"]:
@@ -320,7 +324,7 @@ async def manage_model(model_name: str, action: str):
             status_code=400, detail="Invalid action. Use 'start' or 'stop'"
         )
 
-    model_info = supported_models[model_name]
+    model_info = models[model_name]
     command = (
         deploy_command_to_string(DeployCommand(**model_info["deploy_command"]))
         if action == "start"
@@ -338,10 +342,10 @@ async def manage_model(model_name: str, action: str):
         if result.returncode == 0:
             # Update model status only if the command was successful
             model_info["status"] = "running" if action == "start" else "stopped"
-            supported_models[model_name] = model_info
+            models[model_name] = model_info
 
             # Save updated models to JSON file
-            await save_models_to_json(supported_models)
+            await save_models_to_json(models)
 
             return {
                 "message": f"Model {model_name} {action}ed successfully",
@@ -364,15 +368,16 @@ async def manage_model(model_name: str, action: str):
 @app.get("/models/{model_name}/status")
 async def get_model_status(model_name: str):
     """Get the status of a specified model."""
-    if model_name not in supported_models:
+    models = await load_models_from_json() or supported_models
+    if model_name not in models:
         raise HTTPException(status_code=404, detail=f"Model {model_name} not found")
 
     try:
         # Execute the byzerllm stat command
         command = (
-            supported_models[model_name]["status_command"]
-            if model_name in supported_models
-            and "status_command" in supported_models[model_name]
+            models[model_name]["status_command"]
+            if model_name in models
+            and "status_command" in models[model_name]
             else f"byzerllm stat --model {model_name}"
         )
         result = subprocess.run(command, shell=True, capture_output=True, text=True)
@@ -380,13 +385,13 @@ async def get_model_status(model_name: str):
         # Check the result status
         if result.returncode == 0:
             status_output = result.stdout.strip()
-            supported_models[model_name]["status"] = "running"
-            await save_models_to_json(supported_models)
+            models[model_name]["status"] = "running"
+            await save_models_to_json(models)
             return {"model": model_name, "status": status_output, "success": True}
         else:
             error_message = f"Command failed with return code {result.returncode}: {result.stderr.strip()}"
-            supported_models[model_name]["status"] = "stopped"
-            await save_models_to_json(supported_models)
+            models[model_name]["status"] = "stopped"
+            await save_models_to_json(models)
             return {
                 "model": model_name,
                 "status": "error",
