@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Button, Modal, Form, Input, InputNumber, Select, message, Switch, Tooltip } from 'antd';
-import { QuestionCircleOutlined } from '@ant-design/icons';
+import { Button, Modal, Form, Input, InputNumber, Select, message, Switch, Tag, Tooltip, AutoComplete } from 'antd';
+import { QuestionCircleOutlined, PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
 
@@ -14,58 +14,75 @@ interface EditRAGProps {
 
 const EditRAG: React.FC<EditRAGProps> = ({ visible, ragData, onClose, onUpdate }) => {
   const [form] = Form.useForm();
-  const [models, setModels] = useState<{name: string, status: string}[]>([]);
+  const [models, setModels] = useState<Array<{ name: string, status: string }>>([]);
+  const [tokenizerPaths, setTokenizerPaths] = useState<Array<{value: string, label: string}>>([]);
 
   useEffect(() => {
     fetchModels();
+    fetchConfig();
   }, []);
 
-  useEffect(() => {    
-    if (visible && ragData?.name) {
-      fetchRAGDetails(ragData.name);
+  useEffect(() => {
+    if (visible && ragData) {
+      form.setFieldsValue({        
+        model: ragData.model,
+        tokenizer_path: ragData.tokenizer_path,
+        doc_dir: ragData.doc_dir,
+        rag_doc_filter_relevance: ragData.rag_doc_filter_relevance,
+        host: ragData.host,
+        port: ragData.port,
+        required_exts: ragData.required_exts,
+        disable_inference_enhance: ragData.disable_inference_enhance,
+        inference_deep_thought: ragData.inference_deep_thought,
+        enable_hybrid_index: ragData.enable_hybrid_index,
+        hybrid_index_max_output_tokens: ragData.hybrid_index_max_output_tokens,
+        without_contexts: ragData.without_contexts,
+        infer_params: ragData.infer_params ? Object.entries(ragData.infer_params).map(([key, value]) => ({
+          key,
+          value
+        })) : []
+      });
     }
-  }, [visible, ragData?.name]);
+  }, [visible, ragData, form]);
+
+  const fetchConfig = async () => {
+    try {
+      const response = await axios.get('/config');
+      const tokenizerPathsFromCommons = response.data.commons?.filter((item: any) => 
+        item.value.includes('tokenizer.json')
+      ) || [];
+      setTokenizerPaths(tokenizerPathsFromCommons);
+    } catch (error) {
+      console.error('Error fetching config:', error);
+      message.error('Failed to fetch configuration');
+    }
+  };
 
   const fetchModels = async () => {
     try {
       const response = await axios.get('/models');
-      setModels(response.data.filter((model: {name: string, status: string}) => 
-        model.status === 'running'
-      ));
+      setModels(response.data.filter((model: { name: string, status: string }) => model.status === 'running'));
     } catch (error) {
       console.error('Error fetching models:', error);
       message.error('获取模型列表失败');
     }
   };
 
-  const fetchRAGDetails = async (ragName: string) => {
-    try {
-      const response = await axios.get(`/rags/${ragName}`);
-      const ragInfo = response.data;
-      
-      form.setFieldsValue({
-        model: ragInfo.model,
-        tokenizer_path: ragInfo.tokenizer_path,
-        doc_dir: ragInfo.doc_dir,
-        rag_doc_filter_relevance: ragInfo.rag_doc_filter_relevance,
-        host: ragInfo.host,
-        port: ragInfo.port,
-        required_exts: ragInfo.required_exts,
-        disable_inference_enhance: ragInfo.disable_inference_enhance,
-        inference_deep_thought: ragInfo.inference_deep_thought,
-        enable_hybrid_index: ragInfo.enable_hybrid_index,
-        hybrid_index_max_output_tokens: ragInfo.hybrid_index_max_output_tokens
-      });
-    } catch (error) {
-      console.error('Error fetching RAG details:', error);
-      message.error('获取RAG详情失败');
-    }
-  };
-
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
+      
+      // Convert infer_params array to object
+      if (values.infer_params) {
+        const params: { [key: string]: string } = {};
+        values.infer_params.forEach((param: { key: string, value: string }) => {
+          params[param.key] = param.value;
+        });
+        values.infer_params = params;        
+      }
+
       values.name = ragData.name;
+
       await axios.put(`/rags/${ragData.name}`, values);
       message.success('RAG更新成功');
       onUpdate();
@@ -82,7 +99,6 @@ const EditRAG: React.FC<EditRAGProps> = ({ visible, ragData, onClose, onUpdate }
       visible={visible}
       onOk={handleOk}
       onCancel={onClose}
-      width={800}
     >
       <Form form={form} layout="vertical">
         <Form.Item name="model" label="模型" rules={[{ required: true }]}>
@@ -93,7 +109,16 @@ const EditRAG: React.FC<EditRAGProps> = ({ visible, ragData, onClose, onUpdate }
           </Select>
         </Form.Item>
         <Form.Item name="tokenizer_path" label="Tokenizer路径" rules={[{ required: true }]}>
-          <Input />
+          {tokenizerPaths.length > 0 ? (
+            <AutoComplete
+              options={tokenizerPaths}
+              placeholder="选择或输入 Tokenizer 路径"
+            >
+              <Input />
+            </AutoComplete>
+          ) : (
+            <Input placeholder="输入 Tokenizer 路径" />
+          )}
         </Form.Item>
         <Form.Item name="doc_dir" label="文档目录" rules={[{ required: true }]}>
           <Input />
@@ -107,7 +132,7 @@ const EditRAG: React.FC<EditRAGProps> = ({ visible, ragData, onClose, onUpdate }
         <Form.Item name="port" label="端口" initialValue={8000}>
           <InputNumber min={1024} max={65535} />
         </Form.Item>
-        <Form.Item name="required_exts" label="必需的扩展名">
+        <Form.Item name="required_exts" label="必需的扩展名" initialValue="">
           <Input placeholder="用逗号分隔，例如: .txt,.pdf" />
         </Form.Item>
         <Form.Item 
@@ -115,12 +140,11 @@ const EditRAG: React.FC<EditRAGProps> = ({ visible, ragData, onClose, onUpdate }
           label={
             <span>
               禁用推理增强
-              <Tooltip title="禁用推理增强可能会影响结果质量">
-                <QuestionCircleOutlined style={{ marginLeft: 8 }} />
-              </Tooltip>
+              <Tag color="blue" style={{ marginLeft: '8px' }}>Pro</Tag>
             </span>
           } 
-          valuePropName="checked"
+          valuePropName="checked" 
+          initialValue={false}
         >
           <Switch />
         </Form.Item>
@@ -129,12 +153,11 @@ const EditRAG: React.FC<EditRAGProps> = ({ visible, ragData, onClose, onUpdate }
           label={
             <span>
               推理深度思考
-              <Tooltip title="启用深度思考可能会增加响应时间">
-                <QuestionCircleOutlined style={{ marginLeft: 8 }} />
-              </Tooltip>
+              <Tag color="blue" style={{ marginLeft: '8px' }}>Pro</Tag>
             </span>
           } 
-          valuePropName="checked"
+          valuePropName="checked" 
+          initialValue={false}
         >
           <Switch />
         </Form.Item>
@@ -142,22 +165,99 @@ const EditRAG: React.FC<EditRAGProps> = ({ visible, ragData, onClose, onUpdate }
           name="enable_hybrid_index" 
           label={
             <span>
-              启用混合索引加速
+              启用混合索引加速                
               <Tooltip title="使用此功能需要先通过 byzerllm storage start 启动一个加速引擎以及创建一个名字为 emb 的向量模型">
                 <QuestionCircleOutlined style={{ marginLeft: 8 }} />
               </Tooltip>
             </span>
           } 
-          valuePropName="checked"
+          valuePropName="checked" 
+          initialValue={false}
         >
           <Switch />
         </Form.Item>
         <Form.Item 
           name="hybrid_index_max_output_tokens" 
-          label="混合索引最大输出令牌数"
+          label="混合索引最大输出令牌数" 
+          initialValue={1000000}
         >
           <InputNumber min={1} max={10000000} />
         </Form.Item>
+
+        <Form.Item 
+          name="without_contexts" 
+          label={
+            <span>
+              禁用上下文
+              <Tag color="blue" style={{ marginLeft: '8px' }}>Pro</Tag>
+            </span>
+          } 
+          valuePropName="checked" 
+          initialValue={false}
+        >
+          <Switch />
+        </Form.Item>
+
+        <Form.List name="infer_params">
+            {(fields, { add, remove }) => (
+              <>
+                {fields.map(({ key, name, ...restField }) => (
+                  <Form.Item
+                    key={key}
+                    label={name === 0 ? "额外参数" : ""}
+                    required={false}
+                    style={{ marginBottom: 8 }}
+                  >
+                    <Form.Item
+                      {...restField}
+                      name={[name, 'key']}
+                      validateTrigger={['onChange', 'onBlur']}
+                      rules={[
+                        {
+                          required: true,
+                          whitespace: true,
+                          message: "请输入参数名称或删除此字段",
+                        },
+                      ]}
+                      noStyle
+                    >
+                      <Input placeholder="参数名称" style={{ width: '45%' }} />
+                    </Form.Item>
+                    <Form.Item
+                      {...restField}
+                      name={[name, 'value']}
+                      validateTrigger={['onChange', 'onBlur']}
+                      rules={[
+                        {
+                          required: true,
+                          whitespace: true,
+                          message: "请输入参数值或删除此字段",
+                        },
+                      ]}
+                      noStyle
+                    >
+                      <Input style={{ width: '45%', marginLeft: 8 }} placeholder="参数值" />
+                    </Form.Item>
+                    <MinusCircleOutlined
+                      className="dynamic-delete-button"
+                      onClick={() => remove(name)}
+                      style={{ margin: '0 8px' }}
+                    />
+                  </Form.Item>
+                ))}
+                <Form.Item>
+                  <Button
+                    type="dashed"
+                    onClick={() => add()}
+                    block
+                    icon={<PlusOutlined />}
+                  >
+                    添加参数
+                  </Button>
+                </Form.Item>
+              </>
+            )}
+          </Form.List>
       </Form>
     </Modal>
   );

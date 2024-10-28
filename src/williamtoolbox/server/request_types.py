@@ -63,6 +63,8 @@ class AddRAGRequest(BaseModel):
     inference_deep_thought: bool = Field(default=False)
     enable_hybrid_index: bool = Field(default=False)
     hybrid_index_max_output_tokens: int = Field(default=1000000)
+    without_contexts: bool = Field(default=False)
+    infer_params: Optional[Dict[str, Any]] = Field(default_factory=dict)
     model_config = {"protected_namespaces": ()}  
 
 

@@ -19,7 +19,7 @@ interface FormValues {
   enable_hybrid_index: boolean;  
   hybrid_index_max_output_tokens: number;
   without_contexts: boolean;
-  infer_params?: { key: string; value: string }[];
+  infer_params?: { key: string; value: string }[] | { [key: string]: string };
 }
 
 interface Model {
@@ -84,6 +84,15 @@ const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
+      // Convert infer_params array to object
+      if (values.infer_params) {
+        const params: { [key: string]: string } = {};
+        const old_infer_params = values.infer_params as { key: string; value: string }[]
+        old_infer_params.forEach((param: { key: string, value: string }) => {
+          params[param.key] = param.value;
+        });
+        values.infer_params = params;        
+      }
       await axios.post('/rags/add', values);
       setIsModalVisible(false);
       form.resetFields();
