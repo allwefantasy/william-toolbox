@@ -95,7 +95,7 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
       case 0: // 展示查询内容
         return (
           <div className="animated-content">
-            <Title level={4}>查询内容</Title>
+            <Title level={4}>用户需求</Title>
             <Card className="query-card">
               <pre>{currentQuery.query}</pre>
             </Card>
@@ -104,7 +104,7 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
       case 1: // 展示相关文件
         return (
           <div className="animated-content">
-            <Title level={4}>相关文件</Title>
+            <Title level={4}>收集的相关文件</Title>
             {currentQuery.urls?.map((url, index) => (
               <Card key={index} size="small" className="file-card">
                 <FileOutlined /> {url}
@@ -115,7 +115,7 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
       case 2: // 展示Diff
         return (
           <div className="animated-content">
-            <Title level={4}>代码变更</Title>
+            <Title level={4}>自动提交代码</Title>
             {currentFileChanges && currentFileChanges.length > 0 && (
               <div className="file-changes-list">
                 {currentFileChanges.map((change, index) => (
@@ -163,15 +163,15 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
         current={currentSubStep}
         items={[
           {
-            title: '需求',
+            title: '用户需求',
             icon: <MessageOutlined />,
           },
           {
-            title: '相关文件',
+            title: '收集的相关文件',
             icon: <FileOutlined />,
           },
           {
-            title: '代码变更',
+            title: '自动提交代码',
             icon: <CodeOutlined />,
           },
         ]}
