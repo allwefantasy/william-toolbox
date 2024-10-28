@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Button, Modal, Form, Input, InputNumber, Select, message, Switch, Tag, Tooltip, AutoComplete } from 'antd';
-import { QuestionCircleOutlined } from '@ant-design/icons';
-import { PlusOutlined } from '@ant-design/icons';
+import { QuestionCircleOutlined, PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
 
@@ -17,8 +16,9 @@ interface FormValues {
   required_exts: string;
   disable_inference_enhance: boolean;
   inference_deep_thought: boolean;
-  enable_hybrid_index: boolean;
+  enable_hybrid_index: boolean;  
   hybrid_index_max_output_tokens: number;
+  infer_params?: { key: string; value: string }[];
 }
 
 interface Model {
@@ -199,6 +199,67 @@ const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
           >
             <InputNumber min={1} max={10000000} />
           </Form.Item>
+
+          <Form.List name="infer_params">
+            {(fields, { add, remove }) => (
+              <>
+                {fields.map(({ key, name, ...restField }) => (
+                  <Form.Item
+                    key={key}
+                    label={name === 0 ? "额外参数" : ""}
+                    required={false}
+                    style={{ marginBottom: 8 }}
+                  >
+                    <Form.Item
+                      {...restField}
+                      name={[name, 'key']}
+                      validateTrigger={['onChange', 'onBlur']}
+                      rules={[
+                        {
+                          required: true,
+                          whitespace: true,
+                          message: "请输入参数名称或删除此字段",
+                        },
+                      ]}
+                      noStyle
+                    >
+                      <Input placeholder="参数名称" style={{ width: '45%' }} />
+                    </Form.Item>
+                    <Form.Item
+                      {...restField}
+                      name={[name, 'value']}
+                      validateTrigger={['onChange', 'onBlur']}
+                      rules={[
+                        {
+                          required: true,
+                          whitespace: true,
+                          message: "请输入参数值或删除此字段",
+                        },
+                      ]}
+                      noStyle
+                    >
+                      <Input style={{ width: '45%', marginLeft: 8 }} placeholder="参数值" />
+                    </Form.Item>
+                    <MinusCircleOutlined
+                      className="dynamic-delete-button"
+                      onClick={() => remove(name)}
+                      style={{ margin: '0 8px' }}
+                    />
+                  </Form.Item>
+                ))}
+                <Form.Item>
+                  <Button
+                    type="dashed"
+                    onClick={() => add()}
+                    block
+                    icon={<PlusOutlined />}
+                  >
+                    添加参数
+                  </Button>
+                </Form.Item>
+              </>
+            )}
+          </Form.List>
         </Form>
       </Modal>
     </div>
