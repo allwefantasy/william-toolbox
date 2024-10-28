@@ -11,12 +11,12 @@ from ..storage.json_file import *
 router = APIRouter()
 
 @router.post("/openai-compatible-service/start")
-async def start_openai_compatible_service(host: str = "0.0.0.0", port: int = 8000):
+async def start_openai_compatible_service(request: OpenAIServiceStartRequest):
     config = await load_config()
     if "openaiServerList" in config and config["openaiServerList"]:
         return {"message": "OpenAI compatible service is already running"}
 
-    command = f"byzerllm serve --ray_address auto --host {host} --port {port}"
+    command = f"byzerllm serve --ray_address auto --host {request.host} --port {request.port}"
     try:
         # Create logs directory if it doesn't exist
         os.makedirs("logs", exist_ok=True)
@@ -35,7 +35,7 @@ async def start_openai_compatible_service(host: str = "0.0.0.0", port: int = 800
         if "openaiServerList" not in config:
             config["openaiServerList"] = []
         config["openaiServerList"].append(
-            {"host": host, "port": port, "pid": process.pid}
+            {"host": request.host, "port": request.port, "pid": process.pid}
         )
         await save_config(config)
 
