@@ -18,6 +18,7 @@ interface FormValues {
   inference_deep_thought: boolean;
   enable_hybrid_index: boolean;  
   hybrid_index_max_output_tokens: number;
+  without_contexts: boolean;
   infer_params?: { key: string; value: string }[];
 }
 
@@ -75,7 +76,8 @@ const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
       disable_inference_enhance: false,
       inference_deep_thought: false,
       enable_hybrid_index: false,
-      hybrid_index_max_output_tokens: 1000000
+      hybrid_index_max_output_tokens: 1000000,
+      without_contexts: false
     });
   };
 
@@ -198,6 +200,20 @@ const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
             initialValue={1000000}
           >
             <InputNumber min={1} max={10000000} />
+          </Form.Item>
+
+          <Form.Item 
+            name="without_contexts" 
+            label={
+              <span>
+                禁用上下文
+                <Tag color="blue" style={{ marginLeft: '8px' }}>Pro</Tag>
+              </span>
+            } 
+            valuePropName="checked" 
+            initialValue={false}
+          >
+            <Switch />
           </Form.Item>
 
           <Form.List name="infer_params">
