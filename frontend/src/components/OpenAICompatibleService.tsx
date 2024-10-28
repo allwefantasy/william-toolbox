@@ -20,6 +20,24 @@ const OpenAICompatibleService: React.FC = () => {
       setRefreshing(true);
       const response = await axios.get('/openai-compatible-service/status');
       setIsRunning(response.data.isRunning);
+      
+      // 如果服务在运行,从config中获取host和port
+      if (response.data.isRunning) {
+        const config = await axios.get('/config');
+        const openaiServer = config.data.openaiServerList?.[0];
+        if (openaiServer) {
+          form.setFieldsValue({
+            host: openaiServer.host,
+            port: openaiServer.port
+          });
+        }
+      } else {
+        // 服务未运行时设置默认值
+        form.setFieldsValue({
+          host: '0.0.0.0',
+          port: 8000
+        });
+      }
     } catch (error) {
       console.error('Error fetching service status:', error);
       message.error('获取服务状态失败');
@@ -35,6 +53,11 @@ const OpenAICompatibleService: React.FC = () => {
         await axios.post('/openai-compatible-service/stop');
         message.success('OpenAI兼容服务已停止');
         setIsRunning(false);
+        // 服务停止后重置表单为默认值
+        form.setFieldsValue({
+          host: '0.0.0.0',
+          port: 8000
+        });
       } else {
         await axios.post('/openai-compatible-service/start', values);
         message.success('OpenAI兼容服务已启动');
