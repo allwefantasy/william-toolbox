@@ -167,8 +167,7 @@ async def add_rag(rag: AddRAGRequest):
                 status_code=400,
                 detail=f"Port {rag.port} is already in use by RAG {other_rag['name']}",
             )
-    new_rag = {"status": "stopped", **rag.model_dump()}
-
+    new_rag = {"status": "stopped", **rag.model_dump()}    
     rags[rag.name] = new_rag
     await save_rags_to_json(rags)
     return {"message": f"RAG {rag.name} added successfully"}
@@ -214,10 +213,22 @@ async def manage_rag(rag_name: str, action: str):
         if rag_info["inference_deep_thought"]:
             command += f" --inference_deep_thought"
 
+        if rag_info["without_contexts"]:
+            command += f" --without_contexts"
+
         if "enable_hybrid_index" in rag_info and rag_info["enable_hybrid_index"]:
             command += f" --enable_hybrid_index"
             if "hybrid_index_max_output_tokens" in rag_info:
                 command += f" --hybrid_index_max_output_tokens {rag_info['hybrid_index_max_output_tokens']}"
+
+        if "infer_params" in rag_info:
+            for key, value in rag_info["infer_params"].items():
+                if value in ["true", "True"]:
+                    command += f" --{key}"
+                elif value in ["false", "False"]:
+                    continue
+                else:
+                    command += f" --{key} {value}"
 
         logger.info(f"manage rag {rag_name} with command: {command}")
         try:
