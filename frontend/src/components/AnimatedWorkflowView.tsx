@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, Typography, Button, Space, Tag, Steps } from 'antd';
-import { FileOutlined, MessageOutlined, CodeOutlined } from '@ant-design/icons';
+import { Card, Typography, Button, Space, Tag, Steps, Input } from 'antd';
+import { FileOutlined, MessageOutlined, CodeOutlined, SearchOutlined, RobotOutlined } from '@ant-design/icons';
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
+import ReactTypingEffect from 'react-typing-effect';
 import './AnimatedWorkflowView.css';
 
 const { Text, Title } = Typography;
@@ -37,6 +38,9 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
   const [currentDiff, setCurrentDiff] = useState('');
   const [currentFileChanges, setCurrentFileChanges] = useState<FileChange[]>([]);
   const [sortedQueries, setSortedQueries] = useState<Query[]>([]);
+  const [userInput, setUserInput] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [isTypingEffect, setIsTypingEffect] = useState(false);
 
   useEffect(() => {
     // 按 file_number 从小到大排序
@@ -95,21 +99,69 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
       case 0: // 展示查询内容
         return (
           <div className="animated-content">
-            <Title level={4}>用户需求</Title>
+            <Title level={4}>
+              <Space>
+                <RobotOutlined spin={isTypingEffect} />
+                用户需求
+              </Space>
+            </Title>
             <Card className="query-card">
-              <pre>{currentQuery.query}</pre>
+              {isTypingEffect ? (
+                <ReactTypingEffect
+                  text={[currentQuery.query]}
+                  speed={50}
+                  eraseDelay={1000000}
+                  typingDelay={0}
+                  className="typing-effect"
+                  onTypingEnd={() => setIsTypingEffect(false)}
+                />
+              ) : (
+                <pre>{currentQuery.query}</pre>
+              )}
             </Card>
+            <div className="input-section">
+              <Input.Search
+                placeholder="输入您的需求,按回车键自动搜索相关文件..."
+                value={userInput}
+                onChange={(e) => setUserInput(e.target.value)}
+                onSearch={handleSearch}
+                loading={isSearching}
+                enterButton={
+                  <Button type="primary" icon={<SearchOutlined />}>
+                    搜索文件
+                  </Button>
+                }
+              />
+            </div>
           </div>
-        );
+        );  
       case 1: // 展示相关文件
         return (
-          <div className="animated-content">
-            <Title level={4}>收集的相关文件</Title>
-            {currentQuery.urls?.map((url, index) => (
-              <Card key={index} size="small" className="file-card">
-                <FileOutlined /> {url}
-              </Card>
-            ))}
+          <div className="animated-content search-animation">
+            <Title level={4}>
+              <Space>
+                <SearchOutlined spin={isSearching} />
+                收集的相关文件
+              </Space>
+            </Title>
+            <div className="files-container">
+              {currentQuery.urls?.map((url, index) => (
+                <Card 
+                  key={index} 
+                  size="small" 
+                  className={`file-card file-card-${index}`}
+                  style={{
+                    animation: `slideIn 0.5s ease-in ${index * 0.2}s forwards`,
+                    opacity: 0
+                  }}
+                >
+                  <Space>
+                    <FileOutlined className="file-icon" />
+                    {url}
+                  </Space>
+                </Card>
+              ))}
+            </div>
           </div>
         );
       case 2: // 展示Diff
@@ -146,8 +198,21 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
     }
   };
 
+  // 新增搜索处理函数  
+  const handleSearch = async () => {
+    if (!userInput.trim()) return;
+    
+    setIsSearching(true);
+    setCurrentSubStep(1); // 切换到文件搜索步骤
+    
+    // 模拟搜索延迟
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setIsSearching(false);
+    setCurrentSubStep(2); // 自动进入代码生成步骤
+  };
+
   return (
-    <div className="animated-workflow-view">
+    <div className="animated-workflow-view cosmic-theme">
       <Space style={{ marginBottom: 16 }}>
         <Button 
           type="primary" 

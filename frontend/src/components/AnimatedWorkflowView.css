@@ -1,8 +1,24 @@
-.animated-workflow-view {
+.animated-workflow-view.cosmic-theme {
   padding: 24px;
-  background: #fff;
-  border-radius: 8px;
+  background: linear-gradient(145deg, #1a1a1a, #2d2d2d);
+  border-radius: 12px;
   min-height: 600px;
+  color: #fff;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.cosmic-theme .ant-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cosmic-theme .ant-typography {
+  color: #fff;
+}
+
+.cosmic-theme .ant-steps-item-title {
+  color: #fff !important;
 }
 
 .animated-content {
@@ -21,7 +37,48 @@
 
 .file-card {
   margin-bottom: 8px;
-  animation: slideIn 0.5s ease-in;
+  opacity: 0;
+}
+
+.file-icon {
+  color: #1890ff;
+  font-size: 16px;
+}
+
+.typing-effect {
+  color: #1890ff;
+  font-family: 'Fira Code', monospace;
+  line-height: 1.6;
+}
+
+.input-section {
+  margin: 24px 0;
+}
+
+.search-animation {
+  position: relative;
+}
+
+.files-container {
+  position: relative;
+  padding: 16px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+@keyframes searchingPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
 }
 
 .query-card {
