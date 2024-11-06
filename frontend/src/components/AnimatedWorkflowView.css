@@ -139,3 +139,144 @@
     opacity: 1;
   }
 }
+.animated-workflow-view.cosmic-theme {
+  padding: 24px;
+  background: linear-gradient(145deg, #1a1a1a, #2d2d2d);
+  border-radius: 12px;
+  min-height: 600px;
+  color: #fff;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.cosmic-theme .ant-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cosmic-theme .ant-typography {
+  color: #fff;
+}
+
+.cosmic-theme .ant-steps-item-title {
+  color: #fff !important;
+}
+
+.animated-content {
+  margin-top: 24px;
+  min-height: 400px;
+  animation: fadeIn 0.5s ease-in;
+}
+
+.content-container {
+  margin: 24px 0;
+  padding: 16px;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  min-height: 400px;
+}
+
+.file-card {
+  margin-bottom: 8px;
+  opacity: 0;
+}
+
+.file-icon {
+  color: #1890ff;
+  font-size: 16px;
+}
+
+.typing-effect {
+  color: #1890ff;
+  font-family: 'Fira Code', monospace;
+  line-height: 1.6;
+}
+
+.input-section {
+  margin: 24px 0;
+}
+
+.search-animation {
+  position: relative;
+}
+
+.files-container {
+  position: relative;
+  padding: 16px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+@keyframes searchingPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+}
+
+.query-card {
+  animation: slideIn 0.5s ease-in;
+}
+
+.query-card pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  margin: 0;
+  padding: 16px;
+  background: #f5f5f5;
+  border-radius: 4px;
+}
+
+.file-changes-list {
+  margin-bottom: 16px;
+  padding: 8px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  animation: slideIn 0.5s ease-in;
+}
+
+.file-changes-list .ant-tag {
+  margin: 4px;
+}
+
+.diff-highlighter {
+  margin-top: 16px;
+  max-height: 400px !important;
+  overflow: auto !important;
+  animation: slideIn 0.5s ease-in;
+}
+
+.progress-indicator {
+  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}

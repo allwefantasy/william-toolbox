@@ -32,6 +32,8 @@ interface AnimatedWorkflowViewProps {
 }
 
 const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, onShowDiff }) => {
+
+const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, onShowDiff }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentSubStep, setCurrentSubStep] = useState(0);
@@ -78,7 +80,9 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
     };
     loadDiffAndChanges();
   }, [currentSubStep, currentStep, sortedQueries, onShowDiff]);
-
+    };
+    loadDiffAndChanges();
+  }, [currentSubStep, currentStep, sortedQueries, onShowDiff]);
   const handlePlayPause = () => {
     setIsPlaying(!isPlaying);
   };
@@ -89,6 +93,7 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
     setIsPlaying(false);
     setCurrentDiff('');
     setCurrentFileChanges([]);
+  }, []);
   }, []);
 
   const renderContent = () => {
@@ -254,6 +259,17 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
             style={{ cursor: 'pointer' }}
             onClick={() => {
               setCurrentStep(index);
+              setCurrentSubStep(0);
+              setIsPlaying(true);
+              setCurrentDiff('');
+            }}
+          >
+            #{query.file_number}
+          </Tag>
+        ))}
+      </div>
+    </div>
+  );
               setCurrentSubStep(0);
               setIsPlaying(true);
               setCurrentDiff('');
