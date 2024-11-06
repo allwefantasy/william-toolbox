@@ -113,7 +113,7 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
                   eraseDelay={1000000}
                   typingDelay={0}
                   className="typing-effect"
-                  onTypingEnd={() => setIsTypingEffect(false)}
+                  // onTypingEnd={() => setIsTypingEffect(false)}
                 />
               ) : (
                 <pre>{currentQuery.query}</pre>
