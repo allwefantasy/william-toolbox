@@ -195,7 +195,12 @@ async def process_message_stream(
                 rag_info = rags.get(request.selected_item, {})
                 host = rag_info.get("host", "localhost")
                 port = rag_info.get("port", 8000)
+                if host == "0.0.0.0":
+                    host = "127.0.0.1"
+                
                 base_url = f"http://{host}:{port}/v1"
+
+                logger.info(f"RAG {request.selected_item} is using {base_url}")
 
                 client = AsyncOpenAI(base_url=base_url, api_key="xxxx")
                 response = await client.chat.completions.create(
