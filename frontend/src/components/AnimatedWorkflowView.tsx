@@ -40,9 +40,10 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
   const [sortedQueries, setSortedQueries] = useState<Query[]>([]);
   const [userInput, setUserInput] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [isTypingEffect, setIsTypingEffect] = useState(true);
+  const [isTypingEffect, setIsTypingEffect] = useState(false);
 
   useEffect(() => {
+    // 按 file_number 从小到大排序
     const sorted = [...queries].sort((a, b) => a.file_number - b.file_number);
     setSortedQueries(sorted);
   }, [queries]);
@@ -56,12 +57,11 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
           if (currentStep < sortedQueries.length - 1) {
             setCurrentStep(prev => prev + 1);
             setCurrentSubStep(0);
-            setIsTypingEffect(true);
           } else {
             setIsPlaying(false);
           }
         }
-      }, 3000);
+      }, 3000); // 3秒切换一个子步骤
 
       return () => clearInterval(timer);
     }
@@ -81,7 +81,6 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
 
   const handlePlayPause = () => {
     setIsPlaying(!isPlaying);
-    setIsTypingEffect(true);
   };
 
   const handleReset = useCallback(() => {
@@ -90,7 +89,6 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
     setIsPlaying(false);
     setCurrentDiff('');
     setCurrentFileChanges([]);
-    setIsTypingEffect(true);
   }, []);
 
   const renderContent = () => {
@@ -98,7 +96,7 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
     if (!currentQuery) return null;
 
     switch (currentSubStep) {
-      case 0:
+      case 0: // 展示查询内容
         return (
           <div className="animated-content">
             <Title level={4}>
@@ -115,7 +113,7 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
                   eraseDelay={1000000}
                   typingDelay={0}
                   className="typing-effect"
-                  onTypingEnd={() => setIsTypingEffect(false)}
+                  // onTypingEnd={() => setIsTypingEffect(false)}
                 />
               ) : (
                 <pre>{currentQuery.query}</pre>
@@ -137,7 +135,7 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
             </div>
           </div>
         );  
-      case 1:
+      case 1: // 展示相关文件
         return (
           <div className="animated-content search-animation">
             <Title level={4}>
@@ -166,7 +164,7 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
             </div>
           </div>
         );
-      case 2:
+      case 2: // 展示Diff
         return (
           <div className="animated-content">
             <Title level={4}>自动提交代码</Title>
@@ -200,15 +198,17 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
     }
   };
 
+  // 新增搜索处理函数  
   const handleSearch = async () => {
     if (!userInput.trim()) return;
     
     setIsSearching(true);
-    setCurrentSubStep(1);
+    setCurrentSubStep(1); // 切换到文件搜索步骤
     
+    // 模拟搜索延迟
     await new Promise(resolve => setTimeout(resolve, 1500));
     setIsSearching(false);
-    setCurrentSubStep(2);
+    setCurrentSubStep(2); // 自动进入代码生成步骤
   };
 
   return (
@@ -256,7 +256,6 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
               setCurrentStep(index);
               setCurrentSubStep(0);
               setIsPlaying(true);
-              setIsTypingEffect(true);
               setCurrentDiff('');
             }}
           >
