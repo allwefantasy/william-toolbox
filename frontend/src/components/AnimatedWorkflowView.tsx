@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Card, Typography, Button, Space, Tag, Steps } from 'antd';
-import { FileOutlined, MessageOutlined, CodeOutlined } from '@ant-design/icons';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Card, Typography, Button, Space, Tag, Steps, Input, message } from 'antd';
+import { FileOutlined, MessageOutlined, CodeOutlined, SendOutlined, LoadingOutlined } from '@ant-design/icons';
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
+import ReactTypingEffect from 'react-typing-effect';
 import './AnimatedWorkflowView.css';
 
 const { Text, Title } = Typography;
@@ -31,12 +32,18 @@ interface AnimatedWorkflowViewProps {
 }
 
 const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, onShowDiff }) => {
+  const [userInput, setUserInput] = useState('');
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentSubStep, setCurrentSubStep] = useState(0);
   const [currentDiff, setCurrentDiff] = useState('');
   const [currentFileChanges, setCurrentFileChanges] = useState<FileChange[]>([]);
   const [sortedQueries, setSortedQueries] = useState<Query[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isTypingComplete, setIsTypingComplete] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [showTypingEffect, setShowTypingEffect] = useState(false);
+  const inputRef = useRef<any>(null);
 
   useEffect(() => {
     // 按 file_number 从小到大排序
@@ -87,7 +94,67 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
     setCurrentFileChanges([]);
   }, []);
 
+  const handleInputSubmit = async () => {
+    if (!userInput.trim()) {
+      message.warning('请输入需求');
+      return;  
+    }
+    
+    setIsProcessing(true);
+    setIsSearching(true);
+    setShowTypingEffect(true);
+    
+    // 模拟文件搜索过程
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    setIsSearching(false);
+    
+    // 开始显示处理过程
+    setCurrentStep(0);
+    setCurrentSubStep(0);
+    setIsPlaying(true);
+    
+    setIsProcessing(false);
+  };
+
   const renderContent = () => {
+    // 如果正在输入阶段
+    if (showTypingEffect) {
+      return (
+        <div className="animated-content">
+          <Title level={4}>处理需求中...</Title>
+          <Card className="query-card">
+            <ReactTypingEffect
+              text={[userInput]}
+              speed={50}
+              eraseSpeed={0}
+              typingDelay={200}
+              onTypingEnd={() => setIsTypingComplete(true)}
+              displayTextRenderer={(text) => {
+                return (
+                  <pre className="typing-text">
+                    {text}
+                  </pre>
+                );
+              }}
+            />
+          </Card>
+          
+          {isTypingComplete && (
+            <div className="search-status">
+              {isSearching ? (
+                <Space>
+                  <LoadingOutlined />
+                  <Text>正在搜索相关文件...</Text>
+                </Space>
+              ) : (
+                <Text className="fade-in">已找到相关文件，开始处理...</Text>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    }
+
     const currentQuery = sortedQueries[currentStep];    
     if (!currentQuery) return null;
 
@@ -148,6 +215,18 @@ const AnimatedWorkflowView: React.FC<AnimatedWorkflowViewProps> = ({ queries, on
 
   return (
     <div className="animated-workflow-view">
+      <div className="input-section">
+        <Input.Search
+          ref={inputRef}
+          placeholder="请输入你的需求，按回车开始处理..."
+          value={userInput}
+          onChange={(e) => setUserInput(e.target.value)}
+          onSearch={handleInputSubmit}
+          enterButton={<SendOutlined />}
+          disabled={isProcessing}
+          size="large"
+        />
+      </div>
       <Space style={{ marginBottom: 16 }}>
         <Button 
           type="primary" 
