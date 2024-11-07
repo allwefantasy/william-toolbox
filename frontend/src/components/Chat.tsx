@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Input, Button, List, Avatar, Typography, Select, Space, Dropdown, Menu, Modal, Spin, Tooltip } from 'antd';
-import { SendOutlined, PlusCircleOutlined, GithubOutlined, SettingOutlined, EditOutlined, PictureOutlined, FileOutlined, DatabaseOutlined, DeleteOutlined, LoadingOutlined, RobotOutlined, RedoOutlined } from '@ant-design/icons';
+import { Input, Button, List, Avatar, Typography, Select, Space, Dropdown, Menu, Modal, Spin, Tooltip, Timeline } from 'antd';
+import { SendOutlined, PlusCircleOutlined, GithubOutlined, SettingOutlined, EditOutlined, PictureOutlined, FileOutlined, DatabaseOutlined, DeleteOutlined, LoadingOutlined, RobotOutlined, RedoOutlined, BulbOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import './Chat.css';
 import { message as MessageBox } from 'antd';
@@ -16,7 +16,8 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
-  id?: string;  // Add this line
+  id?: string;  
+  thoughts?: string[]; // Add thoughts array for AI thinking process
 }
 
 interface Conversation {
@@ -129,18 +130,32 @@ const Chat: React.FC = () => {
               throw new Error(event.content);
             }
 
-            if (event.event === 'chunk') {
-              assistantMessage += event.content;
-              setMessages(prevMessages =>
-                prevMessages.map(msg => {
-                  if (msg.id === assistant_message_id) {
-                    return { ...msg, content: assistantMessage };
-                  }
-                  return msg;
-                })
-              );
-              currentIndex = event.index + 1;
-            }
+                        if (event.event === "chunk") {
+                            assistantMessage += event.content;
+                            setMessages(prevMessages =>
+                                prevMessages.map(msg => {
+                                    if (msg.id === assistant_message_id) {
+                                        return { ...msg, content: assistantMessage };
+                                    }
+                                    return msg;
+                                })
+                            );
+                            currentIndex = event.index + 1;
+                        } else if (event.event === "thought") {
+                            setMessages(prevMessages =>
+                                prevMessages.map(msg => {
+                                    if (msg.id === assistant_message_id) {
+                                        const currentThoughts = msg.thoughts || [];
+                                        return { 
+                                            ...msg, 
+                                            thoughts: [...currentThoughts, event.content]
+                                        };
+                                    }
+                                    return msg;
+                                })
+                            );
+                            currentIndex = event.index + 1;
+                        }
 
             if (event.event === 'done') {
               // Update conversation after regeneration is complete
@@ -507,15 +522,41 @@ const handleSendMessage = async () => {
                     <div style={{ flex: 1 }}>                      
                       {isLoading && item.id === response_message_id && (
                         <div>
-                          <Typography.Text>
-                            Assistant is typing...
-                          </Typography.Text>
-                          <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} />
-                          {countdown !== null && (
-                            <Typography.Text style={{ marginLeft: 10 }}>
-                              思考中...{countdown}s
-                            </Typography.Text>
-                          )}
+                          <Space direction="vertical" style={{ width: '100%' }}>
+                            <Space>
+                              <Typography.Text>
+                                Assistant is typing...
+                              </Typography.Text>
+                              <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} />
+                              {countdown !== null && (
+                                <Typography.Text style={{ marginLeft: 10 }}>
+                                  思考中...{countdown}s
+                                </Typography.Text>
+                              )}
+                            </Space>
+                            {item.thoughts && item.thoughts.length > 0 && (
+                              <div style={{ 
+                                marginTop: 10,
+                                padding: '12px',
+                                backgroundColor: '#f7f7f7',
+                                borderRadius: '6px',
+                                border: '1px solid #e8e8e8'
+                              }}>
+                                <Timeline>
+                                  {item.thoughts.map((thought: string, index: number) => (
+                                    <Timeline.Item 
+                                      key={index}
+                                      dot={<BulbOutlined style={{ fontSize: '16px', color: '#1890ff' }} />}
+                                    >
+                                      <Typography.Paragraph style={{ margin: 0 }}>
+                                        {thought}
+                                      </Typography.Paragraph>
+                                    </Timeline.Item>
+                                  ))}
+                                </Timeline>
+                              </div>
+                            )}
+                          </Space>
                         </div>
                       )}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
