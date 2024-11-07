@@ -174,6 +174,7 @@ async def process_message_stream(
                     ],
                     stream=True,
                     max_tokens=4096,
+                    extra_body={"request_id":request_id},
                 )
 
                 async for chunk in response:
@@ -197,36 +198,104 @@ async def process_message_stream(
                 port = rag_info.get("port", 8000)
                 if host == "0.0.0.0":
                     host = "127.0.0.1"
-                
+
                 base_url = f"http://{host}:{port}/v1"
 
                 logger.info(f"RAG {request.selected_item} is using {base_url}")
+                inference_deep_thought = rag_info.get(
+                    "inference_deep_thought", "False"
+                ) in ["True", "true", True]
 
                 client = AsyncOpenAI(base_url=base_url, api_key="xxxx")
                 response = await client.chat.completions.create(
-                    model=rag_info.get("model", "gpt-3.5-turbo"),
+                    model=rag_info.get("model", "deepseek_chat"),
                     messages=[
                         {"role": msg["role"], "content": msg["content"]}
                         for msg in conversation["messages"]
                     ],
                     stream=True,
                     max_tokens=4096,
+                    extra_body={"request_id":request_id},
                 )
+                if not inference_deep_thought:
+                    async for chunk in response:
+                        if chunk.choices[0].delta.content:
+                            event = {
+                                "index": idx,
+                                "event": "chunk",
+                                "content": chunk.choices[0].delta.content,
+                                "timestamp": datetime.now().isoformat(),
+                            }
+                            await event_file.write(
+                                json.dumps(event, ensure_ascii=False) + "\n"
+                            )
+                            await event_file.flush()
 
-                async for chunk in response:
-                    if chunk.choices[0].delta.content:
-                        event = {
-                            "index": idx,
-                            "event": "chunk",
-                            "content": chunk.choices[0].delta.content,
-                            "timestamp": datetime.now().isoformat(),
-                        }
-                        await event_file.write(
-                            json.dumps(event, ensure_ascii=False) + "\n"
+                            idx += 1
+                else:                    
+                    index = 0
+                    is_in_thought = True
+                    client = AsyncOpenAI(base_url=base_url, api_key="xxxx")
+                    counter = 0
+                    while is_in_thought and counter < 60:                        
+                        round_response = await client.chat.completions.create(
+                            model=rag_info.get("model", "deepseek_chat"),
+                            messages=[
+                                {
+                                    "role": "user",
+                                    "content": json.dumps(
+                                        {"request_id": request_id, "index": index},
+                                        ensure_ascii=False,
+                                    ),
+                                }
+                            ],
+                            stream=True,
+                            max_tokens=4096                            
                         )
-                        await event_file.flush()
+                        result = ""
+                        async for chunk in round_response:
+                            v = chunk.choices[0].delta.content
+                            if v is not None:
+                                result += v
+                        logger.info(f"result: {result}")                                
+                        evts = json.loads(result)
+                        if not evts["events"]:
+                            await asyncio.sleep(1)
+                            counter += 1
+                            continue
+                        counter = 0
+                        for evt in evts["events"]:                            
+                            if evt["event_type"] == "thought":
+                                event = {
+                                    "index": idx,
+                                    "event": "thought",
+                                    "content": evt["content"],
+                                    "timestamp": datetime.now().isoformat(),
+                                }
+                                await event_file.write(
+                                    json.dumps(event, ensure_ascii=False) + "\n"
+                                )
+                                await event_file.flush()                            
+                                idx += 1
+                            if evt["event_type"] == "chunk" or evt["event_type"] == "done":
+                                is_in_thought = False
+                            index += 1  
+                    asyncio.sleep(1)                                 
 
-                        idx += 1
+                    async for chunk in response:
+                        if chunk.choices[0].delta.content:
+                            event = {
+                                "index": idx,
+                                "event": "chunk",
+                                "content": chunk.choices[0].delta.content,
+                                "timestamp": datetime.now().isoformat(),
+                            }
+                            await event_file.write(
+                                json.dumps(event, ensure_ascii=False) + "\n"
+                            )
+                            await event_file.flush()
+
+                            idx += 1
 
         except Exception as e:
             # Add error event
@@ -277,26 +346,29 @@ async def process_message_stream(
 async def update_conversation(conversation_id: str, request: Conversation):
     """Update an existing conversation with new data."""
     chat_data = await load_chat_data()
-    
+
     # Find and update the conversation
     for conv in chat_data["conversations"]:
         if conv["id"] == conversation_id:
             logger.info(f"Updating conversation {conversation_id}")
-            conv.update({
-                "title": request.title,
-                "messages": [msg.model_dump() for msg in request.messages],
-                "updated_at": datetime.now().isoformat()
-            })
+            conv.update(
+                {
+                    "title": request.title,
+                    "messages": [msg.model_dump() for msg in request.messages],
+                    "updated_at": datetime.now().isoformat(),
+                }
+            )
             await save_chat_data(chat_data)
             return conv
-            
+
     raise HTTPException(status_code=404, detail="Conversation not found")
+
 
 @router.put("/chat/conversations/{conversation_id}/title")
 async def update_conversation_title(conversation_id: str, request: UpdateTitleRequest):
     """Update only the title of an existing conversation."""
     chat_data = await load_chat_data()
-    
+
     # Find and update the conversation title
     for conv in chat_data["conversations"]:
         if conv["id"] == conversation_id:
@@ -305,8 +377,9 @@ async def update_conversation_title(conversation_id: str, request: UpdateTitleRe
             conv["updated_at"] = datetime.now().isoformat()
             await save_chat_data(chat_data)
             return {"message": "Title updated successfully", "title": request.title}
-            
+
     raise HTTPException(status_code=404, detail="Conversation not found")
+
 
 @router.delete("/chat/conversations/{conversation_id}")
 async def delete_conversation(conversation_id: str):

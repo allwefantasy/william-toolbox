@@ -12,3 +12,4 @@ dist/
 build/
 pasted/
 chat_events/
+events/
