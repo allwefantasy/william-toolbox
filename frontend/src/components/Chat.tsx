@@ -291,11 +291,9 @@ const Chat: React.FC = () => {
       setCountdownInterval(interval);
 
       try {
-
-        // Call the stream endpoint  
         const streamResponse = await axios.post(`/chat/conversations/${currentConversationId}/messages/stream`, {
           conversation_id: currentConversationId,
-          messages: [...messages, newUserMessage], // Send full message history
+          messages: [...messages, newUserMessage],
           list_type: listType,
           selected_item: selectedItem
         });
@@ -311,19 +309,17 @@ const Chat: React.FC = () => {
           const tempMessage = { id: assistant_message_id, role: 'assistant' as const, content: '', timestamp: new Date().toISOString() };
           setMessages(prevMessages => [...prevMessages, tempMessage]);
 
-          // Poll for events
           while (true) {
             const eventsResponse = await axios.get(`/chat/conversations/events/${requestId}/${currentIndex}`);
             const events = eventsResponse.data.events;
 
             if (!events || events.length === 0) {
-              await new Promise(resolve => setTimeout(resolve, 100)); // Wait 100ms before next poll
+              await new Promise(resolve => setTimeout(resolve, 100));
               continue;
             }
 
             for (const event of events) {
               if (event.event === 'error') {
-                // Clear countdown on error
                 if (countdownInterval) {
                   clearInterval(countdownInterval);
                   setCountdownInterval(null);
@@ -332,8 +328,7 @@ const Chat: React.FC = () => {
                 throw new Error(event.content);
               }
 
-              if (event.event === 'chunk') {
-                // Clear countdown on first content
+              if (event.event === "chunk") {
                 if (!assistantMessage) {
                   if (countdownInterval) {
                     clearInterval(countdownInterval);
@@ -342,11 +337,24 @@ const Chat: React.FC = () => {
                   setCountdown(null);
                 }
                 assistantMessage += event.content;
-                // Update the assistant message at the correct position
                 setMessages(prevMessages =>
-                  prevMessages.map((msg, index) => {
+                  prevMessages.map(msg => {
                     if (msg.id === assistant_message_id) {
                       return { ...msg, content: assistantMessage };
+                    }
+                    return msg;
+                  })
+                );
+                currentIndex = event.index + 1;
+              } else if (event.event === "thought") {
+                setMessages(prevMessages =>
+                  prevMessages.map(msg => {
+                    if (msg.id === assistant_message_id) {
+                      const currentThoughts = msg.thoughts || [];
+                      return {
+                        ...msg,
+                        thoughts: [...currentThoughts, event.content]
+                      };
                     }
                     return msg;
                   })
