@@ -11,6 +11,7 @@ class Message(BaseModel):
     role: str
     content: str
     timestamp: str
+    thoughts: List[str] = []
 
 
 class Conversation(BaseModel):

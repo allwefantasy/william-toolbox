@@ -93,7 +93,7 @@ const Chat: React.FC = () => {
       if (streamResponse.data && streamResponse.data.request_id) {
         const requestId = streamResponse.data.request_id;
         let currentIndex = 0;
-        let assistantMessage = '';
+        let assistantMessage = '';        
 
         const assistant_message_id = streamResponse.data.response_message_id;
         setResponseMessageId(assistant_message_id);
@@ -121,7 +121,7 @@ const Chat: React.FC = () => {
           const events = eventsResponse.data.events;
 
           if (!events || events.length === 0) {
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise(resolve => setTimeout(resolve, 1000));
             continue;
           }
 
@@ -160,15 +160,16 @@ const Chat: React.FC = () => {
             if (event.event === 'done') {
               // Update conversation after regeneration is complete
               try {
-                for (const message of newMessages) {
-                  if (message.id === assistant_message_id) {
-                    message.content = assistantMessage;
+                const updatedMessages = messages.map(msg => {
+                  if (msg.id === assistant_message_id) {
+                    return { ...msg, content: assistantMessage, thoughts: msg.thoughts || [] };
                   }
-                }
+                  return msg;
+                });               
                 await axios.put(`/chat/conversations/${currentConversationId}`, {
                   id: currentConversationId,
                   title: currentConversationTitle,
-                  messages: newMessages,
+                  messages: updatedMessages,
                   created_at: new Date().toISOString(),
                   updated_at: new Date().toISOString()
                 });
@@ -206,7 +207,7 @@ const Chat: React.FC = () => {
   const fetchMessages = async (conversationId: string) => {
     try {
       const response = await axios.get(`/chat/conversations/${conversationId}`);
-      setMessages(response.data.messages);
+      setMessages(response.data.messages);      
     } catch (error) {
       console.error('Error fetching messages:', error);
       MessageBox.error('Failed to load messages');
@@ -363,6 +364,33 @@ const Chat: React.FC = () => {
               }
 
               if (event.event === 'done') {
+                // Update conversation after receiving assistant's response
+                try {
+                  // Ensure the assistant message is updated with content and thoughts
+                  const updatedMessages = messages.map(msg => {
+                    if (msg.id === assistant_message_id) {
+                      return { ...msg, content: assistantMessage, thoughts: msg.thoughts || [] };
+                    }
+                    return msg;
+                  });
+                  await axios.put(`/chat/conversations/${currentConversationId}`, {
+                    id: currentConversationId,
+                    title: currentConversationTitle,
+                    messages: updatedMessages,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                  });
+                } catch (error) {
+                  console.error('Error updating conversation:', error);
+                  MessageBox.error('Failed to update conversation');
+                } finally {
+                  setIsLoading(false);
+                  if (countdownInterval) {
+                    clearInterval(countdownInterval);
+                    setCountdownInterval(null);
+                  }
+                  setCountdown(null);
+                }
                 return;
               }
             }

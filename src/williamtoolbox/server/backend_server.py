@@ -408,50 +408,6 @@ async def get_model_status(model_name: str):
         }
 
 
-@app.get("/chat/conversations")
-async def get_conversation_list():
-    chat_data = await load_chat_data()
-    conversation_list = [
-        {
-            "id": conv["id"],
-            "title": conv["title"],
-            "created_at": conv["created_at"],
-            "updated_at": conv["updated_at"],
-            "message_count": len(conv["messages"]),
-        }
-        for conv in chat_data["conversations"]
-    ]
-    return conversation_list
-
-
-@app.post("/chat/conversations", response_model=Conversation)
-async def create_conversation(request: CreateConversationRequest):
-    chat_data = await load_chat_data()
-    new_conversation = Conversation(
-        id=str(uuid.uuid4()),
-        title=request.title,
-        created_at=datetime.now().isoformat(),
-        updated_at=datetime.now().isoformat(),
-        messages=[],
-    )
-    chat_data["conversations"].append(new_conversation.model_dump())
-    await save_chat_data(chat_data)
-    return new_conversation
-
-
-@app.get("/chat/conversations/{conversation_id}", response_model=Conversation)
-async def get_conversation(conversation_id: str):
-    chat_data = await load_chat_data()
-    conversation = next(
-        (conv for conv in chat_data["conversations"] if conv["id"] == conversation_id),
-        None,
-    )
-    if conversation is None:
-        raise HTTPException(status_code=404, detail="Conversation not found")
-    return conversation
-
-
-
 def main():
     parser = argparse.ArgumentParser(description="Backend Server")
     parser.add_argument(

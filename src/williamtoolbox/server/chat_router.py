@@ -15,9 +15,37 @@ import traceback
 
 router = APIRouter()
 
+@router.get("/chat/conversations")
+async def get_conversation_list():
+    chat_data = await load_chat_data()
+    conversation_list = [
+        {
+            "id": conv["id"],
+            "title": conv["title"],
+            "created_at": conv["created_at"],
+            "updated_at": conv["updated_at"],
+            "message_count": len(conv["messages"]),
+        }
+        for conv in chat_data["conversations"]
+    ]
+    return conversation_list
 
-@router.post("/chat/conversations/{conversation_id}/messages", response_model=Message)
-async def add_message(conversation_id: str, request: AddMessageRequest):
+@router.post("/chat/conversations", response_model=Conversation)
+async def create_conversation(request: CreateConversationRequest):
+    chat_data = await load_chat_data()
+    new_conversation = Conversation(
+        id=str(uuid.uuid4()),
+        title=request.title,
+        created_at=datetime.now().isoformat(),
+        updated_at=datetime.now().isoformat(),
+        messages=[],
+    )
+    chat_data["conversations"].append(new_conversation.model_dump())
+    await save_chat_data(chat_data)
+    return new_conversation
+
+@router.get("/chat/conversations/{conversation_id}", response_model=Conversation)
+async def get_conversation(conversation_id: str):
     chat_data = await load_chat_data()
     conversation = next(
         (conv for conv in chat_data["conversations"] if conv["id"] == conversation_id),
@@ -25,75 +53,7 @@ async def add_message(conversation_id: str, request: AddMessageRequest):
     )
     if conversation is None:
         raise HTTPException(status_code=404, detail="Conversation not found")
-
-    # Instead of appending the last message, we use the full messages list from the request
-    # Add timestamp to the last user message
-    request.messages[-1]["timestamp"] = datetime.now().isoformat()
-    # Replace the entire conversation messages with the new messages
-    conversation["messages"] = [msg.model_dump() for msg in request.messages]
-
-    list_type = request.list_type
-    selected_item = request.selected_item
-
-    # 根据 list_type 和 selected_item 选择合适的模型或 RAG
-    try:
-        config = await load_config()
-        if list_type == "models":
-            openai_server = config.get("openaiServerList", [{}])[0]
-            base_url = f"http://{openai_server.get('host', 'localhost')}:{openai_server.get('port', 8000)}/v1"
-            client = AsyncOpenAI(base_url=base_url, api_key="xxxx")
-
-            response = await client.chat.completions.create(
-                model=selected_item,
-                messages=[
-                    {"role": msg["role"], "content": msg["content"]}
-                    for msg in request.messages
-                ],
-                max_tokens=4096,
-            )
-            assistant_message = response.choices[0].message
-        elif list_type == "rags":
-            rags = await load_rags_from_json()
-            if not selected_item in rags:
-                logger.error(f"RAG {selected_item} not found")
-                raise ValueError(f"RAG {selected_item} not found")
-
-            rag_info = rags.get(selected_item, {})
-            host = rag_info.get("host", "localhost")
-            port = rag_info.get("port", 8000)
-            base_url = f"http://{host}:{port}/v1"
-            client = AsyncOpenAI(base_url=base_url, api_key="xxxx")
-
-            response = await client.chat.completions.create(
-                model=rag_info.get(
-                    "model", "gpt-3.5-turbo"
-                ),  # Use a default model if not specified
-                messages=[
-                    {"role": msg["role"], "content": msg["content"]}
-                    for msg in request.messages
-                ],
-                max_tokens=4096,
-            )
-            assistant_message = response.choices[0].message
-        else:
-            raise ValueError("Invalid list_type")
-
-        assistant_response = Message(
-            role="assistant",
-            content=assistant_message.content,
-            timestamp=datetime.now().isoformat(),
-        )
-        conversation["messages"].append(assistant_response.model_dump())
-    except Exception as e:
-        logger.error(f"Error calling {list_type} service: {str(e)}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get response from {list_type} service"
-        )
-
-    conversation["updated_at"] = datetime.now().isoformat()
-    await save_chat_data(chat_data)
-    return assistant_response
-
+    return conversation
 
 @router.post(
     "/chat/conversations/{conversation_id}/messages/stream",
@@ -158,6 +118,7 @@ async def process_message_stream(
 ):
     file_path = await get_event_file_path(request_id)
     idx = 0
+    thoughts = []
     async with aiofiles.open(file_path, "w") as event_file:
         try:
             config = await load_config()
@@ -266,6 +227,7 @@ async def process_message_stream(
                         counter = 0
                         for evt in evts["events"]:                            
                             if evt["event_type"] == "thought":
+                                thoughts.append(evt["content"])
                                 event = {
                                     "index": idx,
                                     "event": "thought",
@@ -337,6 +299,7 @@ async def process_message_stream(
             "role": "assistant",
             "content": s,
             "timestamp": datetime.now().isoformat(),
+            "thoughts": thoughts,
         }
     ]
     await save_chat_data(chat_data)
