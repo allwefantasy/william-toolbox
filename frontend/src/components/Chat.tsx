@@ -573,12 +573,15 @@ const Chat: React.FC = () => {
                       )}
                       {item.thoughts && item.thoughts.length > 0 && (
                         <div style={{
-                          marginTop: 10,
-                          padding: '12px',
+                          marginBottom: 24,
+                          padding: '16px',
                           backgroundColor: '#f7f7f7',
-                          borderRadius: '6px',
+                          borderRadius: '8px',
                           border: '1px solid #e8e8e8'
                         }}>
+                          <div style={{ marginBottom: '12px' }}>
+                            <Typography.Text type="secondary">思考过程:</Typography.Text>
+                          </div>
                           <Timeline>
                             {item.thoughts.map((thought: string, index: number) => (
                               <Timeline.Item
@@ -610,7 +613,15 @@ const Chat: React.FC = () => {
                           </Timeline>
                         </div>
                       )}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'flex-start',
+                        padding: '16px',
+                        backgroundColor: item.role === 'assistant' ? '#fff' : 'transparent',
+                        borderRadius: '8px',
+                        marginTop: item.thoughts && item.thoughts.length > 0 ? '16px' : '0'
+                      }}>
                         <Typography.Text style={{ color: item.role === 'user' ? '#096dd9' : '#389e0d', flex: 1 }}>
                           <ReactMarkdown
                             components={{
