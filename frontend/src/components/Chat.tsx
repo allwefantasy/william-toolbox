@@ -16,7 +16,7 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
-  id?: string;  
+  id?: string;
   thoughts?: string[]; // Add thoughts array for AI thinking process
 }
 
@@ -28,7 +28,7 @@ interface Conversation {
 }
 
 const Chat: React.FC = () => {
-  
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
@@ -70,7 +70,7 @@ const Chat: React.FC = () => {
   }, [currentConversationId]);
 
   const handleRegenerateResponse = async (message: Message) => {
-    
+
     const canProceed = await checkOpenAIService();
     if (!canProceed) {
       return;
@@ -78,10 +78,10 @@ const Chat: React.FC = () => {
 
     const messageIndex = messages.findIndex(msg => msg.id === message.id);
     if (messageIndex === -1) return;
-    
-    const messagesToSend = messages.slice(0, messageIndex + 1);    
+
+    const messagesToSend = messages.slice(0, messageIndex + 1);
     setIsLoading(true);
-    
+
     try {
       const streamResponse = await axios.post(`/chat/conversations/${currentConversationId}/messages/stream`, {
         conversation_id: currentConversationId,
@@ -94,12 +94,12 @@ const Chat: React.FC = () => {
         const requestId = streamResponse.data.request_id;
         let currentIndex = 0;
         let assistantMessage = '';
-        
+
         const assistant_message_id = streamResponse.data.response_message_id;
         setResponseMessageId(assistant_message_id);
 
         const nextMessage = messages[messageIndex + 1];
-        
+
         let newMessages;
         if (nextMessage && nextMessage.role === 'assistant') {
           newMessages = [
@@ -130,40 +130,40 @@ const Chat: React.FC = () => {
               throw new Error(event.content);
             }
 
-                        if (event.event === "chunk") {
-                            assistantMessage += event.content;
-                            setMessages(prevMessages =>
-                                prevMessages.map(msg => {
-                                    if (msg.id === assistant_message_id) {
-                                        return { ...msg, content: assistantMessage };
-                                    }
-                                    return msg;
-                                })
-                            );
-                            currentIndex = event.index + 1;
-                        } else if (event.event === "thought") {
-                            setMessages(prevMessages =>
-                                prevMessages.map(msg => {
-                                    if (msg.id === assistant_message_id) {
-                                        const currentThoughts = msg.thoughts || [];
-                                        return { 
-                                            ...msg, 
-                                            thoughts: [...currentThoughts, event.content]
-                                        };
-                                    }
-                                    return msg;
-                                })
-                            );
-                            currentIndex = event.index + 1;
-                        }
+            if (event.event === "chunk") {
+              assistantMessage += event.content;
+              setMessages(prevMessages =>
+                prevMessages.map(msg => {
+                  if (msg.id === assistant_message_id) {
+                    return { ...msg, content: assistantMessage };
+                  }
+                  return msg;
+                })
+              );
+              currentIndex = event.index + 1;
+            } else if (event.event === "thought") {
+              setMessages(prevMessages =>
+                prevMessages.map(msg => {
+                  if (msg.id === assistant_message_id) {
+                    const currentThoughts = msg.thoughts || [];
+                    return {
+                      ...msg,
+                      thoughts: [...currentThoughts, event.content]
+                    };
+                  }
+                  return msg;
+                })
+              );
+              currentIndex = event.index + 1;
+            }
 
             if (event.event === 'done') {
               // Update conversation after regeneration is complete
               try {
-                for( const message of newMessages) {
-                   if (message.id === assistant_message_id) {
+                for (const message of newMessages) {
+                  if (message.id === assistant_message_id) {
                     message.content = assistantMessage;
-                   }
+                  }
                 }
                 await axios.put(`/chat/conversations/${currentConversationId}`, {
                   id: currentConversationId,
@@ -240,39 +240,39 @@ const Chat: React.FC = () => {
     fetchItemList();
   }, []);
 
-const checkOpenAIService = async () => {
-  if (listType === 'models') {
-    // 检查 OpenAI 兼容服务状态
-    try {
-      const response = await axios.get('/openai-compatible-service/status');
-      if (!response.data.isRunning) {
-        MessageBox.error('OpenAI 兼容服务未启动，点击菜单， 模型列表/OpenAI 兼容服务 启动对应的服务');
+  const checkOpenAIService = async () => {
+    if (listType === 'models') {
+      // 检查 OpenAI 兼容服务状态
+      try {
+        const response = await axios.get('/openai-compatible-service/status');
+        if (!response.data.isRunning) {
+          MessageBox.error('OpenAI 兼容服务未启动，点击菜单， 模型列表/OpenAI 兼容服务 启动对应的服务');
+          return false;
+        }
+        return true;
+      } catch (error) {
+        console.error('Error checking OpenAI service status:', error);
+        MessageBox.error('检查 OpenAI 兼容服务状态失败');
         return false;
       }
-      return true;
-    } catch (error) {
-      console.error('Error checking OpenAI service status:', error);
-      MessageBox.error('检查 OpenAI 兼容服务状态失败');
-      return false;
     }
-  }
-  return true;
-};
+    return true;
+  };
 
-const handleSendMessage = async () => {
-  if (inputMessage.trim() && currentConversationId) {
-    // 检查 OpenAI 兼容服务状态
-    const canProceed = await checkOpenAIService();
-    if (!canProceed) {
-      return;
-    }
+  const handleSendMessage = async () => {
+    if (inputMessage.trim() && currentConversationId) {
+      // 检查 OpenAI 兼容服务状态
+      const canProceed = await checkOpenAIService();
+      if (!canProceed) {
+        return;
+      }
 
-    const newUserMessage: Message = {
-      role: 'user',
-      content: inputMessage,
-      timestamp: new Date().toISOString(),
-      id: Math.random().toString(36)
-    };
+      const newUserMessage: Message = {
+        role: 'user',
+        content: inputMessage,
+        timestamp: new Date().toISOString(),
+        id: Math.random().toString(36)
+      };
       setMessages([...messages, newUserMessage]);
       setInputMessage('');
       setIsLoading(true);
@@ -519,7 +519,7 @@ const handleSendMessage = async () => {
                 }
                 description={
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                    <div style={{ flex: 1 }}>                      
+                    <div style={{ flex: 1 }}>
                       {isLoading && item.id === response_message_id && (
                         <div>
                           <Space direction="vertical" style={{ width: '100%' }}>
@@ -535,7 +535,7 @@ const handleSendMessage = async () => {
                               )}
                             </Space>
                             {item.thoughts && item.thoughts.length > 0 && (
-                              <div style={{ 
+                              <div style={{
                                 marginTop: 10,
                                 padding: '12px',
                                 backgroundColor: '#f7f7f7',
@@ -544,7 +544,7 @@ const handleSendMessage = async () => {
                               }}>
                                 <Timeline>
                                   {item.thoughts.map((thought: string, index: number) => (
-                                    <Timeline.Item 
+                                    <Timeline.Item
                                       key={index}
                                       dot={<BulbOutlined style={{ fontSize: '16px', color: '#1890ff' }} />}
                                     >
@@ -593,7 +593,7 @@ const handleSendMessage = async () => {
                           </Tooltip>
                         )}
                       </div>
-                    </div>                    
+                    </div>
                   </div>
                 }
               />
