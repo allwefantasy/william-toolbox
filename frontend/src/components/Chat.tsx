@@ -557,42 +557,57 @@ const Chat: React.FC = () => {
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                     <div style={{ flex: 1 }}>
                       {isLoading && item.id === response_message_id && (
-                        <div>
-                          <Space direction="vertical" style={{ width: '100%' }}>
-                            <Space>
-                              <Typography.Text>
-                                Assistant is typing...
+                        <Space direction="vertical" style={{ width: '100%' }}>
+                          <Space>
+                            <Typography.Text>
+                              Assistant is typing...
+                            </Typography.Text>
+                            <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} />
+                            {countdown !== null && (
+                              <Typography.Text style={{ marginLeft: 10 }}>
+                                思考中...{countdown}s
                               </Typography.Text>
-                              <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} />
-                              {countdown !== null && (
-                                <Typography.Text style={{ marginLeft: 10 }}>
-                                  思考中...{countdown}s
-                                </Typography.Text>
-                              )}
-                            </Space>
-                            {item.thoughts && item.thoughts.length > 0 && (
-                              <div style={{
-                                marginTop: 10,
-                                padding: '12px',
-                                backgroundColor: '#f7f7f7',
-                                borderRadius: '6px',
-                                border: '1px solid #e8e8e8'
-                              }}>
-                                <Timeline>
-                                  {item.thoughts.map((thought: string, index: number) => (
-                                    <Timeline.Item
-                                      key={index}
-                                      dot={<BulbOutlined style={{ fontSize: '16px', color: '#1890ff' }} />}
-                                    >
-                                      <Typography.Paragraph style={{ margin: 0 }}>
-                                        {thought}
-                                      </Typography.Paragraph>
-                                    </Timeline.Item>
-                                  ))}
-                                </Timeline>
-                              </div>
                             )}
                           </Space>
+                        </Space>
+                      )}
+                      {item.thoughts && item.thoughts.length > 0 && (
+                        <div style={{
+                          marginTop: 10,
+                          padding: '12px',
+                          backgroundColor: '#f7f7f7',
+                          borderRadius: '6px',
+                          border: '1px solid #e8e8e8'
+                        }}>
+                          <Timeline>
+                            {item.thoughts.map((thought: string, index: number) => (
+                              <Timeline.Item
+                                key={index}
+                                dot={<BulbOutlined style={{ fontSize: '16px', color: '#1890ff' }} />}
+                              >
+                                <ReactMarkdown
+                                  components={{
+                                    code({ inline, className, children, ...props }) {
+                                      const match = /language-(\w+)/.exec(className || '');
+                                      return !inline && match ? (
+                                        <CodeBlock
+                                          language={match[1]}
+                                          value={String(children).replace(/\n$/, '')}
+                                          {...props}
+                                        />
+                                      ) : (
+                                        <code className={className} {...props}>
+                                          {children}
+                                        </code>
+                                      );
+                                    },
+                                  }}
+                                >
+                                  {thought}
+                                </ReactMarkdown>
+                              </Timeline.Item>
+                            ))}
+                          </Timeline>
                         </div>
                       )}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
