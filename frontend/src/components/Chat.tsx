@@ -93,7 +93,7 @@ const Chat: React.FC = () => {
       if (streamResponse.data && streamResponse.data.request_id) {
         const requestId = streamResponse.data.request_id;
         let currentIndex = 0;
-        let assistantMessage = '';        
+        let assistantMessage = '';
 
         const assistant_message_id = streamResponse.data.response_message_id;
         setResponseMessageId(assistant_message_id);
@@ -165,7 +165,7 @@ const Chat: React.FC = () => {
                     return { ...msg, content: assistantMessage, thoughts: msg.thoughts || [] };
                   }
                   return msg;
-                });               
+                });
                 await axios.put(`/chat/conversations/${currentConversationId}`, {
                   id: currentConversationId,
                   title: currentConversationTitle,
@@ -207,7 +207,7 @@ const Chat: React.FC = () => {
   const fetchMessages = async (conversationId: string) => {
     try {
       const response = await axios.get(`/chat/conversations/${conversationId}`);
-      setMessages(response.data.messages);      
+      setMessages(response.data.messages);
     } catch (error) {
       console.error('Error fetching messages:', error);
       MessageBox.error('Failed to load messages');
@@ -587,7 +587,7 @@ const Chat: React.FC = () => {
                               >
                                 <ReactMarkdown
                                   components={{
-                                    code({ inline, className, children, ...props }) {
+                                    code({ inline, className, children, ...props }: any) {
                                       const match = /language-(\w+)/.exec(className || '');
                                       return !inline && match ? (
                                         <CodeBlock
