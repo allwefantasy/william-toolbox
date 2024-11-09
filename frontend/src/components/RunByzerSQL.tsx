@@ -28,16 +28,28 @@ const RunByzerSQL: React.FC<TestByzerSQLProps> = ({ visible, onCancel, serviceNa
   const [form] = Form.useForm();
 
   useEffect(() => {
-    if (visible) {
-      // 当弹窗显示时,尝试获取已保存的引擎地址和用户名
-      const savedEngineUrl = localStorage.getItem('byzerEngineUrl') || 'http://localhost:9003';
-      const savedOwner = localStorage.getItem('byzerOwner') || 'admin';
-      form.setFieldsValue({
-        engineUrl: savedEngineUrl,
-        owner: savedOwner
-      });
+    if (visible && serviceName) {
+      // 获取所有ByzerSQL对象，根据名字匹配当前服务
+      const fetchByzerSQL = async () => {
+        try {
+          const response = await axios.get('/byzer-sql');
+          const service = response.data.find((s: any) => s.name === serviceName);
+          if (service) {
+            const engineUrl = `http://${service.host}:${service.port}`;
+            const savedOwner = localStorage.getItem('byzerOwner') || 'admin';
+            form.setFieldsValue({
+              engineUrl: engineUrl,
+              owner: savedOwner
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching Byzer SQL service:', error);
+          message.error('获取Byzer SQL服务信息失败');
+        }
+      };
+      fetchByzerSQL();
     }
-  }, [visible, form]);
+  }, [visible, serviceName, form]);
 
   const handleExecute = async () => {
     if (!sql.trim()) {
