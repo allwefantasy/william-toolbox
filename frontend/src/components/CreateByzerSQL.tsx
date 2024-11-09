@@ -88,7 +88,20 @@ const handleDownloadError = (error: string, isMessageVisible: boolean) => {
 // 处理确认下载
 const handleDownloadConfirm = async (taskId: string, onServiceAdded: () => void) => {
   let isMessageVisible = true;
+  console.log("Starting EventSource connection with taskId:", taskId);
   const eventSource = new EventSource(`/api/download-progress/${taskId}`);
+  
+  // Log when connection is opened
+  eventSource.onopen = () => {
+    console.log("EventSource connection opened");
+  };
+  
+  // Log general errors
+  eventSource.onerror = (error) => {
+    console.error("EventSource error:", error);
+    eventSource.close();
+    handleDownloadError('下载过程发生错误', isMessageVisible);
+  };
 
   message.loading({
     content: '准备下载...',
@@ -96,7 +109,8 @@ const handleDownloadConfirm = async (taskId: string, onServiceAdded: () => void)
     key: 'downloadProgress'
   });
 
-  eventSource.addEventListener('message', (event) => {
+  eventSource.onmessage = (event) => {
+    console.log("Received SSE event:", event);
     console.log(event.data);
     const data = JSON.parse(event.data);
     
