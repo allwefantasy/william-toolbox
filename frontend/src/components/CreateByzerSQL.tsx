@@ -167,12 +167,28 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
 
   const handleSubmit = async (values: any) => {
     try {
+      // Check if port is already in use by other running instances
+      const instances = await axios.get('/byzer-sql');
+      const runningInstances = instances.data.filter((instance: any) => instance.status === 'running');
+      const portInUse = runningInstances.some((instance: any) => 
+        instance.host === values.host && instance.port === values.port
+      );
+
+      if (portInUse) {
+        message.error(`端口 ${values.port} 已被其他运行中的 ByzerSQL 实例使用`);
+        return;
+      }
+
       // Check if byzer.sh exists
       const checkResponse = await axios.post('/byzer-sql/check-installation', {
         install_dir: values.install_dir
       });
 
-      const response = await axios.post('/byzer-sql/add', values);
+      const response = await axios.post('/byzer-sql/add', {
+        ...values,
+        host: values.host || '127.0.0.1',
+        port: values.port || 9003
+      });
 
       if (!checkResponse.data.has_byzer_sh) {
         const modal = Modal.confirm({
@@ -264,6 +280,10 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
           form={form}
           layout="vertical"
           onFinish={handleSubmit}
+          initialValues={{
+            host: '127.0.0.1',
+            port: 9003
+          }}
         >
         <Form.Item
           name="name"
@@ -280,6 +300,32 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
           help="如果目录不包含bin/byzer.sh，系统将提示您下载"
         >
           <Input />
+        </Form.Item>
+
+        <Form.Item
+          name="host"
+          label="主机地址"
+          rules={[{ required: true, message: '请输入主机地址' }]}
+        >
+          <Input placeholder="127.0.0.1" />
+        </Form.Item>
+
+        <Form.Item
+          name="port"
+          label="端口"
+          rules={[
+            { required: true, message: '请输入端口号' },
+            { type: 'number', transform: (value) => Number(value), message: '请输入有效的端口号' },
+            { validator: (_, value) => {
+                if (value > 0 && value < 65536) {
+                  return Promise.resolve();
+                }
+                return Promise.reject(new Error('端口号必须在 1-65535 之间'));
+              }
+            }
+          ]}
+        >
+          <Input type="number" placeholder="9003" />
         </Form.Item>
 
         <Form.Item>
