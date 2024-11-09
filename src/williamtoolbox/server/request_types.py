@@ -112,3 +112,7 @@ class AddSuperAnalysisRequest(BaseModel):
     byzer_sql_url: str = Field(default="http://127.0.0.1:9003/run/script")
     host: str = Field(default="0.0.0.0")
 
+class AddByzerSQLRequest(BaseModel):
+    name: str
+    install_dir: str
+

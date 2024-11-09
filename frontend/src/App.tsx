@@ -12,12 +12,13 @@ import OpenAICompatibleService from './components/OpenAICompatibleService';
 import Chat from './components/Chat';
 import AutoCoderChatViz from './components/AutoCoderChatViz';
 import SuperAnalysisList from './components/SuperAnalysisList';
+import ByzerSQLList from './components/ByzerSQLList';
 import './App.css';
 
 const { Header, Sider, Content } = Layout;
 const { Title, Text } = Typography;
 const { SubMenu } = Menu;
-import ByzerSQLList from './components/ByzerSQLList';
+
 
 function App() {
   const [selectedKey, setSelectedKey] = useState('1');

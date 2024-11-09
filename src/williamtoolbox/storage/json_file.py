@@ -119,3 +119,16 @@ async def save_super_analysis_to_json(analyses):
 async def get_event_file_path(request_id: str) -> str:
     os.makedirs("chat_events", exist_ok=True)
     return f"chat_events/{request_id}.json"
+
+
+async def load_byzer_sql_from_json():
+    if os.path.exists("byzer_sql.json"):
+        async with aiofiles.open("byzer_sql.json", "r") as f:
+            content = await f.read()
+            return json.loads(content)  
+    return {}     
+
+async def save_byzer_sql_to_json(services) -> None:
+    async with aiofiles.open("byzer_sql.json", "w") as f:
+        content = json.dumps(services, ensure_ascii=False)
+        await f.write(content)
