@@ -50,6 +50,7 @@ const formatSpeed = (bytesPerSecond: number): string => {
 
 // 处理下载进度更新
 const handleProgressUpdate = (data: any, isMessageVisible: boolean) => {
+  console.log(JSON.stringify(data));
   if (data.type === 'download') {
     message.loading({
       content: `下载中: ${data.progress}% (${formatBytes(data.downloaded_size)} / ${formatBytes(data.total_size)})
@@ -96,6 +97,7 @@ const handleDownloadConfirm = async (taskId: string, onServiceAdded: () => void)
   });
 
   eventSource.addEventListener('message', (event) => {
+    console.log(event.data);
     const data = JSON.parse(event.data);
     
     if (data.completed) {
