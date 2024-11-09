@@ -154,43 +154,38 @@ async def download_byzer_sql(request: Dict[str, str]):
                     }
                     raise Exception("Download timeout")
             
-            # Extract the file asynchronously
+            # Extract the file asynchronously using tar command
             logger.info("Starting extraction...")
-            with tarfile.open(tar_path, "r:gz") as tar:
-                total_members = len(tar.getmembers())
-                # Get the root directory name from the first member
-                first_member = tar.getmembers()[0]
-                root_dir = first_member.name.split('/')[0]
-                temp_extract_dir = os.path.join(install_dir, "_temp_extract")
+            
+            # Use tar command to list files to count total members
+            result = subprocess.run(['tar', '-tzf', tar_path], capture_output=True, text=True)
+            total_members = len(result.stdout.splitlines())
+            
+            # Create pipe to monitor extraction progress
+            process = subprocess.Popen(
+                ['tar', '-xzf', tar_path, '-C', install_dir, '--strip-components=1'],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+            
+            # Monitor progress
+            current_member = 0
+            while True:
+                if process.poll() is not None:
+                    break
+                    
+                current_member += 1
+                progress = int((current_member / total_members) * 100)
+                download_progress_store[task_id] = {
+                    "task_id": task_id,
+                    "type": "extract",
+                    "progress": min(progress, 100)
+                }
+                await asyncio.sleep(0.1)
                 
-                # Extract to temporary directory
-                for index, member in enumerate(tar.getmembers(), 1):
-                    tar.extract(member, temp_extract_dir)
-                    progress = int((index / total_members) * 100)
-                    download_progress_store[task_id] = {
-                        "task_id": task_id,
-                        "type": "extract",
-                        "progress": progress
-                    }
-                
-                # Move content from root directory to install_dir
-                source_dir = os.path.join(temp_extract_dir, root_dir)
-                import shutil
-                for item in os.listdir(source_dir):
-                    s = os.path.join(source_dir, item)
-                    d = os.path.join(install_dir, item)
-                    if os.path.exists(d):
-                        if os.path.isdir(d):
-                            shutil.rmtree(d)
-                        else:
-                            os.remove(d)
-                    if os.path.isdir(s):
-                        shutil.copytree(s, d)
-                    else:
-                        shutil.copy2(s, d)
-                        
-                # Clean up temporary directory
-                shutil.rmtree(temp_extract_dir)
+            if process.returncode != 0:
+                stderr = process.stderr.read().decode()
+                raise Exception(f"Extraction failed: {stderr}")
             
             # Remove the tar file and set permissions
             await asyncio.to_thread(os.remove, tar_path)
