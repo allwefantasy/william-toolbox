@@ -436,7 +436,7 @@ async def manage_byzer_sql(service_name: str, action: str):
             pid_file = os.path.join(install_dir, "pid")
             try:
                 # Wait a bit for the pid file to be created
-                async for _ in range(60):
+                for _ in range(60):
                     if os.path.exists(pid_file):
                         break
                     await asyncio.sleep(0.5)
