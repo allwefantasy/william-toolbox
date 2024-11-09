@@ -447,7 +447,7 @@ async def manage_byzer_sql(service_name: str, action: str):
                     service_info["status"] = "running"
                     service_info["process_id"] = pid
                 else:
-                    raise Exception("PID file not created after 5 seconds")
+                    raise Exception("PID file not created after 30 seconds")
             except Exception as e:
                 logger.error(f"Failed to read PID file: {str(e)}")
                 raise HTTPException(
