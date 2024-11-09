@@ -101,6 +101,34 @@ async def add_byzer_sql(request: AddByzerSQLRequest):
 
     services[request.name] = new_service
     await save_byzer_sql_to_json(services)
+
+    # Update the streaming.driver.port in the configuration file
+    config_file = os.path.join(request.install_dir, "conf", "byzer.properties.override")
+    config_dir = os.path.dirname(config_file)
+
+    if not os.path.exists(config_dir):
+        os.makedirs(config_dir)
+
+    try:
+        properties = Properties()
+        if os.path.exists(config_file):
+            # Read existing properties if file exists
+            async with aiofiles.open(config_file, 'rb') as f:
+                content = await f.read()
+                properties.load(content)
+
+        # Update or add the streaming.driver.port property
+        properties["streaming.driver.port"] = str(request.port)
+
+        # Write back to file
+        async with aiofiles.open(config_file, 'wb') as f:
+            properties.store(f, encoding='utf-8')
+
+    except Exception as e:
+        logger.error(f"Error updating config file: {str(e)}")
+        logger.error(traceback.format_exc())
+        # Even if config update fails, we still return success for the service creation
+        
     return {"message": f"Byzer SQL {request.name} added successfully"}
 
 
