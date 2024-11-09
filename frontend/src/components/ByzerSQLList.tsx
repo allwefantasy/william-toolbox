@@ -69,7 +69,7 @@ const ByzerSQLList: React.FC<ByzerSQLListProps> = ({ refreshTrigger }) => {
     setLogModal({
       visible: true,
       content: '',
-      title: `${serviceName} ${logType === 'out' ? 'Standard Output' : 'Standard Error'}`,
+      title: `${serviceName} ${logType === 'byzer' ? 'Byzer Engine Log' : 'Shell Error Log'}`,
     });
 
     const fetchLogs = async () => {
@@ -217,15 +217,15 @@ const ByzerSQLList: React.FC<ByzerSQLListProps> = ({ refreshTrigger }) => {
             </Button>
             <Button
               icon={<FileOutlined />}
-              onClick={() => showLogModal(record.name, 'out')}
+              onClick={() => showLogModal(record.name, 'byzer')}
             >
-              标准输出
+              引擎日志
             </Button>
             <Button
               icon={<ExclamationCircleOutlined />}
-              onClick={() => showLogModal(record.name, 'err')}
+              onClick={() => showLogModal(record.name, 'shell')}
             >
-              标准错误
+              Shell错误日志
             </Button>
           </Space>
           <Space size="small">

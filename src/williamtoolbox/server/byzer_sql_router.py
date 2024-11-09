@@ -387,10 +387,16 @@ async def get_byzer_sql_status(service_name: str):
 @router.get("/byzer-sql/{service_name}/logs/{log_type}/{offset}")
 async def get_byzer_sql_logs(service_name: str, log_type: str, offset: int = 0) -> Dict[str, Any]:
     """Get the logs for a specific Byzer SQL service."""
-    if log_type not in ["out", "err"]:
+    services = await load_byzer_sql_from_json()
+    if service_name not in services:
+        raise HTTPException(status_code=404, detail=f"Byzer SQL {service_name} not found")
+        
+    if log_type not in ["byzer", "shell"]:
         raise HTTPException(status_code=400, detail="Invalid log type")
     
-    log_file = f"logs/{service_name}.{log_type}"
+    install_dir = services[service_name]["install_dir"]
+    log_file = os.path.join(install_dir, "logs", 
+                           "byzer.out" if log_type == "byzer" else "shell.stderr")
     
     try:
         if not os.path.exists(log_file):
@@ -400,7 +406,7 @@ async def get_byzer_sql_logs(service_name: str, log_type: str, offset: int = 0) 
         
         if offset < 0:
             read_size = min(abs(offset), file_size)
-            async with aiofiles.open(log_file, mode='r') as f:
+            async with aiofiles.open(log_file, mode='r', encoding='utf-8', errors='ignore') as f:
                 if read_size < file_size:
                     await f.seek(file_size - read_size)
                 content = await f.read(read_size)
@@ -414,7 +420,7 @@ async def get_byzer_sql_logs(service_name: str, log_type: str, offset: int = 0) 
             if offset > file_size:
                 return {"content": "", "exists": True, "offset": file_size}
                 
-            async with aiofiles.open(log_file, mode='r') as f:
+            async with aiofiles.open(log_file, mode='r', encoding='utf-8', errors='ignore') as f:
                 await f.seek(offset)
                 content = await f.read()
                 current_offset = await f.tell()
