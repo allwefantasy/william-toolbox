@@ -5,7 +5,6 @@ import { PlusOutlined, SettingOutlined } from '@ant-design/icons';
 import { ProgressInfo} from './CreateByzerSQL';
 import EditByzerSQL from './EditByzerSQL';
 import RunByzerSQL from './RunByzerSQL';
-import RegisterModelFunction from './RegisterModelFunction';
 import CreateByzerSQL from './CreateByzerSQL';
 import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, ThunderboltOutlined, FileOutlined, EditOutlined, ExclamationCircleOutlined, DeleteOutlined, CodeOutlined } from '@ant-design/icons';
 
@@ -50,7 +49,6 @@ const ByzerSQLList: React.FC<ByzerSQLListProps> = ({ refreshTrigger }) => {
   });
   const [configForm] = Form.useForm();
   const [testServiceName, setTestServiceName] = useState<string | null>(null);
-  const [showRegisterModel, setShowRegisterModel] = useState(false);
   const [progress, setProgress] = useState<ProgressInfo>({
     visible: false,
     percent: 0,
@@ -339,13 +337,6 @@ const ByzerSQLList: React.FC<ByzerSQLListProps> = ({ refreshTrigger }) => {
         >
           添加Byzer SQL
         </Button>
-        <Button 
-          icon={<CodeOutlined />} 
-          style={{ marginBottom: 16, marginLeft: 8 }}
-          onClick={() => setShowRegisterModel(true)}
-        >
-          注册模型函数
-        </Button>
         
         <CreateByzerSQL 
           visible={showCreateForm}
@@ -484,11 +475,6 @@ const ByzerSQLList: React.FC<ByzerSQLListProps> = ({ refreshTrigger }) => {
         visible={!!testServiceName}
         onCancel={() => setTestServiceName(null)}
         serviceName={testServiceName || ''}
-      />
-
-      <RegisterModelFunction
-        visible={showRegisterModel}
-        onCancel={() => setShowRegisterModel(false)}
       />
     </>
   );
