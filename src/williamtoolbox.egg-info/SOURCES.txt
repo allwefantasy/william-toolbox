@@ -12,6 +12,7 @@ src/williamtoolbox.egg-info/top_level.txt
 src/williamtoolbox/server/__init__.py
 src/williamtoolbox/server/auto_coder_chat_router.py
 src/williamtoolbox/server/backend_server.py
+src/williamtoolbox/server/byzer_sql_router.py
 src/williamtoolbox/server/chat_router.py
 src/williamtoolbox/server/config_router.py
 src/williamtoolbox/server/model_router.py
@@ -19,6 +20,7 @@ src/williamtoolbox/server/openai_service_router.py
 src/williamtoolbox/server/proxy_server.py
 src/williamtoolbox/server/rag_router.py
 src/williamtoolbox/server/request_types.py
+src/williamtoolbox/server/super_analysis_router.py
 src/williamtoolbox/storage/__init__.py
 src/williamtoolbox/storage/json_file.py
 src/williamtoolbox/web/asset-manifest.json
@@ -28,10 +30,10 @@ src/williamtoolbox/web/logo192.png
 src/williamtoolbox/web/logo512.png
 src/williamtoolbox/web/manifest.json
 src/williamtoolbox/web/robots.txt
-src/williamtoolbox/web/static/css/main.f42559e8.css
-src/williamtoolbox/web/static/css/main.f42559e8.css.map
+src/williamtoolbox/web/static/css/main.3c907b64.css
+src/williamtoolbox/web/static/css/main.3c907b64.css.map
 src/williamtoolbox/web/static/js/453.abd36b29.chunk.js
 src/williamtoolbox/web/static/js/453.abd36b29.chunk.js.map
-src/williamtoolbox/web/static/js/main.3fce60cf.js
-src/williamtoolbox/web/static/js/main.3fce60cf.js.LICENSE.txt
-src/williamtoolbox/web/static/js/main.3fce60cf.js.map
+src/williamtoolbox/web/static/js/main.2241b798.js
+src/williamtoolbox/web/static/js/main.2241b798.js.LICENSE.txt
+src/williamtoolbox/web/static/js/main.2241b798.js.map
