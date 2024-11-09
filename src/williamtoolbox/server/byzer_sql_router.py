@@ -479,33 +479,52 @@ async def manage_byzer_sql(service_name: str, action: str):
 async def get_byzer_sql_status(service_name: str):
     """Get the status of a specified Byzer SQL service."""
     services = await load_byzer_sql_from_json()
-
     if service_name not in services:
-        raise HTTPException(
-            status_code=404, detail=f"Byzer SQL {service_name} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Byzer SQL {service_name} not found")
 
     service_info = services[service_name]
+    install_dir = service_info["install_dir"]
+    pid_file = os.path.join(install_dir, "pid")
+    
+    # Check if pid file exists and process is running
     is_alive = False
-
-    if "process_id" in service_info:
+    process_id = None
+    if os.path.exists(pid_file):
         try:
-            process = psutil.Process(service_info["process_id"])
-            is_alive = process.is_running()
-        except psutil.NoSuchProcess:
+            async with aiofiles.open(pid_file, 'r') as f:
+                content = await f.read()
+                process_id = int(content.strip())
+                try:
+                    process = psutil.Process(process_id)
+                    is_alive = process.is_running()
+                except psutil.NoSuchProcess:
+                    is_alive = False
+                    # Remove pid file if process is not running
+                    try:
+                        os.remove(pid_file)
+                    except:
+                        pass
+        except:
             is_alive = False
 
+    # Update the status based on whether the process is alive
     status = "running" if is_alive else "stopped"
     service_info["status"] = status
+    if is_alive and process_id:
+        service_info["process_id"] = process_id
+    elif "process_id" in service_info:
+        del service_info["process_id"]
+        
     services[service_name] = service_info
     await save_byzer_sql_to_json(services)
 
     return {
         "service": service_name,
         "status": status,
-        "process_id": service_info.get("process_id"),
+        "process_id": process_id if is_alive else None,
         "is_alive": is_alive,
         "success": True,
+    }
     }
 
 
