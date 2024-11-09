@@ -299,14 +299,37 @@ async def manage_byzer_sql(service_name: str, action: str):
         
         if action == "start":
             start_script = os.path.join(install_dir, "bin", "byzer.sh")
-            process = subprocess.Popen(
+            # Execute start command
+            subprocess.run(
                 [start_script, "start"],
                 stdout=stdout_log,
                 stderr=stderr_log,
-                cwd=install_dir
+                cwd=install_dir,
+                check=True
             )
-            service_info["status"] = "running"
-            service_info["process_id"] = process.pid
+            
+            # Get PID from pid file
+            pid_file = os.path.join(install_dir, "pid")
+            try:
+                # Wait a bit for the pid file to be created
+                for _ in range(10):
+                    if os.path.exists(pid_file):
+                        break
+                    await asyncio.sleep(0.5)
+                
+                if os.path.exists(pid_file):
+                    async with aiofiles.open(pid_file, 'r') as f:
+                        pid = int(await f.read().strip())
+                    service_info["status"] = "running"
+                    service_info["process_id"] = pid
+                else:
+                    raise Exception("PID file not created after 5 seconds")
+            except Exception as e:
+                logger.error(f"Failed to read PID file: {str(e)}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Failed to read PID file: {str(e)}"
+                )
             
         else:  # stop
             if "process_id" in service_info:
