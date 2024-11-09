@@ -32,6 +32,8 @@ from .config_router import router as config_router
 app.include_router(config_router)
 from .auto_coder_chat_router import router as auto_coder_chat_router
 app.include_router(auto_coder_chat_router)
+from .super_analysis_router import router as super_analysis_router
+app.include_router(super_analysis_router)
 # Add CORS middleware with restricted origins
 app.add_middleware(
     CORSMiddleware,
