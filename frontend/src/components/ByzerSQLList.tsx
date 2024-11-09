@@ -172,6 +172,8 @@ const ByzerSQLList: React.FC<ByzerSQLListProps> = ({ refreshTrigger }) => {
         if (response.data.message) {
           message.success(response.data.message);
           await fetchServices();
+          // 立即获取最新状态
+          await refreshStatus(serviceName);
           // Reset operation status after successful operation
           setOperationStatus(prev => ({ ...prev, [serviceName]: null }));
         }
