@@ -43,7 +43,6 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
               onChange={async (value) => {
                 try {
                   let isMessageVisible = false;
-                  const eventSource = new EventSource('/api/download-progress');
                   const cancelTokenSource = axios.CancelToken.source();
                   Modal.confirm({
                     title: '确认下载',
@@ -87,7 +86,7 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
                         const taskId = response.data.task_id;
                         const eventSource = new EventSource(`/api/download-progress/${taskId}`);
                         
-                        eventSource.onmessage = (event) => {
+                        eventSource.addEventListener('message', (event) => {
                           const data = JSON.parse(event.data);
                           if (data.type === 'download') {
                             message.loading({
