@@ -327,7 +327,7 @@ async def download_byzer_sql(request: Dict[str, str]):
                 properties['streaming.plugin.clzznames'] = plugins
 
                 # Write back to file
-                async with aiofiles.open(config_file, 'wb') as f:
+                with open(config_file, 'wb') as f:
                     properties.store(f, encoding='utf-8')
 
             # Remove the tar file and set permissions
