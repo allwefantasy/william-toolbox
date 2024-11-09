@@ -39,7 +39,7 @@ const ByzerSQLList: React.FC<ByzerSQLListProps> = ({ refreshTrigger }) => {
     title: '',
   });
   const [logPolling, setLogPolling] = useState<NodeJS.Timeout | null>(null);
-  const [startingServices, setStartingServices] = useState<{ [key: string]: boolean }>({});
+  const [operationStatus, setOperationStatus] = useState<{ [key: string]: 'starting' | 'stopping' | null }>({});
   const [configModal, setConfigModal] = useState<{
     visible: boolean;
     service: string | null;
@@ -166,9 +166,7 @@ const ByzerSQLList: React.FC<ByzerSQLListProps> = ({ refreshTrigger }) => {
           await fetchServices();
         }
       } else {
-        if (action === 'start') {
-          setStartingServices(prev => ({ ...prev, [serviceName]: true }));
-        }
+        setOperationStatus(prev => ({ ...prev, [serviceName]: action === 'start' ? 'starting' : 'stopping' }));
 
         const response = await axios.post(`/byzer-sql/${serviceName}/${action}`);
         if (response.data.message) {
@@ -177,9 +175,7 @@ const ByzerSQLList: React.FC<ByzerSQLListProps> = ({ refreshTrigger }) => {
         }
       }
     } catch (error) {
-      if (action === 'start') {
-        setStartingServices(prev => ({ ...prev, [serviceName]: false }));
-      }
+      setOperationStatus(prev => ({ ...prev, [serviceName]: null }));
       console.error(`Error ${action}ing service:`, error);
       if (axios.isAxiosError(error) && error.response) {
         message.error(`${action === 'start' ? '启动' : action === 'stop' ? '停止' : '删除'}Byzer SQL失败: ${error.response.data.detail}`);
@@ -249,14 +245,17 @@ const ByzerSQLList: React.FC<ByzerSQLListProps> = ({ refreshTrigger }) => {
               type={record.status === 'stopped' ? 'primary' : 'default'}
               icon={record.status === 'stopped' ? <PoweroffOutlined /> : <PauseCircleOutlined />}
               onClick={() => handleAction(record.name, record.status === 'stopped' ? 'start' : 'stop')}
-              disabled={record.status === 'stopped' ? startingServices[record.name] : false}
+              loading={operationStatus[record.name] === 'starting' || operationStatus[record.name] === 'stopping'}
+              disabled={!!operationStatus[record.name] || 
+                (record.status === 'stopped' && operationStatus[record.name] === 'starting') || 
+                (record.status === 'running' && operationStatus[record.name] === 'stopping')}
             >
               {record.status === 'stopped' ? '启动' : '停止'}
             </Button>
             <Button
               icon={<SyncOutlined spin={refreshing[record.name]} />}
               onClick={() => refreshStatus(record.name)}
-              disabled={refreshing[record.name]}
+              disabled={refreshing[record.name] || !!operationStatus[record.name]}
             >
               刷新状态
             </Button>
@@ -281,7 +280,7 @@ const ByzerSQLList: React.FC<ByzerSQLListProps> = ({ refreshTrigger }) => {
             <Button
               icon={<SettingOutlined />}
               onClick={() => showConfigModal(record.name)}
-              disabled={record.status === 'running'}
+              disabled={record.status === 'running' || !!operationStatus[record.name]}
             >
               编辑配置
             </Button>
@@ -297,14 +296,14 @@ const ByzerSQLList: React.FC<ByzerSQLListProps> = ({ refreshTrigger }) => {
                   onOk: () => handleAction(record.name, 'delete'),
                 });
               }}
-              disabled={record.status !== 'stopped'}
+              disabled={record.status !== 'stopped' || !!operationStatus[record.name]}
             >
               删除
             </Button>
             <Button
               icon={<EditOutlined />}
               onClick={() => setEditingService(record)}
-              disabled={record.status === 'running'}
+              disabled={record.status === 'running' || !!operationStatus[record.name]}
             >
               编辑
             </Button>
