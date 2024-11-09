@@ -67,11 +67,39 @@ async def add_byzer_sql(request: AddByzerSQLRequest):
     await save_byzer_sql_to_json(services)
     return {"message": f"Byzer SQL {request.name} added successfully"}
 
+# 全局变量存储各个下载任务的进度
+download_progress_store = {}
+
+@router.get("/api/download-progress/{task_id}")
+async def download_progress(request: Request, task_id: str):
+    """SSE endpoint for download progress updates"""
+    async def event_generator():
+        while True:
+            if await request.is_disconnected():
+                break
+                
+            if task_id in download_progress_store:
+                progress_data = download_progress_store[task_id]
+                yield {
+                    "event": "message",
+                    "data": progress_data
+                }
+                
+                if progress_data.get("completed", False):
+                    del download_progress_store[task_id]
+                    break
+                    
+            await asyncio.sleep(0.5)
+            
+    return EventSourceResponse(event_generator())
+
 @router.post("/byzer-sql/download")
 async def download_byzer_sql(request: Dict[str, str]):
     """Download and extract Byzer SQL package."""
     download_url = request["download_url"]
     install_dir = request["install_dir"]
+    task_id = str(uuid.uuid4())
+    download_progress_store[task_id] = {"task_id": task_id}
     
     try:
         # Download the file
@@ -91,7 +119,11 @@ async def download_byzer_sql(request: Dict[str, str]):
                     f.write(chunk)
                     downloaded_size += len(chunk)
                     progress = int((downloaded_size / total_size) * 100)
-                    logger.info(f"Download progress: {progress}%")
+                    download_progress_store[task_id] = {
+                        "task_id": task_id,
+                        "type": "download",
+                        "progress": progress
+                    }
         
         # Extract the file
         logger.info("Starting extraction...")
@@ -100,7 +132,11 @@ async def download_byzer_sql(request: Dict[str, str]):
             for index, member in enumerate(tar.getmembers(), 1):
                 tar.extract(member, install_dir)
                 progress = int((index / total_members) * 100)
-                logger.info(f"Extraction progress: {progress}%")
+                download_progress_store[task_id] = {
+                    "task_id": task_id,
+                    "type": "extract",
+                    "progress": progress
+                }
             
         # Remove the tar file
         os.remove(tar_path)
@@ -110,7 +146,11 @@ async def download_byzer_sql(request: Dict[str, str]):
         if os.path.exists(start_script):
             os.chmod(start_script, 0o755)
         
-        return {"message": "Download and extraction completed successfully"}
+        download_progress_store[task_id] = {
+            "task_id": task_id,
+            "completed": True
+        }
+        return {"message": "Download and extraction completed successfully", "task_id": task_id}
         
     except Exception as e:
         logger.error(f"Error during download/extraction: {str(e)}")

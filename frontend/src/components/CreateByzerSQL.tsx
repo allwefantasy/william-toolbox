@@ -55,29 +55,45 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
                         key: 'downloadProgress'
                       });
                       isMessageVisible = true;
-                      
-                      eventSource.onmessage = (event) => {
-                        const data = JSON.parse(event.data);
-                        if (data.type === 'download') {
-                          message.loading({
-                            content: `下载进度: ${data.progress}%`,
-                            key: 'downloadProgress',
-                            duration: 0
-                          });
-                        } else if (data.type === 'extract') {
-                          message.loading({
-                            content: `解压进度: ${data.progress}%`,
-                            key: 'downloadProgress',
-                            duration: 0
-                          });
-                        }
-                      };
 
                       try {
-                        await axios.post('/byzer-sql/download', {
+                        // 先发起下载请求
+                        const response = await axios.post('/byzer-sql/download', {
                           download_url: value,
                           install_dir: values.install_dir
                         });
+                        
+                        // 获取task_id并开始监听进度
+                        const taskId = response.data.task_id;
+                        const eventSource = new EventSource(`/api/download-progress/${taskId}`);
+                        
+                        eventSource.onmessage = (event) => {
+                          const data = JSON.parse(event.data);
+                          if (data.type === 'download') {
+                            message.loading({
+                              content: `下载进度: ${data.progress}%`,
+                              key: 'downloadProgress',
+                              duration: 0
+                            });
+                          } else if (data.type === 'extract') {
+                            message.loading({
+                              content: `解压进度: ${data.progress}%`,
+                              key: 'downloadProgress',
+                              duration: 0
+                            });
+                          }
+
+                          if (data.completed) {
+                            eventSource.close();
+                            if (isMessageVisible) {
+                              message.success({
+                                content: '下载并解压完成',
+                                key: 'downloadProgress'
+                              });
+                            }
+                            onServiceAdded();
+                          }
+                        };
                         
                         eventSource.close();
                         if (isMessageVisible) {
