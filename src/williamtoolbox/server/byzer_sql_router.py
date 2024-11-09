@@ -19,6 +19,7 @@ from jproperties import Properties
 
 router = APIRouter()
 
+
 @router.post("/run/script")
 async def run_script(request: RunSQLRequest):
     """Execute SQL script on Byzer SQL engine."""
@@ -27,7 +28,7 @@ async def run_script(request: RunSQLRequest):
             # 构建请求参数
             params = {
                 "sql": request.sql,
-                "owner": "admin", # 默认使用admin账户
+                "owner": "admin",  # 默认使用admin账户
                 "jobType": "script",
                 "executeMode": "query",
                 "jobName": f"test_sql_{uuid.uuid4()}",
@@ -39,13 +40,13 @@ async def run_script(request: RunSQLRequest):
             response = await client.post(
                 f"{request.engine_url}/run/script",
                 data=params,
-                timeout=3600  # 设置1小时超时
+                timeout=3600,  # 设置1小时超时
             )
 
             if response.status_code != 200:
                 raise HTTPException(
                     status_code=response.status_code,
-                    detail=f"Failed to execute SQL: {response.text}"
+                    detail=f"Failed to execute SQL: {response.text}",
                 )
 
             return response.json()
@@ -53,10 +54,7 @@ async def run_script(request: RunSQLRequest):
     except Exception as e:
         logger.error(f"Error executing SQL: {str(e)}")
         logger.error(traceback.format_exc())
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to execute SQL: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to execute SQL: {str(e)}")
 
 
 @router.get("/byzer-sql")
@@ -480,18 +478,20 @@ async def get_byzer_sql_status(service_name: str):
     """Get the status of a specified Byzer SQL service."""
     services = await load_byzer_sql_from_json()
     if service_name not in services:
-        raise HTTPException(status_code=404, detail=f"Byzer SQL {service_name} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Byzer SQL {service_name} not found"
+        )
 
     service_info = services[service_name]
     install_dir = service_info["install_dir"]
     pid_file = os.path.join(install_dir, "pid")
-    
+
     # Check if pid file exists and process is running
     is_alive = False
     process_id = None
     if os.path.exists(pid_file):
         try:
-            async with aiofiles.open(pid_file, 'r') as f:
+            async with aiofiles.open(pid_file, "r") as f:
                 content = await f.read()
                 process_id = int(content.strip())
                 try:
@@ -514,7 +514,7 @@ async def get_byzer_sql_status(service_name: str):
         service_info["process_id"] = process_id
     elif "process_id" in service_info:
         del service_info["process_id"]
-        
+
     services[service_name] = service_info
     await save_byzer_sql_to_json(services)
 
@@ -524,7 +524,6 @@ async def get_byzer_sql_status(service_name: str):
         "process_id": process_id if is_alive else None,
         "is_alive": is_alive,
         "success": True,
-    }
     }
 
 
