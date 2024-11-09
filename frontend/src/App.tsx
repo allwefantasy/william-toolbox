@@ -17,6 +17,7 @@ import './App.css';
 const { Header, Sider, Content } = Layout;
 const { Title, Text } = Typography;
 const { SubMenu } = Menu;
+import ByzerSQLList from './components/ByzerSQLList';
 
 function App() {
   const [selectedKey, setSelectedKey] = useState('1');
@@ -66,6 +67,8 @@ function App() {
         return <AutoCoderChatViz />;
       case '6':
         return <SuperAnalysisList refreshTrigger={refreshTrigger} />;
+      case '7':
+        return <ByzerSQLList refreshTrigger={refreshTrigger} />;
       default:
         return (
           <>
@@ -101,6 +104,9 @@ function App() {
           </Menu.Item>
           <Menu.Item key="6" icon={<ThunderboltOutlined />}>
             Super Analysis
+          </Menu.Item>
+          <Menu.Item key="7" icon={<CodeOutlined />}>
+            Byzer SQL
           </Menu.Item>
         </Menu>
       </Sider>

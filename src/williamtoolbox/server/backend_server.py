@@ -34,6 +34,8 @@ from .auto_coder_chat_router import router as auto_coder_chat_router
 app.include_router(auto_coder_chat_router)
 from .super_analysis_router import router as super_analysis_router
 app.include_router(super_analysis_router)
+from .byzer_sql_router import router as byzer_sql_router
+app.include_router(byzer_sql_router)
 # Add CORS middleware with restricted origins
 app.add_middleware(
     CORSMiddleware,
