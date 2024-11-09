@@ -125,66 +125,48 @@ const CreateSuperAnalysis: React.FC<CreateSuperAnalysisProps> = ({ onAnalysisAdd
         >
           <InputNumber min={1024} max={65535} style={{ width: '100%' }} />
         </Form.Item>
-        <Form.Item label="Schema RAG URL" required>
-          <Space.Compact style={{ width: '100%' }}>
-            <Select
-              value={schemaRagMode}
-              onChange={value => setSchemaRagMode(value)}
-              style={{ width: '120px' }}
-            >
-              <Select.Option value="input">手动输入</Select.Option>
-              <Select.Option value="select">选择RAG</Select.Option>
-            </Select>
-            {schemaRagMode === 'input' ? (
-              <Form.Item
-                name="schema_rag_base_url"
-                noStyle
-                rules={[{ required: true, message: '请输入Schema RAG URL' }]}
-              >
-                <Input style={{ width: 'calc(100% - 120px)' }} />
-              </Form.Item>
-            ) : (
-              <Select
-                style={{ width: 'calc(100% - 120px)' }}
-                onChange={(value) => handleRagSelect('schema_rag_base_url', value)}
-              >
-                {rags.map(rag => (
-                  <Select.Option key={rag.name} value={rag.name}>{rag.name}</Select.Option>
-                ))}
-              </Select>
-            )}
-          </Space.Compact>
+        <Form.Item
+          name="schema_rag_base_url"
+          label="Schema RAG URL"
+          rules={[{ required: true, message: '请输入Schema RAG URL' }]}
+        >
+          <AutoComplete
+            options={rags.map(rag => {
+              const host = rag.host === '0.0.0.0' ? '127.0.0.1' : rag.host;
+              return {
+                value: `http://${host}:${rag.port}/v1`,
+                label: rag.name
+              };
+            })}
+            placeholder="输入或选择Schema RAG URL"
+            filterOption={(inputValue, option) =>
+              option!.value.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1 ||
+              option!.label.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
+            }
+            style={{ width: '100%' }}
+          />
         </Form.Item>
-        
-        <Form.Item label="Context RAG URL" required>
-          <Space.Compact style={{ width: '100%' }}>
-            <Select
-              value={contextRagMode}
-              onChange={value => setContextRagMode(value)}
-              style={{ width: '120px' }}
-            >
-              <Select.Option value="input">手动输入</Select.Option>
-              <Select.Option value="select">选择RAG</Select.Option>
-            </Select>
-            {contextRagMode === 'input' ? (
-              <Form.Item
-                name="context_rag_base_url"
-                noStyle
-                rules={[{ required: true, message: '请输入Context RAG URL' }]}
-              >
-                <Input style={{ width: 'calc(100% - 120px)' }} />
-              </Form.Item>
-            ) : (
-              <Select
-                style={{ width: 'calc(100% - 120px)' }}
-                onChange={(value) => handleRagSelect('context_rag_base_url', value)}
-              >
-                {rags.map(rag => (
-                  <Select.Option key={rag.name} value={rag.name}>{rag.name}</Select.Option>
-                ))}
-              </Select>
-            )}
-          </Space.Compact>
+
+        <Form.Item
+          name="context_rag_base_url"
+          label="Context RAG URL"
+          rules={[{ required: true, message: '请输入Context RAG URL' }]}
+        >
+          <AutoComplete
+            options={rags.map(rag => {
+              const host = rag.host === '0.0.0.0' ? '127.0.0.1' : rag.host;
+              return {
+                value: `http://${host}:${rag.port}/v1`,
+                label: rag.name
+              };
+            })}
+            placeholder="输入或选择Context RAG URL"
+            filterOption={(inputValue, option) =>
+              option!.value.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1 ||
+              option!.label.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
+            }
+            style={{ width: '100%' }}
+          />
         </Form.Item>
         <Form.Item
           name="byzer_sql_url"
