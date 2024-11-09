@@ -152,6 +152,44 @@ async def process_message_stream(
                         await event_file.flush()
                         idx += 1
 
+            elif request.list_type == "super-analysis":
+                super_analyses = await load_super_analysis_from_json()
+                analysis_info = super_analyses.get(request.selected_item, {})
+                host = analysis_info.get("host", "localhost")
+                port = analysis_info.get("port", 8000)
+                if host == "0.0.0.0":
+                    host = "127.0.0.1"
+
+                base_url = f"http://{host}:{port}/v1"
+
+                logger.info(f"Super Analysis {request.selected_item} is using {base_url}")
+                
+                client = AsyncOpenAI(base_url=base_url, api_key="xxxx")
+                response = await client.chat.completions.create(
+                    model=analysis_info.get("served_model_name", "default"),
+                    messages=[
+                        {"role": msg["role"], "content": msg["content"]}
+                        for msg in conversation["messages"]
+                    ],
+                    stream=True,
+                    max_tokens=4096,
+                    extra_body={"request_id":request_id},
+                )
+
+                async for chunk in response:
+                    if chunk.choices[0].delta.content:
+                        event = {
+                            "index": idx,
+                            "event": "chunk",
+                            "content": chunk.choices[0].delta.content,
+                            "timestamp": datetime.now().isoformat(),
+                        }
+                        await event_file.write(
+                            json.dumps(event, ensure_ascii=False) + "\n"
+                        )
+                        await event_file.flush()
+                        idx += 1
+
             elif request.list_type == "rags":
                 rags = await load_rags_from_json()
                 rag_info = rags.get(request.selected_item, {})

@@ -40,7 +40,7 @@ const Chat: React.FC = () => {
   const [countdown, setCountdown] = useState<number | null>(null);
   const [countdownInterval, setCountdownInterval] = useState<NodeJS.Timeout | null>(null);
 
-  const [listType, setListType] = useState<'models' | 'rags'>('models');
+  const [listType, setListType] = useState<'models' | 'rags' | 'super-analysis'>('models');
   const [selectedItem, setSelectedItem] = useState<string>('');
   const [itemList, setItemList] = useState<string[]>([]);
 
@@ -224,12 +224,19 @@ const Chat: React.FC = () => {
         if (runningModels.length > 0 && !selectedItem) {
           setSelectedItem(runningModels[0]);
         }
-      } else {
+      } else if (listType === 'rags') {
         response = await axios.get('/rags');
         const runningRags = response.data.filter((rag: any) => rag.status === 'running').map((rag: any) => rag.name);
         setItemList(runningRags);
         if (runningRags.length > 0 && !selectedItem) {
           setSelectedItem(runningRags[0]);
+        }
+      } else {
+        response = await axios.get('/super-analysis');
+        const runningSuperAnalyses = response.data.filter((analysis: any) => analysis.status === 'running').map((analysis: any) => analysis.name);
+        setItemList(runningSuperAnalyses);
+        if (runningSuperAnalyses.length > 0 && !selectedItem) {
+          setSelectedItem(runningSuperAnalyses[0]);
         }
       }
     } catch (error) {
@@ -669,13 +676,14 @@ const Chat: React.FC = () => {
               <Select
                 style={{ width: 240 }}
                 value={listType}
-                onChange={(value: 'models' | 'rags') => {
+                onChange={(value: 'models' | 'rags' | 'super-analysis') => {
                   setListType(value);
                   setSelectedItem('');
                 }}
               >
                 <Option value="models">模型列表</Option>
                 <Option value="rags">RAG列表</Option>
+                <Option value="super-analysis">Super Analysis列表</Option>
               </Select>
               <Select
                 style={{ width: 240 }}
