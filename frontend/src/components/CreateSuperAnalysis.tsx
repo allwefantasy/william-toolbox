@@ -1,5 +1,5 @@
-import React from 'react';
-import { Form, Input, InputNumber, Button, message, Modal, Typography, Space } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Form, Input, InputNumber, Button, message, Modal, Typography, Space, Select } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
 import axios from 'axios';
 
@@ -17,6 +17,33 @@ interface CreateSuperAnalysisProps {
 
 const CreateSuperAnalysis: React.FC<CreateSuperAnalysisProps> = ({ onAnalysisAdded, visible, onCancel }) => {
   const [form] = Form.useForm();
+  const [rags, setRags] = useState<Array<{name: string, host: string, port: number}>>([]);
+  const [schemaRagMode, setSchemaRagMode] = useState<'input' | 'select'>('input');
+  const [contextRagMode, setContextRagMode] = useState<'input' | 'select'>('input');
+
+  useEffect(() => {
+    const fetchRags = async () => {
+      try {
+        const response = await axios.get('/rags');
+        setRags(response.data);
+      } catch (error) {
+        console.error('Error fetching RAGs:', error);
+        message.error('获取RAG列表失败');
+      }
+    };
+    fetchRags();
+  }, []);
+
+  const handleRagSelect = (field: string, ragName: string) => {
+    const selectedRag = rags.find(rag => rag.name === ragName);
+    if (selectedRag) {
+      const host = selectedRag.host === '0.0.0.0' ? '127.0.0.1' : selectedRag.host;
+      const url = `http://${host}:${selectedRag.port}/v1`;
+      form.setFieldsValue({
+        [field]: url
+      });
+    }
+  };
 
   const handleSubmit = async (values: any) => {
     try {
@@ -78,19 +105,66 @@ const CreateSuperAnalysis: React.FC<CreateSuperAnalysisProps> = ({ onAnalysisAdd
         >
           <InputNumber min={1024} max={65535} style={{ width: '100%' }} />
         </Form.Item>
-        <Form.Item
-          name="schema_rag_base_url"
-          label="Schema RAG URL"
-          rules={[{ required: true, message: '请输入Schema RAG URL' }]}
-        >
-          <Input />
+        <Form.Item label="Schema RAG URL" required>
+          <Space.Compact style={{ width: '100%' }}>
+            <Select
+              value={schemaRagMode}
+              onChange={value => setSchemaRagMode(value)}
+              style={{ width: '120px' }}
+            >
+              <Select.Option value="input">手动输入</Select.Option>
+              <Select.Option value="select">选择RAG</Select.Option>
+            </Select>
+            {schemaRagMode === 'input' ? (
+              <Form.Item
+                name="schema_rag_base_url"
+                noStyle
+                rules={[{ required: true, message: '请输入Schema RAG URL' }]}
+              >
+                <Input style={{ width: 'calc(100% - 120px)' }} />
+              </Form.Item>
+            ) : (
+              <Select
+                style={{ width: 'calc(100% - 120px)' }}
+                onChange={(value) => handleRagSelect('schema_rag_base_url', value)}
+              >
+                {rags.map(rag => (
+                  <Select.Option key={rag.name} value={rag.name}>{rag.name}</Select.Option>
+                ))}
+              </Select>
+            )}
+          </Space.Compact>
         </Form.Item>
-        <Form.Item
-          name="context_rag_base_url"
-          label="Context RAG URL"
-          rules={[{ required: true, message: '请输入Context RAG URL' }]}
-        >
-          <Input />
+        
+        <Form.Item label="Context RAG URL" required>
+          <Space.Compact style={{ width: '100%' }}>
+            <Select
+              value={contextRagMode}
+              onChange={value => setContextRagMode(value)}
+              style={{ width: '120px' }}
+            >
+              <Select.Option value="input">手动输入</Select.Option>
+              <Select.Option value="select">选择RAG</Select.Option>
+            </Select>
+            {contextRagMode === 'input' ? (
+              <Form.Item
+                name="context_rag_base_url"
+                noStyle
+                rules={[{ required: true, message: '请输入Context RAG URL' }]}
+              >
+                <Input style={{ width: 'calc(100% - 120px)' }} />
+              </Form.Item>
+            ) : (
+              <Select
+                style={{ width: 'calc(100% - 120px)' }}
+                onChange={(value) => handleRagSelect('context_rag_base_url', value)}
+              >
+                {rags.map(rag => (
+                  <Select.Option key={rag.name} value={rag.name}>{rag.name}</Select.Option>
+                ))}
+              </Select>
+            )}
+          </Space.Compact>
         </Form.Item>
         <Form.Item
           name="byzer_sql_url"
