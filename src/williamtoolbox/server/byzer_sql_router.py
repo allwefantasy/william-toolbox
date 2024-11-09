@@ -101,61 +101,69 @@ async def download_byzer_sql(request: Dict[str, str]):
     task_id = str(uuid.uuid4())
     download_progress_store[task_id] = {"task_id": task_id}
     
-    try:
-        # Download the file
-        response = requests.get(download_url, stream=True)
-        response.raise_for_status()
-        
-        # Get total file size
-        total_size = int(response.headers.get('content-length', 0))
-        
-        tar_path = os.path.join(install_dir, "byzer.tar.gz")
-        block_size = 1024  # 1 Kibibyte
-        downloaded_size = 0
-        
-        with open(tar_path, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=block_size):
-                if chunk:
-                    f.write(chunk)
-                    downloaded_size += len(chunk)
-                    progress = int((downloaded_size / total_size) * 100)
+    async def download_and_extract():
+        try:
+            import aiohttp
+            import aiofiles
+            
+            # Download the file
+            async with aiohttp.ClientSession() as session:
+                async with session.get(download_url) as response:
+                    if response.status != 200:
+                        raise Exception(f"Failed to download: {response.status}")
+                    
+                    # Get total file size    
+                    total_size = int(response.headers.get('content-length', 0))
+                    tar_path = os.path.join(install_dir, "byzer.tar.gz")
+                    downloaded_size = 0
+                    
+                    # Download chunks asynchronously
+                    async with aiofiles.open(tar_path, 'wb') as f:
+                        async for chunk in response.content.iter_chunked(1024):
+                            await f.write(chunk)
+                            downloaded_size += len(chunk)
+                            progress = int((downloaded_size / total_size) * 100)
+                            download_progress_store[task_id] = {
+                                "task_id": task_id,
+                                "type": "download", 
+                                "progress": progress
+                            }
+            
+            # Extract the file asynchronously
+            logger.info("Starting extraction...")
+            with tarfile.open(tar_path, "r:gz") as tar:
+                total_members = len(tar.getmembers())
+                for index, member in enumerate(tar.getmembers(), 1):
+                    tar.extract(member, install_dir)
+                    progress = int((index / total_members) * 100)
                     download_progress_store[task_id] = {
                         "task_id": task_id,
-                        "type": "download",
+                        "type": "extract",
                         "progress": progress
                     }
-        
-        # Extract the file
-        logger.info("Starting extraction...")
-        with tarfile.open(tar_path, "r:gz") as tar:
-            total_members = len(tar.getmembers())
-            for index, member in enumerate(tar.getmembers(), 1):
-                tar.extract(member, install_dir)
-                progress = int((index / total_members) * 100)
-                download_progress_store[task_id] = {
-                    "task_id": task_id,
-                    "type": "extract",
-                    "progress": progress
-                }
             
-        # Remove the tar file
-        os.remove(tar_path)
-        
-        # Make the start script executable
-        start_script = os.path.join(install_dir, "bin", "byzer.sh")
-        if os.path.exists(start_script):
-            os.chmod(start_script, 0o755)
-        
-        download_progress_store[task_id] = {
-            "task_id": task_id,
-            "completed": True
-        }
-        return {"message": "Download and extraction completed successfully", "task_id": task_id}
-        
-    except Exception as e:
-        logger.error(f"Error during download/extraction: {str(e)}")
-        logger.error(traceback.format_exc())
-        raise HTTPException(status_code=500, detail=str(e))
+            # Remove the tar file and set permissions
+            await asyncio.to_thread(os.remove, tar_path)
+            start_script = os.path.join(install_dir, "bin", "byzer.sh")
+            if os.path.exists(start_script):
+                await asyncio.to_thread(os.chmod, start_script, 0o755)
+            
+            download_progress_store[task_id] = {
+                "task_id": task_id,
+                "completed": True
+            }
+            
+        except Exception as e:
+            logger.error(f"Error during download/extraction: {str(e)}")
+            logger.error(traceback.format_exc())
+            download_progress_store[task_id] = {
+                "task_id": task_id,
+                "error": str(e)
+            }
+    
+    # Start the download process asynchronously
+    asyncio.create_task(download_and_extract())
+    return {"message": "Download started", "task_id": task_id}
 
 @router.delete("/byzer-sql/{service_name}")
 async def delete_byzer_sql(service_name: str):
