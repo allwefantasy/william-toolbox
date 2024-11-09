@@ -30,19 +30,39 @@ async def save_chat_data(data):
 
 # Add this function to load the config
 async def load_config():
+    default_config = {
+        "saasBaseUrls": [
+            {"value": "https://api.siliconflow.cn/v1", "label": "硅基流动"},
+            {"value": "https://api.deepseek.com/beta", "label": "DeepSeek"},
+            {"value": "https://dashscope.aliyuncs.com/compatible-mode/v1", "label": "通义千问"},
+            {"value": "https://api.moonshot.cn/v1", "label": "Kimi"}
+        ],
+        "pretrainedModelTypes": [
+            {"value": "saas/openai", "label": "OpenAI 兼容模型"},
+            {"value": "saas/qianwen", "label": "通义千问"},
+            {"value": "saas/qianwen_vl", "label": "通义千问视觉"},
+            {"value": "saas/claude", "label": "Claude"}
+        ],
+        "openaiServerList": [],
+        "commons": [
+            {"value": "/Users/allwefantasy/Downloads/tokenizer.json", "label": "tokenizer_path"}
+        ]
+    }
+
     config_path = "config.json"
     if os.path.exists(config_path):
         async with aiofiles.open(config_path, "r") as f:
             content = await f.read()
-            v = json.loads(content)
-            if "saasBaseUrls" not in v:
-                v["saasBaseUrls"] = []
-            if "pretrainedModelTypes" not in v:
-                v["pretrainedModelTypes"] = []
-            if "commons" not in v:
-                v["commons"] = []
-            return v
-    return {"saasBaseUrls": [], "pretrainedModelTypes": [], "commons": []}
+            user_config = json.loads(content)
+            
+            # Merge user config with default config
+            for key in default_config:
+                if key not in user_config:
+                    user_config[key] = default_config[key]
+            
+            return user_config
+            
+    return default_config
 
 
 async def save_config(config):
