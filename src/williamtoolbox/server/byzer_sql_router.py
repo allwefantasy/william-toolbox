@@ -105,29 +105,53 @@ async def download_byzer_sql(request: Dict[str, str]):
         try:
             import aiohttp
             import aiofiles
+            import time
             
+            start_time = time.time()
+            
+            def calculate_speed(downloaded: int, start: float) -> float:
+                elapsed = time.time() - start
+                return downloaded / elapsed if elapsed > 0 else 0
+            
+            def calculate_eta(downloaded: int, total: int, start: float) -> float:
+                elapsed = time.time() - start
+                speed = downloaded / elapsed if elapsed > 0 else 0
+                remaining = total - downloaded
+                return remaining / speed if speed > 0 else 0
+                
             # Download the file
-            async with aiohttp.ClientSession() as session:
-                async with session.get(download_url) as response:
-                    if response.status != 200:
-                        raise Exception(f"Failed to download: {response.status}")
-                    
-                    # Get total file size    
-                    total_size = int(response.headers.get('content-length', 0))
-                    tar_path = os.path.join(install_dir, "byzer.tar.gz")
-                    downloaded_size = 0
-                    
-                    # Download chunks asynchronously
-                    async with aiofiles.open(tar_path, 'wb') as f:
-                        async for chunk in response.content.iter_chunked(1024):
-                            await f.write(chunk)
-                            downloaded_size += len(chunk)
-                            progress = int((downloaded_size / total_size) * 100)
-                            download_progress_store[task_id] = {
-                                "task_id": task_id,
-                                "type": "download", 
-                                "progress": progress
-                            }
+            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=3600)) as session:
+                try:
+                    async with session.get(download_url) as response:
+                        if response.status != 200:
+                            raise Exception(f"Failed to download: {response.status}")
+                        
+                        # Get total file size    
+                        total_size = int(response.headers.get('content-length', 0))
+                        tar_path = os.path.join(install_dir, "byzer.tar.gz")
+                        downloaded_size = 0
+                        
+                        # Download chunks asynchronously
+                        async with aiofiles.open(tar_path, 'wb') as f:
+                            async for chunk in response.content.iter_chunked(1024):
+                                await f.write(chunk)
+                                downloaded_size += len(chunk)
+                                progress = int((downloaded_size / total_size) * 100)
+                                download_progress_store[task_id] = {
+                                    "task_id": task_id,
+                                    "type": "download", 
+                                    "progress": progress,
+                                    "downloaded_size": downloaded_size,
+                                    "total_size": total_size,
+                                    "speed": calculate_speed(downloaded_size, start_time),
+                                    "estimated_time": calculate_eta(downloaded_size, total_size, start_time)
+                                }
+                except asyncio.TimeoutError:
+                    download_progress_store[task_id] = {
+                        "task_id": task_id,
+                        "error": "下载超时"
+                    }
+                    raise Exception("Download timeout")
             
             # Extract the file asynchronously
             logger.info("Starting extraction...")

@@ -49,6 +49,7 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
                     title: '确认下载',
                     content: '这可能需要几分钟时间，请耐心等待',
                     onOk: async () => {
+                      const cancelTokenSource = axios.CancelToken.source();
                       message.loading({
                         content: '准备下载...',
                         duration: 0,
@@ -56,11 +57,31 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
                       });
                       isMessageVisible = true;
 
+                      const formatBytes = (bytes: number) => {
+                        if (bytes === 0) return '0 B';
+                        const k = 1024;
+                        const sizes = ['B', 'KB', 'MB', 'GB'];
+                        const i = Math.floor(Math.log(bytes) / Math.log(k));
+                        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+                      };
+
+                      const formatTime = (seconds: number) => {
+                        if (!seconds || seconds === Infinity) return '计算中...';
+                        const minutes = Math.floor(seconds / 60);
+                        const remainingSeconds = Math.floor(seconds % 60);
+                        return `${minutes}分${remainingSeconds}秒`;
+                      };
+
+                      const formatSpeed = (bytesPerSecond: number) => {
+                        return `${formatBytes(bytesPerSecond)}/s`;
+                      };
+
                       try {
                         // 先发起下载请求
                         const response = await axios.post('/byzer-sql/download', {
                           download_url: value,
-                          install_dir: values.install_dir
+                          install_dir: values.install_dir,
+                          cancelToken: cancelTokenSource.token
                         });
                         
                         // 获取task_id并开始监听进度
@@ -71,7 +92,9 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
                           const data = JSON.parse(event.data);
                           if (data.type === 'download') {
                             message.loading({
-                              content: `下载进度: ${data.progress}%`,
+                              content: `下载中: ${data.progress}% (${formatBytes(data.downloaded_size)} / ${formatBytes(data.total_size)})
+                                      速度: ${formatSpeed(data.speed)}
+                                      预计剩余时间: ${formatTime(data.estimated_time)}`,
                               key: 'downloadProgress',
                               duration: 0
                             });
@@ -92,6 +115,26 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
                               });
                             }
                             onServiceAdded();
+                          }
+
+                          if (data.error) {
+                            eventSource.close();
+                            if (isMessageVisible) {
+                              message.error({
+                                content: `错误: ${data.error}`,
+                                key: 'downloadProgress'
+                              });
+                            }
+                          }
+                        };
+
+                        eventSource.onerror = (error) => {
+                          eventSource.close();
+                          if (isMessageVisible) {
+                            message.error({
+                              content: '下载过程发生错误',
+                              key: 'downloadProgress'
+                            });
                           }
                         };
                         
@@ -114,12 +157,17 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
                         throw error;
                       }
                     },
+                    cancelText: '取消下载',
                     onCancel: () => {
+                      cancelTokenSource.cancel('用户取消了下载');
                       if (eventSource) {
                         eventSource.close();
                       }
                       if (isMessageVisible) {
-                        message.destroy('downloadProgress');
+                        message.info({
+                          content: '下载已取消',
+                          key: 'downloadProgress'
+                        });
                       }
                     }
                   });
