@@ -32,7 +32,7 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
   const handleSubmit = async (values: any) => {
     try {
       const response = await axios.post('/byzer-sql/add', values);
-      
+
       if (!values.install_dir.includes('bin')) {
         Modal.confirm({
           title: '选择下载版本',
@@ -44,9 +44,19 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
                 try {
                   let isMessageVisible = false;
                   const cancelTokenSource = axios.CancelToken.source();
+                  // 先发起下载请求
+                  const response = await axios.post('/byzer-sql/download', {
+                    download_url: value,
+                    install_dir: values.install_dir                    
+                  });
+
+                  // 获取task_id并开始监听进度
+                  const taskId = response.data.task_id;
+                  const eventSource = new EventSource(`/api/download-progress/${taskId}`);
+
                   Modal.confirm({
                     title: '确认下载',
-                    content: '这可能需要几分钟时间，请耐心等待',                    
+                    content: '这可能需要几分钟时间，请耐心等待',
                     onOk: async () => {
                       message.loading({
                         content: '准备下载...',
@@ -75,17 +85,8 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
                       };
 
                       try {
-                        // 先发起下载请求
-                        const response = await axios.post('/byzer-sql/download', {
-                          download_url: value,
-                          install_dir: values.install_dir,
-                          cancelToken: cancelTokenSource.token
-                        });
-                        
-                        // 获取task_id并开始监听进度
-                        const taskId = response.data.task_id;
-                        const eventSource = new EventSource(`/api/download-progress/${taskId}`);
-                        
+
+
                         eventSource.addEventListener('message', (event) => {
                           const data = JSON.parse(event.data);
                           if (data.type === 'download') {
@@ -124,7 +125,7 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
                               });
                             }
                           }
-                        };
+                        });
 
                         eventSource.onerror = (error) => {
                           eventSource.close();
@@ -135,7 +136,7 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
                             });
                           }
                         };
-                        
+
                         eventSource.close();
                         if (isMessageVisible) {
                           message.success({
@@ -191,7 +192,7 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
           cancelText: null
         });
       }
-      
+
       message.success('Byzer SQL添加成功');
       form.resetFields();
       onServiceAdded();
