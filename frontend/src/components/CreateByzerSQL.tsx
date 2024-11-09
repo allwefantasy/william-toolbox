@@ -251,26 +251,17 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
       <>
         <Modal
           visible={progress.visible}
-          title={<Typography.Title level={4}>{progress.title}</Typography.Title>}
+          title={progress.title}
           footer={null}
           closable={false}
           maskClosable={false}
           width={500}
-          centered={true}
-          bodyStyle={{ padding: '24px' }}
         >
           <Progress
             percent={progress.percent}
             status={progress.status}
-            strokeWidth={10}
-            showInfo={true}
           />
-          <div style={{ 
-            marginTop: '16px', 
-            textAlign: 'center',
-            fontSize: '14px',
-            color: 'rgba(0, 0, 0, 0.65)'
-          }}>
+          <div style={{ marginTop: '10px', textAlign: 'center' }}>
             {progress.subTitle}
           </div>
         </Modal>
