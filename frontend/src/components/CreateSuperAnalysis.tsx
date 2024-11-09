@@ -18,6 +18,7 @@ interface CreateSuperAnalysisProps {
 const CreateSuperAnalysis: React.FC<CreateSuperAnalysisProps> = ({ onAnalysisAdded, visible, onCancel }) => {
   const [form] = Form.useForm();
   const [rags, setRags] = useState<Array<{name: string, host: string, port: number}>>([]);
+  const [byzerSQLInstances, setByzerSQLInstances] = useState<Array<{name: string, host: string, port: number, status: string}>>([]);
   const [schemaRagMode, setSchemaRagMode] = useState<'input' | 'select'>('input');
   const [contextRagMode, setContextRagMode] = useState<'input' | 'select'>('input');
   const [runningModels, setRunningModels] = useState<string[]>([]);
@@ -35,6 +36,10 @@ const CreateSuperAnalysis: React.FC<CreateSuperAnalysisProps> = ({ onAnalysisAdd
           .filter((model: any) => model.status === 'running')
           .map((model: any) => model.name);
         setRunningModels(runningModelsList);
+
+        // Fetch Byzer SQL instances
+        const byzerSQLResponse = await axios.get('/byzer-sql');
+        setByzerSQLInstances(byzerSQLResponse.data.filter((instance: any) => instance.status === 'running'));
       } catch (error) {
         console.error('Error fetching data:', error);
         message.error('获取数据失败');
@@ -184,9 +189,19 @@ const CreateSuperAnalysis: React.FC<CreateSuperAnalysisProps> = ({ onAnalysisAdd
         <Form.Item
           name="byzer_sql_url"
           label="Byzer SQL URL"
-          rules={[{ required: true, message: '请输入Byzer SQL URL' }]}
+          rules={[{ required: true, message: '请选择或输入Byzer SQL URL' }]}
         >
-          <Input />
+          <AutoComplete
+            options={byzerSQLInstances.map(instance => ({
+              value: `http://${instance.host === '0.0.0.0' ? '127.0.0.1' : instance.host}:${instance.port}/run/script`,
+              label: `${instance.name} (${instance.host}:${instance.port})`
+            }))}
+            placeholder="选择或输入 Byzer SQL URL"
+            filterOption={(inputValue, option) =>
+              option!.label.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
+            }
+            style={{ width: '100%' }}
+          />
         </Form.Item>
         <Form.Item
           name="host"
