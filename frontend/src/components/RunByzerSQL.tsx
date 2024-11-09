@@ -29,13 +29,18 @@ const RunByzerSQL: React.FC<TestByzerSQLProps> = ({ visible, onCancel, serviceNa
 
   useEffect(() => {
     if (visible) {
-      // 当弹窗显示时,尝试获取已保存的引擎地址
+      // 当弹窗显示时,尝试获取已保存的引擎地址和用户名
       const savedEngineUrl = localStorage.getItem('byzerEngineUrl') || 'http://localhost:9003';
-      form.setFieldsValue({ engineUrl: savedEngineUrl });
+      const savedOwner = localStorage.getItem('byzerOwner') || 'admin';
+      form.setFieldsValue({ 
+        engineUrl: savedEngineUrl,
+        owner: savedOwner
+      });
     }
   }, [visible, form]);
 
   const handleExecute = async () => {
+async function handleExecute() {
     if (!sql.trim()) {
       message.error('请输入SQL语句');
       return;
@@ -43,17 +48,19 @@ const RunByzerSQL: React.FC<TestByzerSQLProps> = ({ visible, onCancel, serviceNa
 
     const values = await form.validateFields();
     const engineUrl = values.engineUrl;
+    const owner = values.owner || 'admin';  // 使用表单中的owner值，如果没有则默认为admin
 
-    // 保存引擎地址到本地存储
+    // 保存引擎地址和用户名到本地存储
     localStorage.setItem('byzerEngineUrl', engineUrl);
+    localStorage.setItem('byzerOwner', owner);
 
     setLoading(true);
     try {
       const response = await axios.post('/run/script', {
         sql: sql,
-        engine_url: engineUrl
+        engine_url: engineUrl,
+        owner: owner
       });
-
       if (response.data) {
         setResult(response.data);
       }
@@ -119,6 +126,14 @@ const RunByzerSQL: React.FC<TestByzerSQLProps> = ({ visible, onCancel, serviceNa
           rules={[{ required: true, message: '请输入Byzer SQL引擎地址' }]}
         >
           <Input placeholder="例如: http://localhost:9003" />
+        </Form.Item>
+        <Form.Item
+          name="owner"
+          label="用户名"
+          rules={[{ required: true, message: '请输入用户名' }]}
+          initialValue="admin"
+        >
+          <Input placeholder="请输入用户名" />
         </Form.Item>
       </Form>
 
