@@ -32,7 +32,7 @@ const RunByzerSQL: React.FC<TestByzerSQLProps> = ({ visible, onCancel, serviceNa
       // 当弹窗显示时,尝试获取已保存的引擎地址和用户名
       const savedEngineUrl = localStorage.getItem('byzerEngineUrl') || 'http://localhost:9003';
       const savedOwner = localStorage.getItem('byzerOwner') || 'admin';
-      form.setFieldsValue({ 
+      form.setFieldsValue({
         engineUrl: savedEngineUrl,
         owner: savedOwner
       });
@@ -40,7 +40,6 @@ const RunByzerSQL: React.FC<TestByzerSQLProps> = ({ visible, onCancel, serviceNa
   }, [visible, form]);
 
   const handleExecute = async () => {
-async function handleExecute() {
     if (!sql.trim()) {
       message.error('请输入SQL语句');
       return;
@@ -106,9 +105,9 @@ async function handleExecute() {
         <Button key="close" onClick={onCancel}>
           关闭
         </Button>,
-        <Button 
-          key="execute" 
-          type="primary" 
+        <Button
+          key="execute"
+          type="primary"
           onClick={handleExecute}
           loading={loading}
         >
@@ -116,7 +115,7 @@ async function handleExecute() {
         </Button>
       ]}
     >
-      <Form 
+      <Form
         form={form}
         layout="vertical"
       >

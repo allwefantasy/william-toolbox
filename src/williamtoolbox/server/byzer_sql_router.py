@@ -32,7 +32,8 @@ async def run_script(request: RunSQLRequest):
                 "executeMode": "query",
                 "jobName": f"test_sql_{uuid.uuid4()}",
                 "includeSchema": True,
-                "sessionPerRequest": True
+                "sessionPerRequest": True,
+                "sessionPerUser": True,
             }
 
             response = await client.post(
