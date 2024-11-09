@@ -51,6 +51,9 @@ async def read_root():
 async def get_backend_url():
     return {"backend_url": BACKEND_URL}
 
+from fastapi.responses import StreamingResponse
+import asyncio
+
 @app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"])
 async def proxy(request: Request, path: str):
     url = f"{BACKEND_URL}/{path}"
@@ -68,22 +71,54 @@ async def proxy(request: Request, path: str):
     print(f"Request Body: {body}")
 
     try:
-        response = await app.state.client.request(
-            method,
-            url,
-            headers=headers,
-            params=params,
-            content=body, 
-            timeout=3000           
-        )
-        print(f"Response Status Code: {response.status_code}")
-        print(f"Response Headers: {response.headers}")
-        print(f"Response Content: {response.content}")
-        return Response(
-            content=response.content,
-            status_code=response.status_code,
-            headers=dict(response.headers)
-        )
+        # 检查是否是SSE请求
+        is_sse = headers.get('accept') == 'text/event-stream'
+        
+        if is_sse:
+            async def event_stream():
+                try:
+                    async with app.state.client.stream(
+                        method,
+                        url,
+                        headers=headers,
+                        params=params,
+                        content=body,
+                        timeout=None
+                    ) as response:
+                        async for chunk in response.aiter_bytes():
+                            yield chunk
+                except Exception as e:
+                    print(f"Error in SSE stream: {str(e)}")
+                    import traceback
+                    traceback.print_exc()
+                    yield b"event: error\ndata: Connection error\n\n"
+                    
+            return StreamingResponse(
+                event_stream(),
+                media_type="text/event-stream",
+                headers={
+                    "Cache-Control": "no-cache",
+                    "Connection": "keep-alive",
+                }
+            )
+        else:
+            # 普通请求处理
+            response = await app.state.client.request(
+                method,
+                url,
+                headers=headers,
+                params=params,
+                content=body, 
+                timeout=3000           
+            )
+            print(f"Response Status Code: {response.status_code}")
+            print(f"Response Headers: {response.headers}")
+            print(f"Response Content: {response.content}")
+            return Response(
+                content=response.content,
+                status_code=response.status_code,
+                headers=dict(response.headers)
+            )
     except httpx.RequestError as exc:
         import traceback
         traceback.print_exc()
