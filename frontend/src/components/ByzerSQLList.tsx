@@ -172,6 +172,8 @@ const ByzerSQLList: React.FC<ByzerSQLListProps> = ({ refreshTrigger }) => {
         if (response.data.message) {
           message.success(response.data.message);
           await fetchServices();
+          // Reset operation status after successful operation
+          setOperationStatus(prev => ({ ...prev, [serviceName]: null }));
         }
       }
     } catch (error) {
@@ -182,6 +184,9 @@ const ByzerSQLList: React.FC<ByzerSQLListProps> = ({ refreshTrigger }) => {
       } else {
         message.error(`${action === 'start' ? '启动' : action === 'stop' ? '停止' : '删除'}Byzer SQL失败`);
       }
+    } finally {
+      // Ensure operation status is reset even if fetchServices fails
+      setOperationStatus(prev => ({ ...prev, [serviceName]: null }));
     }
   };
 
