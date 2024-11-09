@@ -38,6 +38,13 @@ const ByzerSQLList: React.FC<ByzerSQLListProps> = ({ refreshTrigger }) => {
   });
   const [logPolling, setLogPolling] = useState<NodeJS.Timeout | null>(null);
   const [startingServices, setStartingServices] = useState<{ [key: string]: boolean }>({});
+  const [progress, setProgress] = useState<ProgressInfo>({
+    visible: false,
+    percent: 0,
+    status: 'normal',
+    title: '',
+    subTitle: ''
+  });
   const logContentRef = useRef<HTMLPreElement>(null);
 
   useEffect(() => {
@@ -273,7 +280,25 @@ const ByzerSQLList: React.FC<ByzerSQLListProps> = ({ refreshTrigger }) => {
             setShowCreateForm(false);
             fetchServices();
           }}
+          onProgressChange={setProgress}
         />
+
+      <Modal
+        visible={progress.visible}
+        title={progress.title}
+        footer={null}
+        closable={false}
+        maskClosable={false}
+        width={500}
+      >
+        <Progress
+          percent={progress.percent}
+          status={progress.status}
+        />
+        <div style={{ marginTop: '10px', textAlign: 'center' }}>
+          {progress.subTitle}
+        </div>
+      </Modal>
 
         <EditByzerSQL
           visible={!!editingService}

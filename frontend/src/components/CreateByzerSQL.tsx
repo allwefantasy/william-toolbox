@@ -9,6 +9,7 @@ interface CreateByzerSQLProps {
   onServiceAdded: () => void;
   visible: boolean;
   onCancel: () => void;
+  onProgressChange: (progress: ProgressInfo) => void;
 }
 
 const DOWNLOAD_OPTIONS = [
@@ -161,15 +162,8 @@ const handleDownloadCancel = (taskId: string) => {
   });
 };
 
-const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible, onCancel }) => {
+const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible, onCancel, onProgressChange }) => {
   const [form] = Form.useForm();
-  const [progress, setProgress] = useState<ProgressInfo>({
-    visible: false,
-    percent: 0,
-    status: 'normal',
-    title: '',
-    subTitle: ''
-  });
 
   const handleSubmit = async (values: any) => {
     try {
@@ -204,7 +198,7 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
                       // 关闭创建表单对话框
                       onCancel();
                       // 开始下载和进度展示
-                      handleDownloadConfirm(taskId, onServiceAdded, setProgress);
+                      handleDownloadConfirm(taskId, onServiceAdded, onProgressChange);
                     },
                     cancelText: '取消下载',
                     onCancel: () => {
@@ -261,25 +255,7 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
       footer={null}
       width={800}
     >
-      <>
-        <Modal
-          visible={progress.visible}
-          title={progress.title}
-          footer={null}
-          closable={false}
-          maskClosable={false}
-          width={500}
-        >
-          <Progress
-            percent={progress.percent}
-            status={progress.status}
-          />
-          <div style={{ marginTop: '10px', textAlign: 'center' }}>
-            {progress.subTitle}
-          </div>
-        </Modal>
-
-        <Form
+      <Form
           form={form}
           layout="vertical"
           onFinish={handleSubmit}
