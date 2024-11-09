@@ -5,14 +5,6 @@ import axios from 'axios';
 
 const { TextArea } = Input;
 
-interface ByzerSQL {
-  name: string;
-  status: string;
-  install_dir: string;
-  host: string;
-  port: number;
-}
-
 interface TestByzerSQLProps {
   visible: boolean;
   onCancel: () => void;
@@ -36,26 +28,16 @@ const RunByzerSQL: React.FC<TestByzerSQLProps> = ({ visible, onCancel, serviceNa
   const [form] = Form.useForm();
 
   useEffect(() => {
-    if (visible && serviceName) {
-      // 获取当前选中服务的配置
-      const fetchServiceConfig = async () => {
-        try {
-          const response = await axios.get(`/byzer-sql/${serviceName}`);
-          const service: ByzerSQL = response.data;
-          const engineUrl = `http://${service.host}:${service.port}`;
-          const savedOwner = localStorage.getItem('byzerOwner') || 'admin';
-          form.setFieldsValue({
-            engineUrl: engineUrl,
-            owner: savedOwner
-          });
-        } catch (error) {
-          console.error('Error fetching service config:', error);
-          message.error('获取服务配置失败');
-        }
-      };
-      fetchServiceConfig();
+    if (visible) {
+      // 当弹窗显示时,尝试获取已保存的引擎地址和用户名
+      const savedEngineUrl = localStorage.getItem('byzerEngineUrl') || 'http://localhost:9003';
+      const savedOwner = localStorage.getItem('byzerOwner') || 'admin';
+      form.setFieldsValue({
+        engineUrl: savedEngineUrl,
+        owner: savedOwner
+      });
     }
-  }, [visible, serviceName, form]);
+  }, [visible, form]);
 
   const handleExecute = async () => {
     if (!sql.trim()) {
