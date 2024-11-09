@@ -1,5 +1,5 @@
-import React from 'react';
-import { Form, Input, Button, message, Modal, Typography, Space, Select } from 'antd';
+import React, { useState } from 'react';
+import { Form, Input, Button, message, Modal, Typography, Space, Select, Progress } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
 import axios from 'axios';
 
@@ -35,6 +35,15 @@ const formatBytes = (bytes: number): string => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
+interface ProgressInfo {
+  type: 'download' | 'extract';
+  progress: number;
+  downloaded_size?: number;
+  total_size?: number;
+  speed?: number;
+  estimated_time?: number;
+}
+
 // 工具函数：格式化时间
 const formatTime = (seconds: number): string => {
   if (!seconds || seconds === Infinity) return '计算中...';
@@ -48,40 +57,47 @@ const formatSpeed = (bytesPerSecond: number): string => {
   return `${formatBytes(bytesPerSecond)}/s`;
 };
 
-// 处理下载进度更新
-const handleProgressUpdate = (data: any, isMessageVisible: boolean) => {  
-  if (data.type === 'download') {
-    message.loading({
-      content: `下载中: ${data.progress}% (${formatBytes(data.downloaded_size)} / ${formatBytes(data.total_size)})
-                速度: ${formatSpeed(data.speed)}
-                预计剩余时间: ${formatTime(data.estimated_time)}`,
-      key: 'downloadProgress',
-      duration: 0.1
-    });
-  } else if (data.type === 'extract') {
-    message.loading({
-      content: `解压进度: ${data.progress}%`,
-      key: 'downloadProgress',
-      duration: 0.5
-    });
-  }
-};
+const ProgressDisplay: React.FC<{
+  progressInfo: ProgressInfo | null;
+  visible: boolean;
+  onCancel: () => void;
+}> = ({ progressInfo, visible, onCancel }) => {
+  if (!progressInfo) return null;
 
-// 处理下载完成
-const handleDownloadComplete = (isMessageVisible: boolean, onServiceAdded: () => void) => {
-  message.success({
-    content: '下载并解压完成',
-    key: 'downloadProgress'
-  });
-  onServiceAdded();
-};
+  const getDescription = () => {
+    if (progressInfo.type === 'download') {
+      return (
+        <div>
+          <p>已下载: {formatBytes(progressInfo.downloaded_size || 0)} / {formatBytes(progressInfo.total_size || 0)}</p>
+          <p>速度: {formatSpeed(progressInfo.speed || 0)}</p>
+          <p>预计剩余时间: {formatTime(progressInfo.estimated_time || 0)}</p>
+        </div>
+      );
+    } else {
+      return <p>正在解压文件...</p>;
+    }
+  };
 
-// 处理下载错误
-const handleDownloadError = (error: string, isMessageVisible: boolean) => {
-  message.error({
-    content: `错误: ${error}`,
-    key: 'downloadProgress'
-  });
+  return (
+    <Modal
+      title={progressInfo.type === 'download' ? '下载进度' : '解压进度'}
+      visible={visible}
+      onCancel={onCancel}
+      footer={null}
+      closable={false}
+      maskClosable={false}
+    >
+      <Progress 
+        percent={progressInfo.progress} 
+        status="active"
+        strokeColor={{
+          '0%': '#108ee9',
+          '100%': '#87d068',
+        }}
+      />
+      {getDescription()}
+    </Modal>
+  );
 };
 
 // 处理确认下载
@@ -142,6 +158,8 @@ const handleDownloadCancel = (taskId: string) => {
 };
 
 const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible, onCancel }) => {
+  const [progressInfo, setProgressInfo] = useState<ProgressInfo | null>(null);
+  const [showProgress, setShowProgress] = useState(false);
   const [form] = Form.useForm();
 
   const handleSubmit = async (values: any) => {
@@ -163,15 +181,43 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
                     install_dir: values.install_dir                    
                   });
                   const taskId = downloadResponse.data.task_id;
-
-                  // 确认下载对话框
-                  Modal.confirm({
-                    title: '确认下载',
-                    content: '这可能需要几分钟时间，请耐心等待',
-                    onOk: () => handleDownloadConfirm(taskId, onServiceAdded),
-                    cancelText: '取消下载',
-                    onCancel: () => handleDownloadCancel(taskId),
-                  });
+                  
+                  setShowProgress(true);
+                  const eventSource = new EventSource(`/api/download-progress/${taskId}`);
+                  
+                  eventSource.onopen = () => {
+                    console.log("EventSource connection opened");
+                  };
+                  
+                  eventSource.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    
+                    if (data.completed) {
+                      eventSource.close();
+                      message.success('下载并解压完成');
+                      setShowProgress(false);
+                      setProgressInfo(null);
+                      onServiceAdded();
+                      return;
+                    }
+                    
+                    if (data.error) {
+                      eventSource.close();
+                      message.error(`错误: ${data.error}`);
+                      setShowProgress(false);
+                      setProgressInfo(null);
+                      return;
+                    }
+                    
+                    setProgressInfo(data);
+                  };
+                  
+                  eventSource.onerror = () => {
+                    eventSource.close();
+                    message.error('下载过程发生错误');
+                    setShowProgress(false);
+                    setProgressInfo(null);
+                  };
                 } catch (error) {
                   message.destroy();
                   console.error('Error downloading Byzer SQL:', error);
@@ -249,6 +295,14 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
           </Button>
         </Form.Item>
       </Form>
+      <ProgressDisplay
+        progressInfo={progressInfo}
+        visible={showProgress}
+        onCancel={() => {
+          setShowProgress(false);
+          setProgressInfo(null);
+        }}
+      />
     </Modal>
   );
 };
