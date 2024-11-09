@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Table, Button, message, Card, Typography, Space, Tag, Tooltip, Modal, Progress, Form, Input } from 'antd';
+import RegisterByzerModel from './RegisterByzerModel';
 import { PlusOutlined, SettingOutlined } from '@ant-design/icons';
 import { ProgressInfo} from './CreateByzerSQL';
 import EditByzerSQL from './EditByzerSQL';
 import RunByzerSQL from './RunByzerSQL';
 import CreateByzerSQL from './CreateByzerSQL';
-import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, ThunderboltOutlined, FileOutlined, EditOutlined, ExclamationCircleOutlined, DeleteOutlined, CodeOutlined } from '@ant-design/icons';
+import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, ThunderboltOutlined, FileOutlined, EditOutlined, ExclamationCircleOutlined, DeleteOutlined, CodeOutlined, RobotOutlined } from '@ant-design/icons';
 
 const { Title, Paragraph } = Typography;
 const { confirm } = Modal;
@@ -51,6 +52,7 @@ const ByzerSQLList: React.FC<ByzerSQLListProps> = ({ refreshTrigger }) => {
   });
   const [configForm] = Form.useForm();
   const [testServiceName, setTestServiceName] = useState<string | null>(null);
+  const [registerModelService, setRegisterModelService] = useState<ByzerSQL | null>(null);
   const [progress, setProgress] = useState<ProgressInfo>({
     visible: false,
     percent: 0,
@@ -322,6 +324,12 @@ const ByzerSQLList: React.FC<ByzerSQLListProps> = ({ refreshTrigger }) => {
             >
               测试引擎
             </Button>
+            <Button
+              icon={<RobotOutlined />}
+              onClick={() => setRegisterModelService(record)}
+            >
+              注册模型
+            </Button>
           </Space>
         </div>
       ),
@@ -483,6 +491,14 @@ const ByzerSQLList: React.FC<ByzerSQLListProps> = ({ refreshTrigger }) => {
         visible={!!testServiceName}
         onCancel={() => setTestServiceName(null)}
         serviceName={testServiceName || ''}
+      />
+      
+      <RegisterByzerModel
+        visible={!!registerModelService}
+        onCancel={() => setRegisterModelService(null)}
+        serviceName={registerModelService?.name || ''}
+        host={registerModelService?.host || ''}
+        port={registerModelService?.port || 0}
       />
     </>
   );
