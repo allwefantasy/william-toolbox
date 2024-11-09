@@ -111,33 +111,33 @@ async def add_byzer_sql(request: AddByzerSQLRequest):
 
     try:
         properties = Properties()
-        
+
         # Load existing configuration if file exists
         if os.path.exists(config_file):
-            async with aiofiles.open(config_file, 'rb') as f:
+            async with aiofiles.open(config_file, "rb") as f:
                 content = await f.read()
                 properties.load(content, encoding="utf-8")
-        
+
         # Create a copy of existing properties
         existing_properties = {key: value.data for key, value in properties.items()}
-        
+
         # Only update the port property
         existing_properties["streaming.driver.port"] = str(request.port)
-        
+
         # Clear and update all properties
         properties.clear()
         for key, value in existing_properties.items():
             properties[key] = value
-            
+
         # Write back to file
-        async with aiofiles.open(config_file, 'wb') as f:
-            properties.store(f, encoding='utf-8')
+        with open(config_file, "wb") as f:
+            properties.store(f, encoding="utf-8")
 
     except Exception as e:
         logger.error(f"Error updating config file: {str(e)}")
         logger.error(traceback.format_exc())
         # Even if config update fails, we still return success for the service creation
-        
+
     return {"message": f"Byzer SQL {request.name} added successfully"}
 
 
@@ -198,44 +198,48 @@ async def download_byzer_sql(request: Dict[str, str]):
                 return remaining / speed if speed > 0 else 0
 
             # Download the file
-            async with aiohttp.ClientSession(
-                timeout=aiohttp.ClientTimeout(total=3600)
-            ) as session:
-                try:
-                    async with session.get(download_url) as response:
-                        if response.status != 200:
-                            raise Exception(f"Failed to download: {response.status}")
+            tar_path = os.path.join(install_dir, "byzer.tar.gz")
+            if not os.path.exists(tar_path):
+                async with aiohttp.ClientSession(
+                    timeout=aiohttp.ClientTimeout(total=3600)
+                ) as session:
+                    try:
+                        async with session.get(download_url) as response:
+                            if response.status != 200:
+                                raise Exception(
+                                    f"Failed to download: {response.status}"
+                                )
 
-                        # Get total file size
-                        total_size = int(response.headers.get("content-length", 0))
-                        tar_path = os.path.join(install_dir, "byzer.tar.gz")
-                        downloaded_size = 0
+                            # Get total file size
+                            total_size = int(response.headers.get("content-length", 0))
 
-                        # Download chunks asynchronously
-                        async with aiofiles.open(tar_path, "wb") as f:
-                            async for chunk in response.content.iter_chunked(1024):
-                                await f.write(chunk)
-                                downloaded_size += len(chunk)
-                                progress = int((downloaded_size / total_size) * 100)
-                                download_progress_store[task_id] = {
-                                    "task_id": task_id,
-                                    "type": "download",
-                                    "progress": progress,
-                                    "downloaded_size": downloaded_size,
-                                    "total_size": total_size,
-                                    "speed": calculate_speed(
-                                        downloaded_size, start_time
-                                    ),
-                                    "estimated_time": calculate_eta(
-                                        downloaded_size, total_size, start_time
-                                    ),
-                                }
-                except asyncio.TimeoutError:
-                    download_progress_store[task_id] = {
-                        "task_id": task_id,
-                        "error": "下载超时",
-                    }
-                    raise Exception("Download timeout")
+                            downloaded_size = 0
+
+                            # Download chunks asynchronously
+                            async with aiofiles.open(tar_path, "wb") as f:
+                                async for chunk in response.content.iter_chunked(1024):
+                                    await f.write(chunk)
+                                    downloaded_size += len(chunk)
+                                    progress = int((downloaded_size / total_size) * 100)
+                                    download_progress_store[task_id] = {
+                                        "task_id": task_id,
+                                        "type": "download",
+                                        "progress": progress,
+                                        "downloaded_size": downloaded_size,
+                                        "total_size": total_size,
+                                        "speed": calculate_speed(
+                                            downloaded_size, start_time
+                                        ),
+                                        "estimated_time": calculate_eta(
+                                            downloaded_size, total_size, start_time
+                                        ),
+                                    }
+                    except asyncio.TimeoutError:
+                        download_progress_store[task_id] = {
+                            "task_id": task_id,
+                            "error": "下载超时",
+                        }
+                        raise Exception("Download timeout")
 
             # Extract the file asynchronously using tar command
             logger.info("Starting extraction...")
@@ -347,7 +351,7 @@ async def get_byzer_sql_config(service_name: str):
         properties = Properties()
         async with aiofiles.open(config_file, "rb") as f:
             content = await f.read()
-            properties.load(content,encoding="utf-8")
+            properties.load(content, encoding="utf-8")
 
         # Convert properties to dict
         for item in properties.items():
@@ -394,7 +398,7 @@ async def update_byzer_sql_config(service_name: str, config: dict):
             properties[key] = value
 
         # Write to file
-        async with aiofiles.open(config_file, "wb") as f:
+        with open(config_file, "wb") as f:
             properties.store(f, encoding="utf-8")
 
     except Exception as e:
