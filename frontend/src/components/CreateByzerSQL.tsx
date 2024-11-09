@@ -42,18 +42,69 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
               placeholder="选择适合您操作系统的版本"
               onChange={async (value) => {
                 try {
+                  let isMessageVisible = false;
+                  const eventSource = new EventSource('/api/download-progress');
+                  
                   Modal.confirm({
                     title: '确认下载',
                     content: '这可能需要几分钟时间，请耐心等待',
                     onOk: async () => {
-                      message.loading('正在下载并解压...', 0);
-                      await axios.post('/byzer-sql/download', {
-                        download_url: value,
-                        install_dir: values.install_dir
+                      message.loading({
+                        content: '准备下载...',
+                        duration: 0,
+                        key: 'downloadProgress'
                       });
-                      message.destroy();
-                      message.success('下载并解压完成');
-                      onServiceAdded();
+                      isMessageVisible = true;
+                      
+                      eventSource.onmessage = (event) => {
+                        const data = JSON.parse(event.data);
+                        if (data.type === 'download') {
+                          message.loading({
+                            content: `下载进度: ${data.progress}%`,
+                            key: 'downloadProgress',
+                            duration: 0
+                          });
+                        } else if (data.type === 'extract') {
+                          message.loading({
+                            content: `解压进度: ${data.progress}%`,
+                            key: 'downloadProgress',
+                            duration: 0
+                          });
+                        }
+                      };
+
+                      try {
+                        await axios.post('/byzer-sql/download', {
+                          download_url: value,
+                          install_dir: values.install_dir
+                        });
+                        
+                        eventSource.close();
+                        if (isMessageVisible) {
+                          message.success({
+                            content: '下载并解压完成',
+                            key: 'downloadProgress'
+                          });
+                        }
+                        onServiceAdded();
+                      } catch (error) {
+                        eventSource.close();
+                        if (isMessageVisible) {
+                          message.error({
+                            content: '下载或解压失败',
+                            key: 'downloadProgress'
+                          });
+                        }
+                        throw error;
+                      }
+                    },
+                    onCancel: () => {
+                      if (eventSource) {
+                        eventSource.close();
+                      }
+                      if (isMessageVisible) {
+                        message.destroy('downloadProgress');
+                      }
                     }
                   });
                 } catch (error) {

@@ -11,10 +11,31 @@ import psutil
 import requests
 import tarfile
 import asyncio
+from fastapi import Request
+from sse_starlette.sse import EventSourceResponse
 from ..storage.json_file import load_byzer_sql_from_json, save_byzer_sql_to_json
 from .request_types import AddByzerSQLRequest
 
 router = APIRouter()
+
+@router.get("/api/download-progress")
+async def download_progress(request: Request):
+    """SSE endpoint for download progress updates"""
+    async def event_generator():
+        while True:
+            # Check if client closed connection
+            if await request.is_disconnected():
+                break
+
+            # Yield empty string to keep connection alive
+            yield {
+                "event": "message",
+                "data": "keepalive"
+            }
+            
+            await asyncio.sleep(1)
+            
+    return EventSourceResponse(event_generator())
 
 @router.get("/byzer-sql")
 async def list_byzer_sql():
@@ -57,14 +78,29 @@ async def download_byzer_sql(request: Dict[str, str]):
         response = requests.get(download_url, stream=True)
         response.raise_for_status()
         
+        # Get total file size
+        total_size = int(response.headers.get('content-length', 0))
+        
         tar_path = os.path.join(install_dir, "byzer.tar.gz")
+        block_size = 1024  # 1 Kibibyte
+        downloaded_size = 0
+        
         with open(tar_path, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
+            for chunk in response.iter_content(chunk_size=block_size):
+                if chunk:
+                    f.write(chunk)
+                    downloaded_size += len(chunk)
+                    progress = int((downloaded_size / total_size) * 100)
+                    logger.info(f"Download progress: {progress}%")
         
         # Extract the file
+        logger.info("Starting extraction...")
         with tarfile.open(tar_path, "r:gz") as tar:
-            tar.extractall(install_dir)
+            total_members = len(tar.getmembers())
+            for index, member in enumerate(tar.getmembers(), 1):
+                tar.extract(member, install_dir)
+                progress = int((index / total_members) * 100)
+                logger.info(f"Extraction progress: {progress}%")
             
         # Remove the tar file
         os.remove(tar_path)
