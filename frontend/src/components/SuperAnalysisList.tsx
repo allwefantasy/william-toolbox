@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Table, Button, message, Card, Typography, Space, Tag, Tooltip, Modal, Input, Form, InputNumber } from 'antd';
+import { Table, Button, message, Card, Typography, Space, Tag, Tooltip, Modal } from 'antd';
+import CreateSuperAnalysis from './CreateSuperAnalysis';
+import EditSuperAnalysis from './EditSuperAnalysis';
 import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, ThunderboltOutlined, FileOutlined, EditOutlined, ExclamationCircleOutlined, DeleteOutlined } from '@ant-design/icons';
 
 const { Title, Paragraph } = Typography;
@@ -27,10 +29,8 @@ const SuperAnalysisList: React.FC<SuperAnalysisListProps> = ({ refreshTrigger })
   const [analyses, setAnalyses] = useState<SuperAnalysis[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState<{ [key: string]: boolean }>({});
-  const [modalVisible, setModalVisible] = useState(false);
-  const [editMode, setEditMode] = useState(false);
-  const [currentAnalysis, setCurrentAnalysis] = useState<SuperAnalysis | null>(null);
-  const [form] = Form.useForm();
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [editingAnalysis, setEditingAnalysis] = useState<SuperAnalysis | null>(null);
   const [logModal, setLogModal] = useState<{
     visible: boolean;
     content: string;
@@ -199,43 +199,7 @@ const SuperAnalysisList: React.FC<SuperAnalysisListProps> = ({ refreshTrigger })
     }
   };
 
-  const showAddEditModal = (analysis?: SuperAnalysis) => {
-    setEditMode(!!analysis);
-    setCurrentAnalysis(analysis || null);
-    if (analysis) {
-      form.setFieldsValue(analysis);
-    } else {
-      form.resetFields();
-      form.setFieldsValue({
-        host: '0.0.0.0',
-        port: 8000,
-        byzer_sql_url: 'http://127.0.0.1:9003/run/script'
-      });
-    }
-    setModalVisible(true);
-  };
 
-  const handleModalOk = async () => {
-    try {
-      const values = await form.validateFields();
-      if (editMode && currentAnalysis) {
-        await axios.put(`/super-analysis/${currentAnalysis.name}`, values);
-        message.success('Super Analysis更新成功');
-      } else {
-        await axios.post('/super-analysis/add', values);
-        message.success('Super Analysis添加成功');
-      }
-      setModalVisible(false);
-      fetchAnalyses();
-    } catch (error) {
-      console.error('Error saving analysis:', error);
-      if (axios.isAxiosError(error) && error.response) {
-        message.error(`保存失败: ${error.response.data.detail}`);
-      } else {
-        message.error('保存失败');
-      }
-    }
-  };
 
   const columns = [
     {
@@ -338,7 +302,7 @@ const SuperAnalysisList: React.FC<SuperAnalysisListProps> = ({ refreshTrigger })
             </Button>
             <Button
               icon={<EditOutlined />}
-              onClick={() => showAddEditModal(record)}
+              onClick={() => setEditingAnalysis(record)}
               disabled={record.status === 'running'}
             >
               编辑
@@ -362,10 +326,29 @@ const SuperAnalysisList: React.FC<SuperAnalysisListProps> = ({ refreshTrigger })
           type="primary" 
           icon={<EditOutlined />} 
           style={{ marginBottom: 16 }}
-          onClick={() => showAddEditModal()}
+          onClick={() => setShowCreateForm(true)}
         >
           添加Super Analysis
         </Button>
+        
+        {showCreateForm && (
+          <CreateSuperAnalysis 
+            onAnalysisAdded={() => {
+              setShowCreateForm(false);
+              fetchAnalyses();
+            }} 
+          />
+        )}
+
+        {editingAnalysis && (
+          <EditSuperAnalysis
+            analysis={editingAnalysis}
+            onAnalysisUpdated={() => {
+              setEditingAnalysis(null);
+              fetchAnalyses();
+            }}
+          />
+        )}
         <Table
           columns={columns}
           dataSource={analyses}
@@ -376,67 +359,7 @@ const SuperAnalysisList: React.FC<SuperAnalysisListProps> = ({ refreshTrigger })
         />
       </Card>
 
-      <Modal
-        title={editMode ? '编辑Super Analysis' : '添加Super Analysis'}
-        visible={modalVisible}
-        onOk={handleModalOk}
-        onCancel={() => setModalVisible(false)}
-        width={800}
-      >
-        <Form form={form} layout="vertical">
-          <Form.Item
-            name="name"
-            label="名称"
-            rules={[{ required: true, message: '请输入名称' }]}
-          >
-            <Input disabled={editMode} />
-          </Form.Item>
-          <Form.Item
-            name="served_model_name"
-            label="服务模型名称"
-            rules={[{ required: true, message: '请输入服务模型名称' }]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="port"
-            label="端口"
-            rules={[{ required: true, message: '请输入端口号' }]}
-            initialValue={8000}
-          >
-            <InputNumber min={1024} max={65535} style={{ width: '100%' }} />
-          </Form.Item>
-          <Form.Item
-            name="schema_rag_base_url"
-            label="Schema RAG URL"
-            rules={[{ required: true, message: '请输入Schema RAG URL' }]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="context_rag_base_url"
-            label="Context RAG URL"
-            rules={[{ required: true, message: '请输入Context RAG URL' }]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="byzer_sql_url"
-            label="Byzer SQL URL"
-            rules={[{ required: true, message: '请输入Byzer SQL URL' }]}
-            initialValue="http://127.0.0.1:9003/run/script"
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="host"
-            label="主机"
-            initialValue="0.0.0.0"
-          >
-            <Input />
-          </Form.Item>
-        </Form>
-      </Modal>
+
 
       <Modal
         title={logModal.title}
