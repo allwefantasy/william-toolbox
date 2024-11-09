@@ -2,6 +2,7 @@ import json
 from fastapi import APIRouter, HTTPException
 import os
 import aiofiles
+import configparser
 from loguru import logger
 import traceback
 from typing import Dict, Any
@@ -241,6 +242,79 @@ async def delete_byzer_sql(service_name: str):
         logger.warning(f"Failed to delete log files for service {service_name}: {str(e)}")
     
     return {"message": f"Byzer SQL {service_name} deleted successfully"}
+
+@router.get("/byzer-sql/{service_name}/config")
+async def get_byzer_sql_config(service_name: str):
+    """Get the configuration of a Byzer SQL service."""
+    services = await load_byzer_sql_from_json()
+    
+    if service_name not in services:
+        raise HTTPException(
+            status_code=404, 
+            detail=f"Byzer SQL {service_name} not found"
+        )
+        
+    service_info = services[service_name]
+    config_file = os.path.join(service_info["install_dir"], "conf", "byzer.properties.override")
+    
+    if not os.path.exists(config_file):
+        return {"config": {}}
+        
+    config = {}
+    try:
+        async with aiofiles.open(config_file, 'r') as f:
+            content = await f.read()
+            for line in content.splitlines():
+                line = line.strip()
+                if line and not line.startswith('#'):
+                    try:
+                        key, value = line.split('=', 1)
+                        config[key.strip()] = value.strip()
+                    except ValueError:
+                        continue
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to read config file: {str(e)}"
+        )
+    
+    return {"config": config}
+
+@router.put("/byzer-sql/{service_name}/config")
+async def update_byzer_sql_config(service_name: str, config: dict):
+    """Update the configuration of a Byzer SQL service."""
+    services = await load_byzer_sql_from_json()
+    
+    if service_name not in services:
+        raise HTTPException(
+            status_code=404, 
+            detail=f"Byzer SQL {service_name} not found"
+        )
+        
+    service_info = services[service_name]
+    if service_info['status'] == 'running':
+        raise HTTPException(
+            status_code=400, 
+            detail="Cannot update config while service is running"
+        )
+    
+    config_file = os.path.join(service_info["install_dir"], "conf", "byzer.properties.override")
+    config_dir = os.path.dirname(config_file)
+    
+    if not os.path.exists(config_dir):
+        os.makedirs(config_dir)
+    
+    try:
+        async with aiofiles.open(config_file, 'w') as f:
+            for key, value in config.items():
+                await f.write(f"{key}={value}\n")
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to write config file: {str(e)}"
+        )
+    
+    return {"message": "Configuration updated successfully"}
 
 @router.put("/byzer-sql/{service_name}")
 async def update_byzer_sql(service_name: str, request: AddByzerSQLRequest):

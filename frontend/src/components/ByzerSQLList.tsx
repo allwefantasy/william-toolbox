@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Table, Button, message, Card, Typography, Space, Tag, Tooltip, Modal,Progress } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { Table, Button, message, Card, Typography, Space, Tag, Tooltip, Modal, Progress, Form, Input } from 'antd';
+import { PlusOutlined, SettingOutlined } from '@ant-design/icons';
 import { ProgressInfo} from './CreateByzerSQL';
 import EditByzerSQL from './EditByzerSQL';
 import CreateByzerSQL from './CreateByzerSQL';
@@ -39,6 +39,14 @@ const ByzerSQLList: React.FC<ByzerSQLListProps> = ({ refreshTrigger }) => {
   });
   const [logPolling, setLogPolling] = useState<NodeJS.Timeout | null>(null);
   const [startingServices, setStartingServices] = useState<{ [key: string]: boolean }>({});
+  const [configModal, setConfigModal] = useState<{
+    visible: boolean;
+    service: string | null;
+  }>({
+    visible: false,
+    service: null,
+  });
+  const [configForm] = Form.useForm();
   const [progress, setProgress] = useState<ProgressInfo>({
     visible: false,
     percent: 0,
@@ -90,6 +98,41 @@ const ByzerSQLList: React.FC<ByzerSQLListProps> = ({ refreshTrigger }) => {
     await fetchLogs();
     const interval = setInterval(fetchLogs, 3000);
     setLogPolling(interval);
+  };
+
+  const showConfigModal = async (serviceName: string) => {
+    try {
+      const response = await axios.get(`/byzer-sql/${serviceName}/config`);
+      const config = response.data.config;
+      const configList = Object.entries(config).map(([key, value]) => ({ key, value }));
+      configForm.setFieldsValue({ configs: configList });
+      setConfigModal({ visible: true, service: serviceName });
+    } catch (error) {
+      console.error('Error fetching config:', error);
+      message.error('获取配置失败');
+    }
+  };
+
+  const handleUpdateConfig = async (values: any) => {
+    if (!configModal.service) return;
+
+    try {
+      const config = values.configs.reduce((acc: any, item: any) => {
+        acc[item.key] = item.value;
+        return acc;
+      }, {});
+
+      await axios.put(`/byzer-sql/${configModal.service}/config`, config);
+      message.success('配置更新成功');
+      setConfigModal({ visible: false, service: null });
+    } catch (error) {
+      console.error('Error updating config:', error);
+      if (axios.isAxiosError(error) && error.response) {
+        message.error(`更新失败: ${error.response.data.detail}`);
+      } else {
+        message.error('更新失败');
+      }
+    }
   };
 
   const handleCloseLogModal = () => {
@@ -233,6 +276,13 @@ const ByzerSQLList: React.FC<ByzerSQLListProps> = ({ refreshTrigger }) => {
             >
               环境检查日志
             </Button>
+            <Button
+              icon={<SettingOutlined />}
+              onClick={() => showConfigModal(record.name)}
+              disabled={record.status === 'running'}
+            >
+              编辑配置
+            </Button>
           </Space>
           <Space size="small">
             <Button
@@ -326,6 +376,65 @@ const ByzerSQLList: React.FC<ByzerSQLListProps> = ({ refreshTrigger }) => {
           bordered
         />
       </Card>
+
+      <Modal
+        title={
+          <Space>
+            <SettingOutlined />
+            编辑 Byzer SQL 配置
+          </Space>
+        }
+        visible={configModal.visible}
+        onCancel={() => setConfigModal({ visible: false, service: null })}
+        width={800}
+        footer={[
+          <Button key="cancel" onClick={() => setConfigModal({ visible: false, service: null })}>
+            取消
+          </Button>,
+          <Button key="submit" type="primary" onClick={() => configForm.submit()}>
+            保存
+          </Button>
+        ]}
+      >
+        <Form
+          form={configForm}
+          layout="vertical"
+          onFinish={handleUpdateConfig}
+        >
+          <Form.List name="configs">
+            {(fields, { add, remove }) => (
+              <>
+                {fields.map(({ key, name, ...restField }) => (
+                  <Space key={key} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
+                    <Form.Item
+                      {...restField}
+                      name={[name, 'key']}
+                      rules={[{ required: true, message: '请输入配置项' }]}
+                    >
+                      <Input placeholder="配置项" />
+                    </Form.Item>
+                    <Form.Item
+                      {...restField}
+                      name={[name, 'value']}
+                      rules={[{ required: true, message: '请输入配置值' }]}
+                    >
+                      <Input placeholder="配置值" />
+                    </Form.Item>
+                    <Button onClick={() => remove(name)} type="link" danger>
+                      删除
+                    </Button>
+                  </Space>
+                ))}
+                <Form.Item>
+                  <Button type="dashed" onClick={() => add()} block>
+                    添加配置项
+                  </Button>
+                </Form.Item>
+              </>
+            )}
+          </Form.List>
+        </Form>
+      </Modal>
 
       <Modal
         title={logModal.title}
