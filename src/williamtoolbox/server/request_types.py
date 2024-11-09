@@ -118,4 +118,6 @@ class RunSQLRequest(BaseModel):
 class AddByzerSQLRequest(BaseModel):
     name: str
     install_dir: str
+    host: str
+    port: int
 

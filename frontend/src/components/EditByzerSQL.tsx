@@ -84,7 +84,7 @@ const EditByzerSQL: React.FC<EditByzerSQLProps> = ({ service, onServiceUpdated, 
           label="主机地址"
           rules={[{ required: true, message: '请输入主机地址' }]}
         >
-          <Input placeholder="127.0.0.1" />
+          <Input value={service?.host} />
         </Form.Item>
 
         <Form.Item
@@ -102,7 +102,7 @@ const EditByzerSQL: React.FC<EditByzerSQLProps> = ({ service, onServiceUpdated, 
             }
           ]}
         >
-          <Input type="number" placeholder="9003" />
+          <Input type="number" value={service?.port} />
         </Form.Item>
 
         <Form.Item>

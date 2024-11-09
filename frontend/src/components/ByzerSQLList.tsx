@@ -17,6 +17,8 @@ interface ByzerSQL {
   install_dir: string;
   process_id?: number;
   is_alive?: boolean;
+  host: string;
+  port: number;
 }
 
 interface ByzerSQLListProps {
