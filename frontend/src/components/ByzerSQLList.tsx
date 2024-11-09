@@ -227,6 +227,12 @@ const ByzerSQLList: React.FC<ByzerSQLListProps> = ({ refreshTrigger }) => {
             >
               Shell错误日志
             </Button>
+            <Button
+              icon={<ExclamationCircleOutlined />}
+              onClick={() => showLogModal(record.name, 'check-env')}
+            >
+              环境检查日志
+            </Button>
           </Space>
           <Space size="small">
             <Button
