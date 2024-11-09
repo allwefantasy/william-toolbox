@@ -1,3 +1,4 @@
+import json
 from fastapi import APIRouter, HTTPException
 import os
 import aiofiles
@@ -61,10 +62,11 @@ async def download_progress(request: Request, task_id: str):
                 
             if task_id in download_progress_store:
                 progress_data = download_progress_store[task_id]
-                yield {
-                    "event": "message",
-                    "data": progress_data
-                }
+                # Convert progress_data to JSON string
+                data = json.dumps(progress_data)
+                
+                # Send in SSE format
+                yield f"data: {data}\n\n"
                 
                 if progress_data.get("completed", False):
                     del download_progress_store[task_id]
