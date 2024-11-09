@@ -6,7 +6,7 @@ import traceback
 from typing import Dict, Any
 from pathlib import Path
 import subprocess
-import signal
+import uuid
 import psutil
 import requests
 import tarfile
