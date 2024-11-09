@@ -4,7 +4,7 @@ import { Table, Button, message, Card, Typography, Space, Tag, Tooltip, Modal, P
 import { PlusOutlined, SettingOutlined } from '@ant-design/icons';
 import { ProgressInfo} from './CreateByzerSQL';
 import EditByzerSQL from './EditByzerSQL';
-import TestByzerSQL from './TestByzerSQL';
+import RunByzerSQL from './RunByzerSQL';
 import CreateByzerSQL from './CreateByzerSQL';
 import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, ThunderboltOutlined, FileOutlined, EditOutlined, ExclamationCircleOutlined, DeleteOutlined, CodeOutlined } from '@ant-design/icons';
 
@@ -471,7 +471,7 @@ const ByzerSQLList: React.FC<ByzerSQLListProps> = ({ refreshTrigger }) => {
         </pre>
       </Modal>
 
-      <TestByzerSQL
+      <RunByzerSQL
         visible={!!testServiceName}
         onCancel={() => setTestServiceName(null)}
         serviceName={testServiceName || ''}

@@ -21,7 +21,7 @@ interface SQLResult {
   data: any[];
 }
 
-const TestByzerSQL: React.FC<TestByzerSQLProps> = ({ visible, onCancel, serviceName }) => {
+const RunByzerSQL: React.FC<TestByzerSQLProps> = ({ visible, onCancel, serviceName }) => {
   const [sql, setSql] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SQLResult | null>(null);
@@ -120,4 +120,4 @@ const TestByzerSQL: React.FC<TestByzerSQLProps> = ({ visible, onCancel, serviceN
   );
 };
 
-export default TestByzerSQL;
+export default RunByzerSQL;
