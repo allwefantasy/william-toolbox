@@ -243,6 +243,8 @@ async def delete_byzer_sql(service_name: str):
     
     return {"message": f"Byzer SQL {service_name} deleted successfully"}
 
+from jproperties import Properties
+
 @router.get("/byzer-sql/{service_name}/config")
 async def get_byzer_sql_config(service_name: str):
     """Get the configuration of a Byzer SQL service."""
@@ -262,16 +264,16 @@ async def get_byzer_sql_config(service_name: str):
         
     config = {}
     try:
-        async with aiofiles.open(config_file, 'r') as f:
+        properties = Properties()
+        async with aiofiles.open(config_file, 'rb') as f:
             content = await f.read()
-            for line in content.splitlines():
-                line = line.strip()
-                if line and not line.startswith('#'):
-                    try:
-                        key, value = line.split('=', 1)
-                        config[key.strip()] = value.strip()
-                    except ValueError:
-                        continue
+            properties.load(content)
+            
+        # Convert properties to dict
+        for item in properties.items():
+            key, value = item
+            config[key] = str(value.data)
+            
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -305,9 +307,16 @@ async def update_byzer_sql_config(service_name: str, config: dict):
         os.makedirs(config_dir)
     
     try:
-        async with aiofiles.open(config_file, 'w') as f:
-            for key, value in config.items():
-                await f.write(f"{key}={value}\n")
+        properties = Properties()
+        
+        # Add all config items to properties
+        for key, value in config.items():
+            properties[key] = value
+            
+        # Write to file
+        async with aiofiles.open(config_file, 'wb') as f:
+            properties.store(f, encoding='utf-8')
+            
     except Exception as e:
         raise HTTPException(
             status_code=500,
