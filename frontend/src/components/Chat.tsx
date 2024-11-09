@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Input, Button, List, Avatar, Typography, Select, Space, Dropdown, Menu, Modal, Spin, Tooltip, Timeline } from 'antd';
+import { Input, Button, List, Avatar, Typography, Select, Space, Dropdown, Menu, Modal, Spin, Tooltip, Timeline, Table } from 'antd';
 import { SendOutlined, PlusCircleOutlined, GithubOutlined, SettingOutlined, EditOutlined, PictureOutlined, FileOutlined, DatabaseOutlined, DeleteOutlined, LoadingOutlined, RobotOutlined, RedoOutlined, BulbOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import './Chat.css';
@@ -629,28 +629,68 @@ const Chat: React.FC = () => {
                         borderRadius: '8px',
                         marginTop: item.thoughts && item.thoughts.length > 0 ? '16px' : '0'
                       }}>
-                        <Typography.Text style={{ color: item.role === 'user' ? '#096dd9' : '#389e0d', flex: 1 }}>
-                          <ReactMarkdown
-                            components={{
-                              code({ inline, className, children, ...props }: any) {
-                                const match = /language-(\w+)/.exec(className || '');
-                                return !inline && match ? (
-                                  <CodeBlock
-                                    language={match[1]}
-                                    value={String(children).replace(/\n$/, '')}
-                                    {...props}
-                                  />
-                                ) : (
-                                  <code className={className} {...props}>
-                                    {children}
-                                  </code>
+                        {listType === 'super-analysis' && item.role === 'assistant' ? (
+                          <div style={{ flex: 1 }}>
+                            {(() => {
+                              try {
+                                const result = JSON.parse(item.content);
+                                if (result.schema && result.data) {
+                                  const columns = result.schema.fields.map((field: any) => ({
+                                    title: field.name,
+                                    dataIndex: field.name,
+                                    key: field.name,
+                                  }));
+                                  
+                                  return (
+                                    <Table 
+                                      dataSource={result.data} 
+                                      columns={columns}
+                                      pagination={false}
+                                      bordered
+                                      size="small"
+                                    />
+                                  );
+                                }
+                                // 如果不是预期的格式，回退到普通文本显示
+                                return (
+                                  <Typography.Text style={{ color: '#389e0d' }}>
+                                    {item.content}
+                                  </Typography.Text>
                                 );
-                              },
-                            }}
-                          >
-                            {item.content}
-                          </ReactMarkdown>
-                        </Typography.Text>
+                              } catch (e) {
+                                // 如果解析JSON失败，回退到普通文本显示
+                                return (
+                                  <Typography.Text style={{ color: '#389e0d' }}>
+                                    {item.content}
+                                  </Typography.Text>
+                                );
+                              }
+                            })()}
+                          </div>
+                        ) : (
+                          <Typography.Text style={{ color: item.role === 'user' ? '#096dd9' : '#389e0d', flex: 1 }}>
+                            <ReactMarkdown
+                              components={{
+                                code({ inline, className, children, ...props }: any) {
+                                  const match = /language-(\w+)/.exec(className || '');
+                                  return !inline && match ? (
+                                    <CodeBlock
+                                      language={match[1]}
+                                      value={String(children).replace(/\n$/, '')}
+                                      {...props}
+                                    />
+                                  ) : (
+                                    <code className={className} {...props}>
+                                      {children}
+                                    </code>
+                                  );
+                                },
+                              }}
+                            >
+                              {item.content}
+                            </ReactMarkdown>
+                          </Typography.Text>
+                        )}
                         {item.role === 'user' && (
                           <Tooltip title="Regenerate response">
                             <Button
