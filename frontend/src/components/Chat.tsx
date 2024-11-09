@@ -158,26 +158,39 @@ const Chat: React.FC = () => {
             }
 
             if (event.event === 'done') {
-              // Update conversation after regeneration is complete
-              try {
-                const updatedMessages = messages.map(msg => {
-                  if (msg.id === assistant_message_id) {
-                    return { ...msg, content: assistantMessage, thoughts: msg.thoughts || [] };
-                  }
-                  return msg;
-                });
-                await axios.put(`/chat/conversations/${currentConversationId}`, {
-                  id: currentConversationId,
-                  title: currentConversationTitle,
-                  messages: updatedMessages,
-                  created_at: new Date().toISOString(),
-                  updated_at: new Date().toISOString()
-                });
-              } catch (error) {
-                console.error('Error updating conversation:', error);
-                MessageBox.error('Failed to update conversation');
-              }
-              return;
+                // Update conversation after regeneration is complete
+                try {
+                  setMessages(prevMessages => {
+                    const updatedMessages = prevMessages.map(msg => {
+                      if (msg.id === assistant_message_id) {
+                        return { ...msg, content: assistantMessage, thoughts: msg.thoughts || [] };
+                      }
+                      return msg;
+                    });
+
+                    // Update conversation in server
+                    (async () => {
+                      try {
+                        await axios.put(`/chat/conversations/${currentConversationId}`, {
+                          id: currentConversationId,
+                          title: currentConversationTitle,
+                          messages: updatedMessages,
+                          created_at: new Date().toISOString(),
+                          updated_at: new Date().toISOString()
+                        });
+                      } catch (error) {
+                        console.error('Error updating conversation:', error);
+                        MessageBox.error('Failed to update conversation');
+                      }
+                    })();
+
+                    return updatedMessages;
+                  });
+                } catch (error) {
+                  console.error('Error updating conversation:', error);
+                  MessageBox.error('Failed to update conversation');
+                }
+                return;
             }
           }
         }
