@@ -391,14 +391,12 @@ async def get_byzer_sql_logs(service_name: str, log_type: str, offset: int = 0) 
     if service_name not in services:
         raise HTTPException(status_code=404, detail=f"Byzer SQL {service_name} not found")
         
-    if log_type not in ["byzer", "shell", "env-check"]:
+    if log_type not in ["byzer", "shell"]:
         raise HTTPException(status_code=400, detail="Invalid log type")
     
     install_dir = services[service_name]["install_dir"]
     log_file = os.path.join(install_dir, "logs", 
-                           "byzer.out" if log_type == "byzer" 
-                           else "shell.stderr" if log_type == "shell"
-                           else "check-env.error")
+                           "byzer.out" if log_type == "byzer" else "shell.stderr")
     
     try:
         if not os.path.exists(log_file):
