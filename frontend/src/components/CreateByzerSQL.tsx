@@ -1,5 +1,5 @@
-import React from 'react';
-import { Form, Input, Button, message, Modal, Typography, Space, Select } from 'antd';
+import React, { useState } from 'react';
+import { Form, Input, Button, message, Modal, Typography, Space, Select, Progress } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
 import axios from 'axios';
 
@@ -26,6 +26,14 @@ const DOWNLOAD_OPTIONS = [
   }
 ];
 
+interface ProgressInfo {
+  visible: boolean;
+  percent: number;
+  status: 'active' | 'exception' | 'success' | 'normal';
+  title: string;
+  subTitle: string;
+}
+
 // 工具函数：格式化文件大小
 const formatBytes = (bytes: number): string => {
   if (bytes === 0) return '0 B';
@@ -49,44 +57,54 @@ const formatSpeed = (bytesPerSecond: number): string => {
 };
 
 // 处理下载进度更新
-const handleProgressUpdate = (data: any, isMessageVisible: boolean) => {  
+const handleProgressUpdate = (data: any, setProgress: Function) => {  
   if (data.type === 'download') {
-    message.loading({
-      content: `下载中: ${data.progress}% (${formatBytes(data.downloaded_size)} / ${formatBytes(data.total_size)})
-                速度: ${formatSpeed(data.speed)}
-                预计剩余时间: ${formatTime(data.estimated_time)}`,
-      key: 'downloadProgress',
-      duration: 0.1
+    setProgress({
+      visible: true,
+      percent: data.progress,
+      status: 'active',
+      title: '下载中',
+      subTitle: `${formatBytes(data.downloaded_size)} / ${formatBytes(data.total_size)} | 速度: ${formatSpeed(data.speed)} | 剩余时间: ${formatTime(data.estimated_time)}`
     });
   } else if (data.type === 'extract') {
-    message.loading({
-      content: `解压进度: ${data.progress}%`,
-      key: 'downloadProgress',
-      duration: 0.5
+    setProgress({
+      visible: true,
+      percent: data.progress,
+      status: 'active',
+      title: '解压中',
+      subTitle: `${data.progress}%`
     });
   }
 };
 
 // 处理下载完成
-const handleDownloadComplete = (isMessageVisible: boolean, onServiceAdded: () => void) => {
-  message.success({
-    content: '下载并解压完成',
-    key: 'downloadProgress'
+const handleDownloadComplete = (setProgress: Function, onServiceAdded: () => void) => {
+  setProgress({
+    visible: true,
+    percent: 100,
+    status: 'success',
+    title: '完成',
+    subTitle: '下载并解压完成'
   });
-  onServiceAdded();
+  setTimeout(() => {
+    setProgress(prev => ({ ...prev, visible: false }));
+    onServiceAdded();
+  }, 1500);
 };
 
 // 处理下载错误
-const handleDownloadError = (error: string, isMessageVisible: boolean) => {
-  message.error({
-    content: `错误: ${error}`,
-    key: 'downloadProgress'
+const handleDownloadError = (error: string, setProgress: Function) => {
+  setProgress({
+    visible: true,
+    percent: 100,
+    status: 'exception',
+    title: '错误',
+    subTitle: error
   });
 };
 
 // 处理确认下载
-const handleDownloadConfirm = async (taskId: string, onServiceAdded: () => void) => {
-  let isMessageVisible = true;
+const handleDownloadConfirm = async (taskId: string, onServiceAdded: () => void, setProgress: Function) => {
   console.log("Starting EventSource connection with taskId:", taskId);
   const eventSource = new EventSource(`/api/download-progress/${taskId}`);
   // Log when connection is opened
@@ -98,13 +116,15 @@ const handleDownloadConfirm = async (taskId: string, onServiceAdded: () => void)
   eventSource.onerror = (error) => {
     console.error("EventSource error:", error);
     eventSource.close();
-    handleDownloadError('下载过程发生错误', isMessageVisible);
+    handleDownloadError('下载过程发生错误', setProgress);
   };
 
-  message.loading({
-    content: '准备下载...',
-    duration: 0,
-    key: 'downloadProgress'
+  setProgress({
+    visible: true,
+    percent: 0,
+    status: 'active',
+    title: '准备下载',
+    subTitle: '正在初始化...'
   });
 
   eventSource.onmessage = (event) => {
@@ -114,17 +134,17 @@ const handleDownloadConfirm = async (taskId: string, onServiceAdded: () => void)
     
     if (data.completed) {
       eventSource.close();
-      handleDownloadComplete(isMessageVisible, onServiceAdded);
+      handleDownloadComplete(setProgress, onServiceAdded);
       return;
     }
     
     if (data.error) {
       eventSource.close();
-      handleDownloadError(data.error, isMessageVisible);
+      handleDownloadError(data.error, setProgress);
       return;
     }
     
-    handleProgressUpdate(data, isMessageVisible);
+      handleProgressUpdate(data, setProgress);
   };
 
   eventSource.onerror = () => {
@@ -143,6 +163,13 @@ const handleDownloadCancel = (taskId: string) => {
 
 const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible, onCancel }) => {
   const [form] = Form.useForm();
+  const [progress, setProgress] = useState<ProgressInfo>({
+    visible: false,
+    percent: 0,
+    status: 'normal',
+    title: '',
+    subTitle: ''
+  });
 
   const handleSubmit = async (values: any) => {
     try {
@@ -168,7 +195,7 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
                   Modal.confirm({
                     title: '确认下载',
                     content: '这可能需要几分钟时间，请耐心等待',
-                    onOk: () => handleDownloadConfirm(taskId, onServiceAdded),
+                    onOk: () => handleDownloadConfirm(taskId, onServiceAdded, setProgress),
                     cancelText: '取消下载',
                     onCancel: () => handleDownloadCancel(taskId),
                   });
@@ -221,11 +248,29 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
       footer={null}
       width={800}
     >
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={handleSubmit}
-      >
+      <>
+        <Modal
+          visible={progress.visible}
+          title={progress.title}
+          footer={null}
+          closable={false}
+          maskClosable={false}
+          width={500}
+        >
+          <Progress
+            percent={progress.percent}
+            status={progress.status}
+          />
+          <div style={{ marginTop: '10px', textAlign: 'center' }}>
+            {progress.subTitle}
+          </div>
+        </Modal>
+
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleSubmit}
+        >
         <Form.Item
           name="name"
           label="服务名称"
@@ -249,6 +294,7 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
           </Button>
         </Form.Item>
       </Form>
+      </>
     </Modal>
   );
 };
