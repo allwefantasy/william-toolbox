@@ -4,8 +4,9 @@ import { Table, Button, message, Card, Typography, Space, Tag, Tooltip, Modal, P
 import { PlusOutlined, SettingOutlined } from '@ant-design/icons';
 import { ProgressInfo} from './CreateByzerSQL';
 import EditByzerSQL from './EditByzerSQL';
+import TestByzerSQL from './TestByzerSQL';
 import CreateByzerSQL from './CreateByzerSQL';
-import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, ThunderboltOutlined, FileOutlined, EditOutlined, ExclamationCircleOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, ThunderboltOutlined, FileOutlined, EditOutlined, ExclamationCircleOutlined, DeleteOutlined, CodeOutlined } from '@ant-design/icons';
 
 const { Title, Paragraph } = Typography;
 const { confirm } = Modal;
@@ -47,6 +48,7 @@ const ByzerSQLList: React.FC<ByzerSQLListProps> = ({ refreshTrigger }) => {
     service: null,
   });
   const [configForm] = Form.useForm();
+  const [testServiceName, setTestServiceName] = useState<string | null>(null);
   const [progress, setProgress] = useState<ProgressInfo>({
     visible: false,
     percent: 0,
@@ -306,6 +308,12 @@ const ByzerSQLList: React.FC<ByzerSQLListProps> = ({ refreshTrigger }) => {
             >
               编辑
             </Button>
+            <Button
+              icon={<CodeOutlined />}
+              onClick={() => setTestServiceName(record.name)}
+            >
+              测试引擎
+            </Button>
           </Space>
         </div>
       ),
@@ -462,6 +470,12 @@ const ByzerSQLList: React.FC<ByzerSQLListProps> = ({ refreshTrigger }) => {
           {logModal.content || 'No logs available'}
         </pre>
       </Modal>
+
+      <TestByzerSQL
+        visible={!!testServiceName}
+        onCancel={() => setTestServiceName(null)}
+        serviceName={testServiceName || ''}
+      />
     </>
   );
 };
