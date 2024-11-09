@@ -176,7 +176,7 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
       const response = await axios.post('/byzer-sql/add', values);
 
       if (!values.install_dir.includes('bin')) {
-        Modal.confirm({
+        const modal = Modal.confirm({
           title: '选择下载版本',
           content: (
             <Select
@@ -184,6 +184,9 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
               placeholder="选择适合您操作系统的版本"
               onChange={async (value) => {
                 try {
+                  // 关闭版本选择对话框
+                  modal.destroy();
+                  
                   // 创建下载请求并获取 taskId
                   const downloadResponse = await axios.post('/byzer-sql/download', {
                     download_url: value,
@@ -192,12 +195,22 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
                   const taskId = downloadResponse.data.task_id;
 
                   // 确认下载对话框
-                  Modal.confirm({
+                  const confirmModal = Modal.confirm({
                     title: '确认下载',
                     content: '这可能需要几分钟时间，请耐心等待',
-                    onOk: () => handleDownloadConfirm(taskId, onServiceAdded, setProgress),
+                    onOk: () => {
+                      // 关闭确认对话框
+                      confirmModal.destroy();
+                      // 关闭创建表单对话框
+                      onCancel();
+                      // 开始下载和进度展示
+                      handleDownloadConfirm(taskId, onServiceAdded, setProgress);
+                    },
                     cancelText: '取消下载',
-                    onCancel: () => handleDownloadCancel(taskId),
+                    onCancel: () => {
+                      handleDownloadCancel(taskId);
+                      confirmModal.destroy();
+                    },
                   });
                 } catch (error) {
                   message.destroy();
