@@ -167,9 +167,14 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
 
   const handleSubmit = async (values: any) => {
     try {
+      // Check if byzer.sh exists
+      const checkResponse = await axios.post('/byzer-sql/check-installation', {
+        install_dir: values.install_dir
+      });
+
       const response = await axios.post('/byzer-sql/add', values);
 
-      if (!values.install_dir.includes('bin')) {
+      if (!checkResponse.data.has_byzer_sh) {
         const modal = Modal.confirm({
           title: '选择下载版本',
           content: (

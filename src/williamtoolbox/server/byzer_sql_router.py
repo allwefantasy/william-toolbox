@@ -25,6 +25,16 @@ async def list_byzer_sql():
     services = await load_byzer_sql_from_json()
     return [{"name": name, **info} for name, info in services.items()]
 
+@router.post("/byzer-sql/check-installation")
+async def check_byzer_sql_installation(request: dict):
+    """Check if byzer.sh exists in the specified directory."""
+    install_dir = request.get("install_dir")
+    if not install_dir:
+        raise HTTPException(status_code=400, detail="install_dir is required")
+        
+    byzer_sh_path = os.path.join(install_dir, "bin", "byzer.sh")
+    return {"has_byzer_sh": os.path.exists(byzer_sh_path)}
+
 @router.post("/byzer-sql/add")
 async def add_byzer_sql(request: AddByzerSQLRequest):
     """Add a new Byzer SQL service."""
@@ -40,9 +50,14 @@ async def add_byzer_sql(request: AddByzerSQLRequest):
     if not os.path.exists(request.install_dir):
         os.makedirs(request.install_dir)
     
+    # Check if bin/byzer.sh exists in the specified directory
+    byzer_sh_path = os.path.join(request.install_dir, "bin", "byzer.sh")
+    has_byzer_sh = os.path.exists(byzer_sh_path)
+    
     new_service = {
         "status": "stopped",
-        **request.model_dump()
+        **request.model_dump(),
+        "has_byzer_sh": has_byzer_sh
     }
     
     services[request.name] = new_service
@@ -143,14 +158,39 @@ async def download_byzer_sql(request: Dict[str, str]):
             logger.info("Starting extraction...")
             with tarfile.open(tar_path, "r:gz") as tar:
                 total_members = len(tar.getmembers())
+                # Get the root directory name from the first member
+                first_member = tar.getmembers()[0]
+                root_dir = first_member.name.split('/')[0]
+                temp_extract_dir = os.path.join(install_dir, "_temp_extract")
+                
+                # Extract to temporary directory
                 for index, member in enumerate(tar.getmembers(), 1):
-                    tar.extract(member, install_dir)
+                    tar.extract(member, temp_extract_dir)
                     progress = int((index / total_members) * 100)
                     download_progress_store[task_id] = {
                         "task_id": task_id,
                         "type": "extract",
                         "progress": progress
                     }
+                
+                # Move content from root directory to install_dir
+                source_dir = os.path.join(temp_extract_dir, root_dir)
+                import shutil
+                for item in os.listdir(source_dir):
+                    s = os.path.join(source_dir, item)
+                    d = os.path.join(install_dir, item)
+                    if os.path.exists(d):
+                        if os.path.isdir(d):
+                            shutil.rmtree(d)
+                        else:
+                            os.remove(d)
+                    if os.path.isdir(s):
+                        shutil.copytree(s, d)
+                    else:
+                        shutil.copy2(s, d)
+                        
+                # Clean up temporary directory
+                shutil.rmtree(temp_extract_dir)
             
             # Remove the tar file and set permissions
             await asyncio.to_thread(os.remove, tar_path)
