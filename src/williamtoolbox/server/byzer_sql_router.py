@@ -115,7 +115,7 @@ async def add_byzer_sql(request: AddByzerSQLRequest):
             # Read existing properties if file exists
             async with aiofiles.open(config_file, 'rb') as f:
                 content = await f.read()
-                properties.load(content)
+                properties.load(content,encoding="utf-8")
 
         # Update or add the streaming.driver.port property
         properties["streaming.driver.port"] = str(request.port)
@@ -338,7 +338,7 @@ async def get_byzer_sql_config(service_name: str):
         properties = Properties()
         async with aiofiles.open(config_file, "rb") as f:
             content = await f.read()
-            properties.load(content)
+            properties.load(content,encoding="utf-8")
 
         # Convert properties to dict
         for item in properties.items():
