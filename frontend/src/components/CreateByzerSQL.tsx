@@ -43,11 +43,19 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
               onChange={async (value) => {
                 try {
                   let isMessageVisible = false;
+                  const eventSource = new EventSource('/api/download-progress');
                   const cancelTokenSource = axios.CancelToken.source();
                   Modal.confirm({
                     title: '确认下载',
                     content: '这可能需要几分钟时间，请耐心等待',                    
                     onOk: async () => {
+                      message.loading({
+                        content: '准备下载...',
+                        duration: 0,
+                        key: 'downloadProgress'
+                      });
+                      isMessageVisible = true;
+
                       const formatBytes = (bytes: number) => {
                         if (bytes === 0) return '0 B';
                         const k = 1024;
@@ -131,66 +139,11 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
                         
                         eventSource.close();
                         if (isMessageVisible) {
-                        message.loading({
-                          content: '准备下载...',
-                          duration: 0,
-                          key: 'downloadProgress'
-                        });
-                        isMessageVisible = true;
-
-                        // Start the SSE connection after the download request
-                        const eventSource = new EventSource(`/api/download-progress/${taskId}`);
-                        
-                        eventSource.onmessage = (event) => {
-                          const data = JSON.parse(event.data);
-                          
-                          if (data.type === 'download') {
-                            message.loading({
-                              content: `下载中: ${data.progress}% (${formatBytes(data.downloaded_size)} / ${formatBytes(data.total_size)})
-                                      速度: ${formatSpeed(data.speed)}
-                                      预计剩余时间: ${formatTime(data.estimated_time)}`,
-                              key: 'downloadProgress',
-                              duration: 0
-                            });
-                          } else if (data.type === 'extract') {
-                            message.loading({
-                              content: `解压进度: ${data.progress}%`,
-                              key: 'downloadProgress',
-                              duration: 0
-                            });
-                          }
-
-                          if (data.completed) {
-                            eventSource.close();
-                            if (isMessageVisible) {
-                              message.success({
-                                content: '下载并解压完成',
-                                key: 'downloadProgress'
-                              });
-                            }
-                            onServiceAdded();
-                          }
-
-                          if (data.error) {
-                            eventSource.close();
-                            if (isMessageVisible) {
-                              message.error({
-                                content: `错误: ${data.error}`,
-                                key: 'downloadProgress'
-                              });
-                            }
-                          }
-                        };
-
-                        eventSource.onerror = (error) => {
-                          eventSource.close();
-                          if (isMessageVisible) {
-                            message.error({
-                              content: '下载过程发生错误',
-                              key: 'downloadProgress'
-                            });
-                          }
-                        };
+                          message.success({
+                            content: '下载并解压完成',
+                            key: 'downloadProgress'
+                          });
+                        }
                         onServiceAdded();
                       } catch (error) {
                         eventSource.close();
