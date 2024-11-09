@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, InputNumber, Button, message, Modal, Typography, Space, Select } from 'antd';
+import { Form, Input, InputNumber, Button, message, Modal, Typography, Space, Select, AutoComplete } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
 import axios from 'axios';
 
 const { Title } = Typography;
+const { Option } = Select;
 
 interface CreateSuperAnalysisProps {
   onAnalysisAdded: () => void;
@@ -18,11 +19,52 @@ interface CreateSuperAnalysisProps {
 const CreateSuperAnalysis: React.FC<CreateSuperAnalysisProps> = ({ onAnalysisAdded, visible, onCancel }) => {
   const [form] = Form.useForm();
   const [rags, setRags] = useState<Array<{name: string, host: string, port: number}>>([]);
+  const [models, setModels] = useState<Array<{name: string, status: string}>>([]);
   const [schemaRagMode, setSchemaRagMode] = useState<'input' | 'select'>('input');
   const [contextRagMode, setContextRagMode] = useState<'input' | 'select'>('input');
 
   useEffect(() => {
-    const fetchRags = async () => {
+    const fetchData = async () => {
+      try {
+        const [modelsResponse, ragsResponse] = await Promise.all([
+          axios.get('/models'),
+          axios.get('/rags')
+        ]);
+        
+        // 设置运行中的模型列表
+        const runningModels = modelsResponse.data.filter((model: any) => model.status === 'running');
+        setModels(runningModels);
+        
+        // 设置运行中的RAG列表
+        const runningRags = ragsResponse.data.filter((rag: any) => rag.status === 'running');
+        setRags(runningRags);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        message.error('获取数据失败');
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const filterModelOptions = (inputValue: string, option: any) => {
+    return option.value.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1;
+  };
+
+  const handleModelSelect = (value: string) => {
+    form.setFieldsValue({
+      served_model_name: value
+    });
+  };
+
+  const getModelOptions = () => {
+    return models.map(model => ({
+      value: model.name,
+      label: model.name
+    }));
+  };
+
+  const fetchRags = async () => {
       try {
         const response = await axios.get('/rags');
         // 只设置状态为 running 的 RAGs
@@ -95,9 +137,14 @@ const CreateSuperAnalysis: React.FC<CreateSuperAnalysisProps> = ({ onAnalysisAdd
         <Form.Item
           name="served_model_name"
           label="服务模型名称"
-          rules={[{ required: true, message: '请输入服务模型名称' }]}
+          rules={[{ required: true, message: '请选择服务模型名称' }]}
         >
-          <Input />
+          <AutoComplete
+            options={getModelOptions()}
+            filterOption={filterModelOptions}
+            onSelect={handleModelSelect}
+            placeholder="请选择或输入模型名称"
+          />
         </Form.Item>
         <Form.Item
           name="port"
