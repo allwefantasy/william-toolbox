@@ -26,6 +26,107 @@ const DOWNLOAD_OPTIONS = [
   }
 ];
 
+// 工具函数：格式化文件大小
+const formatBytes = (bytes: number): string => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
+// 工具函数：格式化时间
+const formatTime = (seconds: number): string => {
+  if (!seconds || seconds === Infinity) return '计算中...';
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+  return `${minutes}分${remainingSeconds}秒`;
+};
+
+// 工具函数：格式化速度
+const formatSpeed = (bytesPerSecond: number): string => {
+  return `${formatBytes(bytesPerSecond)}/s`;
+};
+
+// 处理下载进度更新
+const handleProgressUpdate = (data: any, isMessageVisible: boolean) => {
+  if (data.type === 'download') {
+    message.loading({
+      content: `下载中: ${data.progress}% (${formatBytes(data.downloaded_size)} / ${formatBytes(data.total_size)})
+                速度: ${formatSpeed(data.speed)}
+                预计剩余时间: ${formatTime(data.estimated_time)}`,
+      key: 'downloadProgress',
+      duration: 0
+    });
+  } else if (data.type === 'extract') {
+    message.loading({
+      content: `解压进度: ${data.progress}%`,
+      key: 'downloadProgress',
+      duration: 0
+    });
+  }
+};
+
+// 处理下载完成
+const handleDownloadComplete = (isMessageVisible: boolean, onServiceAdded: () => void) => {
+  message.success({
+    content: '下载并解压完成',
+    key: 'downloadProgress'
+  });
+  onServiceAdded();
+};
+
+// 处理下载错误
+const handleDownloadError = (error: string, isMessageVisible: boolean) => {
+  message.error({
+    content: `错误: ${error}`,
+    key: 'downloadProgress'
+  });
+};
+
+// 处理确认下载
+const handleDownloadConfirm = async (taskId: string, onServiceAdded: () => void) => {
+  let isMessageVisible = true;
+  const eventSource = new EventSource(`/api/download-progress/${taskId}`);
+
+  message.loading({
+    content: '准备下载...',
+    duration: 0,
+    key: 'downloadProgress'
+  });
+
+  eventSource.addEventListener('message', (event) => {
+    const data = JSON.parse(event.data);
+    
+    if (data.completed) {
+      eventSource.close();
+      handleDownloadComplete(isMessageVisible, onServiceAdded);
+      return;
+    }
+    
+    if (data.error) {
+      eventSource.close();
+      handleDownloadError(data.error, isMessageVisible);
+      return;
+    }
+    
+    handleProgressUpdate(data, isMessageVisible);
+  });
+
+  eventSource.onerror = () => {
+    eventSource.close();
+    handleDownloadError('下载过程发生错误', isMessageVisible);
+  };
+};
+
+// 处理取消下载
+const handleDownloadCancel = (taskId: string) => {
+  message.info({
+    content: '下载已取消',
+    key: 'downloadProgress'
+  });
+};
+
 const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible, onCancel }) => {
   const [form] = Form.useForm();
 
@@ -42,133 +143,20 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
               placeholder="选择适合您操作系统的版本"
               onChange={async (value) => {
                 try {
-                  let isMessageVisible = false;
-                  const cancelTokenSource = axios.CancelToken.source();
-                  // 先发起下载请求
-                  const response = await axios.post('/byzer-sql/download', {
+                  // 创建下载请求并获取 taskId
+                  const downloadResponse = await axios.post('/byzer-sql/download', {
                     download_url: value,
                     install_dir: values.install_dir                    
                   });
+                  const taskId = downloadResponse.data.task_id;
 
-                  // 获取task_id并开始监听进度
-                  const taskId = response.data.task_id;
-                  const eventSource = new EventSource(`/api/download-progress/${taskId}`);
-
+                  // 确认下载对话框
                   Modal.confirm({
                     title: '确认下载',
                     content: '这可能需要几分钟时间，请耐心等待',
-                    onOk: async () => {
-                      message.loading({
-                        content: '准备下载...',
-                        duration: 0,
-                        key: 'downloadProgress'
-                      });
-                      isMessageVisible = true;
-
-                      const formatBytes = (bytes: number) => {
-                        if (bytes === 0) return '0 B';
-                        const k = 1024;
-                        const sizes = ['B', 'KB', 'MB', 'GB'];
-                        const i = Math.floor(Math.log(bytes) / Math.log(k));
-                        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-                      };
-
-                      const formatTime = (seconds: number) => {
-                        if (!seconds || seconds === Infinity) return '计算中...';
-                        const minutes = Math.floor(seconds / 60);
-                        const remainingSeconds = Math.floor(seconds % 60);
-                        return `${minutes}分${remainingSeconds}秒`;
-                      };
-
-                      const formatSpeed = (bytesPerSecond: number) => {
-                        return `${formatBytes(bytesPerSecond)}/s`;
-                      };
-
-                      try {
-
-
-                        eventSource.addEventListener('message', (event) => {
-                          const data = JSON.parse(event.data);
-                          if (data.type === 'download') {
-                            message.loading({
-                              content: `下载中: ${data.progress}% (${formatBytes(data.downloaded_size)} / ${formatBytes(data.total_size)})
-                                      速度: ${formatSpeed(data.speed)}
-                                      预计剩余时间: ${formatTime(data.estimated_time)}`,
-                              key: 'downloadProgress',
-                              duration: 0
-                            });
-                          } else if (data.type === 'extract') {
-                            message.loading({
-                              content: `解压进度: ${data.progress}%`,
-                              key: 'downloadProgress',
-                              duration: 0
-                            });
-                          }
-
-                          if (data.completed) {
-                            eventSource.close();
-                            if (isMessageVisible) {
-                              message.success({
-                                content: '下载并解压完成',
-                                key: 'downloadProgress'
-                              });
-                            }
-                            onServiceAdded();
-                          }
-
-                          if (data.error) {
-                            eventSource.close();
-                            if (isMessageVisible) {
-                              message.error({
-                                content: `错误: ${data.error}`,
-                                key: 'downloadProgress'
-                              });
-                            }
-                          }
-                        });
-
-                        eventSource.onerror = (error) => {
-                          eventSource.close();
-                          if (isMessageVisible) {
-                            message.error({
-                              content: '下载过程发生错误',
-                              key: 'downloadProgress'
-                            });
-                          }
-                        };
-
-                        eventSource.close();
-                        if (isMessageVisible) {
-                          message.success({
-                            content: '下载并解压完成',
-                            key: 'downloadProgress'
-                          });
-                        }
-                        onServiceAdded();
-                      } catch (error) {
-                        eventSource.close();
-                        if (isMessageVisible) {
-                          message.error({
-                            content: '下载或解压失败',
-                            key: 'downloadProgress'
-                          });
-                        }
-                        throw error;
-                      }
-                    },
+                    onOk: () => handleDownloadConfirm(taskId, onServiceAdded),
                     cancelText: '取消下载',
-                    onCancel: () => {
-                      cancelTokenSource.cancel('用户取消了下载');
-                      if (eventSource) {
-                        eventSource.close();
-                      }
-                      if (isMessageVisible) {
-                        message.info({
-                          content: '下载已取消',
-                          key: 'downloadProgress'
-                        });
-                      }
-                    }
+                    onCancel: () => handleDownloadCancel(taskId),
                   });
                 } catch (error) {
                   message.destroy();
