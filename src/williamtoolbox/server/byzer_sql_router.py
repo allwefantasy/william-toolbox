@@ -111,15 +111,24 @@ async def add_byzer_sql(request: AddByzerSQLRequest):
 
     try:
         properties = Properties()
+        
+        # Load existing configuration if file exists
         if os.path.exists(config_file):
-            # Read existing properties if file exists
             async with aiofiles.open(config_file, 'rb') as f:
                 content = await f.read()
-                properties.load(content,encoding="utf-8")
-
-        # Update or add the streaming.driver.port property
-        properties["streaming.driver.port"] = str(request.port)
-
+                properties.load(content, encoding="utf-8")
+        
+        # Create a copy of existing properties
+        existing_properties = {key: value.data for key, value in properties.items()}
+        
+        # Only update the port property
+        existing_properties["streaming.driver.port"] = str(request.port)
+        
+        # Clear and update all properties
+        properties.clear()
+        for key, value in existing_properties.items():
+            properties[key] = value
+            
         # Write back to file
         async with aiofiles.open(config_file, 'wb') as f:
             properties.store(f, encoding='utf-8')
