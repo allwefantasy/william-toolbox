@@ -9,6 +9,8 @@ interface ByzerSQL {
   name: string;
   status: string;
   install_dir: string;
+  host: string;
+  port: number;
 }
 
 interface EditByzerSQLProps {
@@ -75,6 +77,32 @@ const EditByzerSQL: React.FC<EditByzerSQLProps> = ({ service, onServiceUpdated, 
           rules={[{ required: true, message: '请输入安装目录' }]}
         >
           <Input />
+        </Form.Item>
+
+        <Form.Item
+          name="host"
+          label="主机地址"
+          rules={[{ required: true, message: '请输入主机地址' }]}
+        >
+          <Input placeholder="127.0.0.1" />
+        </Form.Item>
+
+        <Form.Item
+          name="port"
+          label="端口"
+          rules={[
+            { required: true, message: '请输入端口号' },
+            { type: 'number', transform: (value) => Number(value), message: '请输入有效的端口号' },
+            { validator: (_, value) => {
+                if (value > 0 && value < 65536) {
+                  return Promise.resolve();
+                }
+                return Promise.reject(new Error('端口号必须在 1-65535 之间'));
+              }
+            }
+          ]}
+        >
+          <Input type="number" placeholder="9003" />
         </Form.Item>
 
         <Form.Item>
