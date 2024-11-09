@@ -1,5 +1,5 @@
 import React from 'react';
-import { Form, Input, Button, message, Modal, Typography, Space, Select, Progress } from 'antd';
+import { Form, Input, Button, message, Modal, Typography, Space, Select } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
 import axios from 'axios';
 
@@ -48,79 +48,64 @@ const formatSpeed = (bytesPerSecond: number): string => {
   return `${formatBytes(bytesPerSecond)}/s`;
 };
 
-interface ProgressState {
-  visible: boolean;
-  type: 'download' | 'extract' | null;
-  progress: number;
-  downloadedSize?: number;
-  totalSize?: number;
-  speed?: number;
-  estimatedTime?: number;
-  error?: string;
-}
-
-const [progressState, setProgressState] = useState<ProgressState>({
-  visible: false,
-  type: null,
-  progress: 0
-});
-
 // 处理下载进度更新
-const handleProgressUpdate = (data: any) => {
+const handleProgressUpdate = (data: any, isMessageVisible: boolean) => {  
   if (data.type === 'download') {
-    setProgressState({
-      visible: true,
-      type: 'download',
-      progress: data.progress,
-      downloadedSize: data.downloaded_size,
-      totalSize: data.total_size,
-      speed: data.speed,
-      estimatedTime: data.estimated_time
+    message.loading({
+      content: `下载中: ${data.progress}% (${formatBytes(data.downloaded_size)} / ${formatBytes(data.total_size)})
+                速度: ${formatSpeed(data.speed)}
+                预计剩余时间: ${formatTime(data.estimated_time)}`,
+      key: 'downloadProgress',
+      duration: 0.1
     });
   } else if (data.type === 'extract') {
-    setProgressState({
-      visible: true,
-      type: 'extract',
-      progress: data.progress
+    message.loading({
+      content: `解压进度: ${data.progress}%`,
+      key: 'downloadProgress',
+      duration: 0.5
     });
   }
 };
 
 // 处理下载完成
-const handleDownloadComplete = (onServiceAdded: () => void) => {
-  setProgressState(prev => ({ ...prev, visible: false }));
-  message.success('下载并解压完成');
+const handleDownloadComplete = (isMessageVisible: boolean, onServiceAdded: () => void) => {
+  message.success({
+    content: '下载并解压完成',
+    key: 'downloadProgress'
+  });
   onServiceAdded();
 };
 
 // 处理下载错误
-const handleDownloadError = (error: string) => {
-  setProgressState(prev => ({
-    ...prev,
-    error: error
-  }));
+const handleDownloadError = (error: string, isMessageVisible: boolean) => {
+  message.error({
+    content: `错误: ${error}`,
+    key: 'downloadProgress'
+  });
 };
 
 // 处理确认下载
 const handleDownloadConfirm = async (taskId: string, onServiceAdded: () => void) => {
-  setProgressState({
-    visible: true,
-    type: null,
-    progress: 0
-  });
-  
+  let isMessageVisible = true;
   console.log("Starting EventSource connection with taskId:", taskId);
   const eventSource = new EventSource(`/api/download-progress/${taskId}`);
-  
+  // Log when connection is opened
   eventSource.onopen = () => {
     console.log("EventSource connection opened");
   };
   
+  // Log general errors
   eventSource.onerror = (error) => {
     console.error("EventSource error:", error);
     eventSource.close();
-    handleDownloadError('下载过程发生错误');
+    handleDownloadError('下载过程发生错误', isMessageVisible);
   };
+
+  message.loading({
+    content: '准备下载...',
+    duration: 0,
+    key: 'downloadProgress'
+  });
 
   eventSource.onmessage = (event) => {
     console.log("Received SSE event:", event);
@@ -129,22 +114,22 @@ const handleDownloadConfirm = async (taskId: string, onServiceAdded: () => void)
     
     if (data.completed) {
       eventSource.close();
-      handleDownloadComplete(onServiceAdded);
+      handleDownloadComplete(isMessageVisible, onServiceAdded);
       return;
     }
     
     if (data.error) {
       eventSource.close();
-      handleDownloadError(data.error);
+      handleDownloadError(data.error, isMessageVisible);
       return;
     }
     
-    handleProgressUpdate(data);
+    handleProgressUpdate(data, isMessageVisible);
   };
 
   eventSource.onerror = () => {
     eventSource.close();
-    handleDownloadError('下载过程发生错误');
+    handleDownloadError('下载过程发生错误', isMessageVisible);
   };
 };
 
@@ -224,19 +209,18 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
   };
 
   return (
-    <>
-      <Modal
-        title={
-          <Space>
-            <ThunderboltOutlined />
-            添加 Byzer SQL
-          </Space>
-        }
-        visible={visible}
-        onCancel={onCancel}
-        footer={null}
-        width={800}
-      >
+    <Modal
+      title={
+        <Space>
+          <ThunderboltOutlined />
+          添加 Byzer SQL
+        </Space>
+      }
+      visible={visible}
+      onCancel={onCancel}
+      footer={null}
+      width={800}
+    >
       <Form
         form={form}
         layout="vertical"
@@ -265,39 +249,7 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
           </Button>
         </Form.Item>
       </Form>
-      </Modal>
-
-      <Modal
-        title="下载进度"
-        visible={progressState.visible}
-        footer={null}
-        closable={false}
-        width={600}
-      >
-        <div style={{ padding: '20px' }}>
-          {progressState.error ? (
-            <div style={{ color: 'red', marginBottom: '20px' }}>
-              错误: {progressState.error}
-            </div>
-          ) : (
-            <>
-              <div style={{ marginBottom: '20px' }}>
-                {progressState.type === 'download' ? '下载中...' : progressState.type === 'extract' ? '解压中...' : '准备中...'}
-              </div>
-              <Progress percent={progressState.progress} status={progressState.error ? 'exception' : 'active'} />
-              
-              {progressState.type === 'download' && (
-                <div style={{ marginTop: '20px' }}>
-                  <p>已下载: {formatBytes(progressState.downloadedSize || 0)} / {formatBytes(progressState.totalSize || 0)}</p>
-                  <p>下载速度: {formatSpeed(progressState.speed || 0)}</p>
-                  <p>预计剩余时间: {formatTime(progressState.estimatedTime || 0)}</p>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </Modal>
-    </>
+    </Modal>
   );
 };
 
