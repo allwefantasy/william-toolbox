@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, InputNumber, Button, message, Modal, Typography, Space, Select } from 'antd';
+import { Form, Input, InputNumber, Button, message, Modal, Typography, Space, Select, AutoComplete } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
 import axios from 'axios';
 
@@ -20,19 +20,27 @@ const CreateSuperAnalysis: React.FC<CreateSuperAnalysisProps> = ({ onAnalysisAdd
   const [rags, setRags] = useState<Array<{name: string, host: string, port: number}>>([]);
   const [schemaRagMode, setSchemaRagMode] = useState<'input' | 'select'>('input');
   const [contextRagMode, setContextRagMode] = useState<'input' | 'select'>('input');
+  const [runningModels, setRunningModels] = useState<string[]>([]);
 
   useEffect(() => {
-    const fetchRags = async () => {
+    const fetchData = async () => {
       try {
-        const response = await axios.get('/rags');
-        // 只设置状态为 running 的 RAGs
-        setRags(response.data.filter((rag: any) => rag.status === 'running'));
+        // Fetch RAGs
+        const ragsResponse = await axios.get('/rags');
+        setRags(ragsResponse.data.filter((rag: any) => rag.status === 'running'));
+        
+        // Fetch Models
+        const modelsResponse = await axios.get('/models');
+        const runningModelsList = modelsResponse.data
+          .filter((model: any) => model.status === 'running')
+          .map((model: any) => model.name);
+        setRunningModels(runningModelsList);
       } catch (error) {
-        console.error('Error fetching RAGs:', error);
-        message.error('获取RAG列表失败');
+        console.error('Error fetching data:', error);
+        message.error('获取数据失败');
       }
     };
-    fetchRags();
+    fetchData();
   }, []);
 
   const handleRagSelect = (field: string, ragName: string) => {
@@ -97,7 +105,13 @@ const CreateSuperAnalysis: React.FC<CreateSuperAnalysisProps> = ({ onAnalysisAdd
           label="服务模型名称"
           rules={[{ required: true, message: '请输入服务模型名称' }]}
         >
-          <Input />
+          <AutoComplete
+            options={runningModels.map(model => ({ value: model }))}
+            placeholder="输入或选择模型名称"
+            filterOption={(inputValue, option) =>
+              option!.value.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
+            }
+          />
         </Form.Item>
         <Form.Item
           name="port"
