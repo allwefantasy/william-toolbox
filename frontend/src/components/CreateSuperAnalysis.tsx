@@ -1,5 +1,5 @@
 import React from 'react';
-import { Form, Input, InputNumber, Button, message, Card, Typography, Space } from 'antd';
+import { Form, Input, InputNumber, Button, message, Modal, Typography, Space } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
 import axios from 'axios';
 

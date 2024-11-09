@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Form, Input, InputNumber, Button, message, Card, Typography, Space } from 'antd';
+import { Form, Input, InputNumber, Button, message, Modal, Typography, Space } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
 import axios from 'axios';
 
@@ -23,7 +23,7 @@ interface EditSuperAnalysisProps {
   onCancel: () => void;
 }
 
-const EditSuperAnalysis: React.FC<EditSuperAnalysisProps> = ({ analysis, onAnalysisUpdated }) => {
+const EditSuperAnalysis: React.FC<EditSuperAnalysisProps> = ({ analysis, onAnalysisUpdated, visible, onCancel }) => {
   const [form] = Form.useForm();
 
   useEffect(() => {
