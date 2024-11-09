@@ -141,7 +141,20 @@ const CreateSuperAnalysis: React.FC<CreateSuperAnalysisProps> = ({ onAnalysisAdd
                 noStyle
                 rules={[{ required: true, message: '请输入Schema RAG URL' }]}
               >
-                <Input style={{ width: 'calc(100% - 120px)' }} />
+                <AutoComplete
+                  style={{ width: 'calc(100% - 120px)' }}
+                  options={rags.map(rag => {
+                    const host = rag.host === '0.0.0.0' ? '127.0.0.1' : rag.host;
+                    return {
+                      value: `http://${host}:${rag.port}/v1`,
+                      label: `${rag.name} (${host}:${rag.port})`
+                    };
+                  })}
+                  placeholder="输入或选择Schema RAG URL"
+                  filterOption={(inputValue, option) =>
+                    option!.label.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
+                  }
+                />
               </Form.Item>
             ) : (
               <Select
@@ -172,7 +185,20 @@ const CreateSuperAnalysis: React.FC<CreateSuperAnalysisProps> = ({ onAnalysisAdd
                 noStyle
                 rules={[{ required: true, message: '请输入Context RAG URL' }]}
               >
-                <Input style={{ width: 'calc(100% - 120px)' }} />
+                <AutoComplete
+                  style={{ width: 'calc(100% - 120px)' }}
+                  options={rags.map(rag => {
+                    const host = rag.host === '0.0.0.0' ? '127.0.0.1' : rag.host;
+                    return {
+                      value: `http://${host}:${rag.port}/v1`,
+                      label: `${rag.name} (${host}:${rag.port})`
+                    };
+                  })}
+                  placeholder="输入或选择Context RAG URL"
+                  filterOption={(inputValue, option) =>
+                    option!.label.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
+                  }
+                />
               </Form.Item>
             ) : (
               <Select
