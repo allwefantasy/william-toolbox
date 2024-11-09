@@ -276,6 +276,60 @@ async def download_byzer_sql(request: Dict[str, str]):
                 stderr = process.stderr.read().decode()
                 raise Exception(f"Extraction failed: {stderr}")
 
+            # Download byzer-llm extension
+            byzer_llm_url = "https://download.byzer.org/byzer-extensions/nightly-build/byzer-llm-3.3_2.12-0.1.9.jar"
+            libs_dir = os.path.join(install_dir, "libs")
+            os.makedirs(libs_dir, exist_ok=True)
+            byzer_llm_path = os.path.join(libs_dir, "byzer-llm-3.3_2.12-0.1.9.jar")
+
+            async with httpx.AsyncClient() as client:
+                download_progress_store[task_id] = {
+                    "task_id": task_id, 
+                    "type": "download",
+                    "progress": 0,
+                    "subTitle": "正在下载 byzer-llm 扩展..."
+                }
+                
+                async with client.stream('GET', byzer_llm_url) as response:
+                    total = int(response.headers.get('content-length', 0))
+                    downloaded = 0
+                    
+                    async with aiofiles.open(byzer_llm_path, 'wb') as f:
+                        async for chunk in response.aiter_bytes():
+                            await f.write(chunk)
+                            downloaded += len(chunk)
+                            progress = int((downloaded / total) * 100) if total else 0
+                            download_progress_store[task_id] = {
+                                "task_id": task_id,
+                                "type": "download",
+                                "progress": progress,
+                                "subTitle": f"正在下载 byzer-llm 扩展... {progress}%"
+                            }
+
+            # Update byzer.properties.override
+            config_file = os.path.join(install_dir, "conf", "byzer.properties.override")
+            if os.path.exists(config_file):
+                properties = Properties()
+                async with aiofiles.open(config_file, 'rb') as f:
+                    content = await f.read()
+                    properties.load(content, encoding='utf-8')
+                
+                # Get existing plugins
+                plugins = properties.get('streaming.plugin.clzznames', '').data
+                if plugins:
+                    # Add LLMApp if not already present
+                    if 'tech.mlsql.plugins.llm.LLMApp' not in plugins:
+                        plugins += ',tech.mlsql.plugins.llm.LLMApp'
+                else:
+                    plugins = 'tech.mlsql.plugins.llm.LLMApp'
+                
+                # Update property
+                properties['streaming.plugin.clzznames'] = plugins
+
+                # Write back to file
+                async with aiofiles.open(config_file, 'wb') as f:
+                    properties.store(f, encoding='utf-8')
+
             # Remove the tar file and set permissions
             await asyncio.to_thread(os.remove, tar_path)
             start_script = os.path.join(install_dir, "bin", "byzer.sh")
