@@ -103,3 +103,12 @@ class CreateConversationRequest(BaseModel):
 class UpdateTitleRequest(BaseModel):
     title: str
 
+class AddSuperAnalysisRequest(BaseModel):
+    name: str
+    served_model_name: str
+    port: int = Field(default=8000)
+    schema_rag_base_url: str
+    context_rag_base_url: str
+    byzer_sql_url: str = Field(default="http://127.0.0.1:9003/run/script")
+    host: str = Field(default="0.0.0.0")
+

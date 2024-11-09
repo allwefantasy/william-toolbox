@@ -96,6 +96,19 @@ async def save_rags_to_json(rags):
         content = json.dumps(rags, ensure_ascii=False)
         await f.write(content)
 
+# Function to load Super Analysis from JSON file
+async def load_super_analysis_from_json():
+    if os.path.exists(SUPER_ANALYSIS_JSON_PATH):
+        async with aiofiles.open(SUPER_ANALYSIS_JSON_PATH, "r") as f:
+            content = await f.read()
+            return json.loads(content)
+    return {}
+
+# Function to save Super Analysis to JSON file
+async def save_super_analysis_to_json(analyses):
+    async with aiofiles.open(SUPER_ANALYSIS_JSON_PATH, "w") as f:
+        content = json.dumps(analyses, ensure_ascii=False)
+        await f.write(content)
 
 async def get_event_file_path(request_id: str) -> str:
     os.makedirs("chat_events", exist_ok=True)
