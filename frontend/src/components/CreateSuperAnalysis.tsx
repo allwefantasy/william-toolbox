@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, InputNumber, Button, message, Modal, Typography, Space, Select, AutoComplete, Tooltip } from 'antd';
+import { Form, Input, InputNumber, Button, message, Modal, Typography, Space, Select, AutoComplete } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
 import axios from 'axios';
 
@@ -21,21 +21,9 @@ const CreateSuperAnalysis: React.FC<CreateSuperAnalysisProps> = ({ onAnalysisAdd
   const [schemaRagMode, setSchemaRagMode] = useState<'input' | 'select'>('input');
   const [contextRagMode, setContextRagMode] = useState<'input' | 'select'>('input');
   const [runningModels, setRunningModels] = useState<string[]>([]);
-  const [byzerSQLServices, setByzerSQLServices] = useState<Array<{name: string, host: string, port: number}>>([]);
 
   useEffect(() => {
-        const fetchData = async () => {
-          try {
-            // Fetch Byzer SQL services
-            const byzerResponse = await axios.get('/byzer-sql');
-            const runningByzerServices = byzerResponse.data
-              .filter((service: any) => service.status === 'running')
-              .map((service: any) => ({
-                name: service.name,
-                host: service.host === '0.0.0.0' ? '127.0.0.1' : service.host,
-                port: service.port
-              }));
-            setByzerSQLServices(runningByzerServices);
+    const fetchData = async () => {
       try {
         // Fetch RAGs
         const ragsResponse = await axios.get('/rags');
@@ -198,18 +186,7 @@ const CreateSuperAnalysis: React.FC<CreateSuperAnalysisProps> = ({ onAnalysisAdd
           label="Byzer SQL URL"
           rules={[{ required: true, message: '请输入Byzer SQL URL' }]}
         >
-          <AutoComplete
-            options={byzerSQLServices.map(service => ({
-              value: `http://${service.host}:${service.port}/run/script`,
-              label: (
-                <Tooltip title={`http://${service.host}:${service.port}/run/script`}>
-                  {service.name} ({service.host}:{service.port})
-                </Tooltip>
-              )
-            }))}
-            placeholder="选择或输入Byzer SQL URL"
-            style={{ width: '100%' }}
-          />
+          <Input />
         </Form.Item>
         <Form.Item
           name="host"
