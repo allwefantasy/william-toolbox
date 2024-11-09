@@ -443,7 +443,7 @@ async def manage_byzer_sql(service_name: str, action: str):
 
                 if os.path.exists(pid_file):
                     async with aiofiles.open(pid_file, "r") as f:
-                        pid = int(await f.read().strip())
+                        pid = int((await f.read()).strip())
                     service_info["status"] = "running"
                     service_info["process_id"] = pid
                 else:
