@@ -44,12 +44,11 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
                 try {
                   let isMessageVisible = false;
                   const eventSource = new EventSource('/api/download-progress');
-                  
+                  const cancelTokenSource = axios.CancelToken.source();
                   Modal.confirm({
                     title: '确认下载',
-                    content: '这可能需要几分钟时间，请耐心等待',
+                    content: '这可能需要几分钟时间，请耐心等待',                    
                     onOk: async () => {
-                      const cancelTokenSource = axios.CancelToken.source();
                       message.loading({
                         content: '准备下载...',
                         duration: 0,

@@ -18,25 +18,6 @@ from .request_types import AddByzerSQLRequest
 
 router = APIRouter()
 
-@router.get("/api/download-progress")
-async def download_progress(request: Request):
-    """SSE endpoint for download progress updates"""
-    async def event_generator():
-        while True:
-            # Check if client closed connection
-            if await request.is_disconnected():
-                break
-
-            # Yield empty string to keep connection alive
-            yield {
-                "event": "message",
-                "data": "keepalive"
-            }
-            
-            await asyncio.sleep(1)
-            
-    return EventSourceResponse(event_generator())
-
 @router.get("/byzer-sql")
 async def list_byzer_sql():
     """List all Byzer SQL services."""
