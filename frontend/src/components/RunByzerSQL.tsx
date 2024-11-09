@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Modal, Input, Button, Table, message, Space } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Modal, Input, Button, Table, message, Space, Form } from 'antd';
 import { CodeOutlined } from '@ant-design/icons';
 import axios from 'axios';
 
@@ -25,6 +25,15 @@ const RunByzerSQL: React.FC<TestByzerSQLProps> = ({ visible, onCancel, serviceNa
   const [sql, setSql] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SQLResult | null>(null);
+  const [form] = Form.useForm();
+
+  useEffect(() => {
+    if (visible) {
+      // 当弹窗显示时,尝试获取已保存的引擎地址
+      const savedEngineUrl = localStorage.getItem('byzerEngineUrl') || 'http://localhost:9003';
+      form.setFieldsValue({ engineUrl: savedEngineUrl });
+    }
+  }, [visible, form]);
 
   const handleExecute = async () => {
     if (!sql.trim()) {
@@ -32,15 +41,17 @@ const RunByzerSQL: React.FC<TestByzerSQLProps> = ({ visible, onCancel, serviceNa
       return;
     }
 
+    const values = await form.validateFields();
+    const engineUrl = values.engineUrl;
+
+    // 保存引擎地址到本地存储
+    localStorage.setItem('byzerEngineUrl', engineUrl);
+
     setLoading(true);
     try {
       const response = await axios.post('/run/script', {
         sql: sql,
-        owner: 'admin',
-        jobType: 'script',
-        executeMode: 'query',
-        jobName: `test_sql_${Date.now()}`,
-        includeSchema: true
+        engine_url: engineUrl
       });
 
       if (response.data) {
@@ -98,6 +109,19 @@ const RunByzerSQL: React.FC<TestByzerSQLProps> = ({ visible, onCancel, serviceNa
         </Button>
       ]}
     >
+      <Form 
+        form={form}
+        layout="vertical"
+      >
+        <Form.Item
+          name="engineUrl"
+          label="Byzer SQL引擎地址"
+          rules={[{ required: true, message: '请输入Byzer SQL引擎地址' }]}
+        >
+          <Input placeholder="例如: http://localhost:9003" />
+        </Form.Item>
+      </Form>
+
       <div style={{ marginBottom: 16 }}>
         <TextArea
           rows={8}

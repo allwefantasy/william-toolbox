@@ -10,13 +10,52 @@ import subprocess
 import uuid
 import psutil
 import asyncio
+import httpx
 from fastapi import Request
 from sse_starlette.sse import EventSourceResponse
 from ..storage.json_file import load_byzer_sql_from_json, save_byzer_sql_to_json
-from .request_types import AddByzerSQLRequest
+from .request_types import AddByzerSQLRequest, RunSQLRequest, RunSQLRequest
 from jproperties import Properties
 
 router = APIRouter()
+
+@router.post("/run/script")
+async def run_script(request: RunSQLRequest):
+    """Execute SQL script on Byzer SQL engine."""
+    try:
+        async with httpx.AsyncClient() as client:
+            # 构建请求参数
+            params = {
+                "sql": request.sql,
+                "owner": "admin", # 默认使用admin账户
+                "jobType": "script",
+                "executeMode": "query",
+                "jobName": f"test_sql_{uuid.uuid4()}",
+                "includeSchema": True,
+                "sessionPerRequest": True
+            }
+
+            response = await client.post(
+                f"{request.engine_url}/run/script",
+                data=params,
+                timeout=3600  # 设置1小时超时
+            )
+
+            if response.status_code != 200:
+                raise HTTPException(
+                    status_code=response.status_code,
+                    detail=f"Failed to execute SQL: {response.text}"
+                )
+
+            return response.json()
+
+    except Exception as e:
+        logger.error(f"Error executing SQL: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to execute SQL: {str(e)}"
+        )
 
 
 @router.get("/byzer-sql")

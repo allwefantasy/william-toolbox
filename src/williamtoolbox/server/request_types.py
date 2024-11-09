@@ -111,6 +111,9 @@ class AddSuperAnalysisRequest(BaseModel):
     context_rag_base_url: str
     byzer_sql_url: str = Field(default="http://127.0.0.1:9003/run/script")
     host: str = Field(default="0.0.0.0")
+class RunSQLRequest(BaseModel):
+    sql: str
+    engine_url: str
 
 class AddByzerSQLRequest(BaseModel):
     name: str
