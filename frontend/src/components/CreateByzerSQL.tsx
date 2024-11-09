@@ -273,14 +273,19 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
           <Input />
         </Form.Item>
 
-        <Form.Item
-          name="install_dir"
-          label="安装目录"
-          rules={[{ required: true, message: '请输入安装目录' }]}
-          help="如果目录不包含bin/byzer.sh，系统将提示您下载"
-        >
-          <Input />
-        </Form.Item>
+          <Form.Item
+            name="install_dir"
+            label="安装目录"
+            rules={[{ required: true, message: '请输入安装目录' }]}
+            help="如果目录不包含bin/byzer.sh，系统将提示您下载"
+          >
+            <Space direction="vertical" style={{ width: '100%' }}>
+              <Input />
+              <Button onClick={() => showLogModal(form.getFieldValue('name'), 'env-check')}>
+                查看环境检查日志
+              </Button>
+            </Space>
+          </Form.Item>
 
         <Form.Item>
           <Button type="primary" htmlType="submit">
