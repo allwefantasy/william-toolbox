@@ -63,8 +63,7 @@ async def download_progress(request: Request, task_id: str):
             if task_id in download_progress_store:
                 progress_data = download_progress_store[task_id]            
                 # Convert progress_data to JSON string and ensure it's properly formatted
-                data = json.dumps(progress_data)
-                logger.info(f"Sending SSE data: {data}")
+                data = json.dumps(progress_data)                
                 
                 # Send in SSE format with proper headers
                 yield {

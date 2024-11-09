@@ -49,21 +49,20 @@ const formatSpeed = (bytesPerSecond: number): string => {
 };
 
 // 处理下载进度更新
-const handleProgressUpdate = (data: any, isMessageVisible: boolean) => {
-  console.log(JSON.stringify(data));
+const handleProgressUpdate = (data: any, isMessageVisible: boolean) => {  
   if (data.type === 'download') {
     message.loading({
       content: `下载中: ${data.progress}% (${formatBytes(data.downloaded_size)} / ${formatBytes(data.total_size)})
                 速度: ${formatSpeed(data.speed)}
                 预计剩余时间: ${formatTime(data.estimated_time)}`,
       key: 'downloadProgress',
-      duration: 0
+      duration: 0.1
     });
   } else if (data.type === 'extract') {
     message.loading({
       content: `解压进度: ${data.progress}%`,
       key: 'downloadProgress',
-      duration: 0
+      duration: 0.5
     });
   }
 };
