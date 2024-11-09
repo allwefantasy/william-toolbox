@@ -167,17 +167,6 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
 
   const handleSubmit = async (values: any) => {
     try {
-      // Check if port is in use
-      const portCheckResponse = await axios.post('/byzer-sql/check-port', {
-        host: values.host,
-        port: values.port
-      });
-
-      if (portCheckResponse.data.in_use) {
-        MessageBox.error(`端口 ${values.port} 已被占用`);
-        return;
-      }
-
       // Check if byzer.sh exists
       const checkResponse = await axios.post('/byzer-sql/check-installation', {
         install_dir: values.install_dir
@@ -291,24 +280,6 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
           help="如果目录不包含bin/byzer.sh，系统将提示您下载"
         >
           <Input />
-        </Form.Item>
-
-        <Form.Item
-          name="host"
-          label="主机地址"
-          initialValue="127.0.0.1"
-          rules={[{ required: true, message: '请输入主机地址' }]}
-        >
-          <Input />
-        </Form.Item>
-
-        <Form.Item
-          name="port"
-          label="端口"
-          initialValue={9003}
-          rules={[{ required: true, message: '请输入端口号' }]}
-        >
-          <Input type="number" />
         </Form.Item>
 
         <Form.Item>

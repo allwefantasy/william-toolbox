@@ -64,25 +64,6 @@ async def list_byzer_sql():
     return [{"name": name, **info} for name, info in services.items()]
 
 
-@router.post("/byzer-sql/check-port")
-async def check_byzer_sql_port(request: dict):
-    """Check if the specified port is in use."""
-    host = request.get("host")
-    port = request.get("port")
-    
-    if not host or not port:
-        raise HTTPException(status_code=400, detail="host and port are required")
-    
-    import socket
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    try:
-        sock.bind((host, int(port)))
-        sock.close()
-        return {"in_use": False}
-    except:
-        sock.close()
-        return {"in_use": True}
-
 @router.post("/byzer-sql/check-installation")
 async def check_byzer_sql_installation(request: dict):
     """Check if byzer.sh exists in the specified directory."""
