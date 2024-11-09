@@ -9,7 +9,13 @@ interface CreateSuperAnalysisProps {
   onAnalysisAdded: () => void;
 }
 
-const CreateSuperAnalysis: React.FC<CreateSuperAnalysisProps> = ({ onAnalysisAdded }) => {
+interface CreateSuperAnalysisProps {
+  onAnalysisAdded: () => void;
+  visible: boolean;
+  onCancel: () => void;
+}
+
+const CreateSuperAnalysis: React.FC<CreateSuperAnalysisProps> = ({ onAnalysisAdded, visible, onCancel }) => {
   const [form] = Form.useForm();
 
   const handleSubmit = async (values: any) => {
@@ -29,13 +35,18 @@ const CreateSuperAnalysis: React.FC<CreateSuperAnalysisProps> = ({ onAnalysisAdd
   };
 
   return (
-    <Card style={{ marginBottom: 16 }}>
-      <Title level={2}>
+    <Modal
+      title={
         <Space>
           <ThunderboltOutlined />
           添加 Super Analysis
         </Space>
-      </Title>
+      }
+      visible={visible}
+      onCancel={onCancel}
+      footer={null}
+      width={800}
+    >
       <Form
         form={form}
         layout="vertical"
@@ -100,7 +111,7 @@ const CreateSuperAnalysis: React.FC<CreateSuperAnalysisProps> = ({ onAnalysisAdd
           </Button>
         </Form.Item>
       </Form>
-    </Card>
+    </Modal>
   );
 };
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Table, Button, message, Card, Typography, Space, Tag, Tooltip, Modal } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import CreateSuperAnalysis from './CreateSuperAnalysis';
 import EditSuperAnalysis from './EditSuperAnalysis';
 import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, ThunderboltOutlined, FileOutlined, EditOutlined, ExclamationCircleOutlined, DeleteOutlined } from '@ant-design/icons';
@@ -324,31 +325,31 @@ const SuperAnalysisList: React.FC<SuperAnalysisListProps> = ({ refreshTrigger })
         </Title>
         <Button 
           type="primary" 
-          icon={<EditOutlined />} 
+          icon={<PlusOutlined />} 
           style={{ marginBottom: 16 }}
           onClick={() => setShowCreateForm(true)}
         >
           添加Super Analysis
         </Button>
         
-        {showCreateForm && (
-          <CreateSuperAnalysis 
-            onAnalysisAdded={() => {
-              setShowCreateForm(false);
-              fetchAnalyses();
-            }} 
-          />
-        )}
+  <CreateSuperAnalysis 
+    visible={showCreateForm}
+    onCancel={() => setShowCreateForm(false)}
+    onAnalysisAdded={() => {
+      setShowCreateForm(false);
+      fetchAnalyses();
+    }}
+  />
 
-        {editingAnalysis && (
-          <EditSuperAnalysis
-            analysis={editingAnalysis}
-            onAnalysisUpdated={() => {
-              setEditingAnalysis(null);
-              fetchAnalyses();
-            }}
-          />
-        )}
+  <EditSuperAnalysis
+    visible={!!editingAnalysis}
+    onCancel={() => setEditingAnalysis(null)}
+    analysis={editingAnalysis as SuperAnalysis}
+    onAnalysisUpdated={() => {
+      setEditingAnalysis(null);
+      fetchAnalyses();
+    }}
+  />
         <Table
           columns={columns}
           dataSource={analyses}

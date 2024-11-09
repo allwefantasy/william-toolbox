@@ -19,6 +19,8 @@ interface SuperAnalysis {
 interface EditSuperAnalysisProps {
   analysis: SuperAnalysis;
   onAnalysisUpdated: () => void;
+  visible: boolean;
+  onCancel: () => void;
 }
 
 const EditSuperAnalysis: React.FC<EditSuperAnalysisProps> = ({ analysis, onAnalysisUpdated }) => {
@@ -44,13 +46,18 @@ const EditSuperAnalysis: React.FC<EditSuperAnalysisProps> = ({ analysis, onAnaly
   };
 
   return (
-    <Card style={{ marginBottom: 16 }}>
-      <Title level={2}>
+    <Modal
+      title={
         <Space>
           <ThunderboltOutlined />
           编辑 Super Analysis
         </Space>
-      </Title>
+      }
+      visible={visible}
+      onCancel={onCancel}
+      footer={null}
+      width={800}
+    >
       <Form
         form={form}
         layout="vertical"
@@ -109,7 +116,7 @@ const EditSuperAnalysis: React.FC<EditSuperAnalysisProps> = ({ analysis, onAnaly
           </Button>
         </Form.Item>
       </Form>
-    </Card>
+    </Modal>
   );
 };
 
