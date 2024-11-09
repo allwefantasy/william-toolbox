@@ -33,7 +33,8 @@ const EditSuperAnalysis: React.FC<EditSuperAnalysisProps> = ({ analysis, onAnaly
     const fetchRags = async () => {
       try {
         const response = await axios.get('/rags');
-        setRags(response.data);
+        // 只设置状态为 running 的 RAGs
+        setRags(response.data.filter((rag: any) => rag.status === 'running'));
       } catch (error) {
         console.error('Error fetching RAGs:', error);
         message.error('获取RAG列表失败');
