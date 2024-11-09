@@ -90,7 +90,6 @@ const handleDownloadConfirm = async (taskId: string, onServiceAdded: () => void)
   let isMessageVisible = true;
   console.log("Starting EventSource connection with taskId:", taskId);
   const eventSource = new EventSource(`/api/download-progress/${taskId}`);
-  
   // Log when connection is opened
   eventSource.onopen = () => {
     console.log("EventSource connection opened");
@@ -127,7 +126,7 @@ const handleDownloadConfirm = async (taskId: string, onServiceAdded: () => void)
     }
     
     handleProgressUpdate(data, isMessageVisible);
-  });
+  };
 
   eventSource.onerror = () => {
     eventSource.close();

@@ -61,18 +61,17 @@ async def download_progress(request: Request, task_id: str):
                 break
                 
             if task_id in download_progress_store:
-                progress_data = download_progress_store[task_id]
-                try:
-                    # Convert progress_data to JSON string and ensure it's properly formatted
-                    data = json.dumps(progress_data)
-                    logger.info(f"Sending SSE data: {data}")
-                    
-                    # Send in SSE format with proper headers
-                    yield {
-                        "event": "message",
-                        "data": data
-                    }
+                progress_data = download_progress_store[task_id]            
+                # Convert progress_data to JSON string and ensure it's properly formatted
+                data = json.dumps(progress_data)
+                logger.info(f"Sending SSE data: {data}")
                 
+                # Send in SSE format with proper headers
+                yield {
+                    "event": "message",
+                    "data": data
+                }
+            
                 if progress_data.get("completed", False):
                     del download_progress_store[task_id]
                     break
