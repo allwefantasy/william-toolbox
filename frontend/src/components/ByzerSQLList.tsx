@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Table, Button, message, Card, Typography, Space, Tag, Tooltip, Modal } from 'antd';
+import { Table, Button, message, Card, Typography, Space, Tag, Tooltip, Modal,Progress } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
-import CreateByzerSQL from './CreateByzerSQL';
+import { ProgressInfo} from './CreateByzerSQL';
 import EditByzerSQL from './EditByzerSQL';
+import CreateByzerSQL from './CreateByzerSQL';
 import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, ThunderboltOutlined, FileOutlined, EditOutlined, ExclamationCircleOutlined, DeleteOutlined } from '@ant-design/icons';
 
 const { Title, Paragraph } = Typography;

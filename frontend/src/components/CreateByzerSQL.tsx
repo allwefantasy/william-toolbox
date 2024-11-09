@@ -282,10 +282,10 @@ const CreateByzerSQL: React.FC<CreateByzerSQLProps> = ({ onServiceAdded, visible
             添加
           </Button>
         </Form.Item>
-      </Form>
-      </>
+      </Form>      
     </Modal>
   );
 };
 
 export default CreateByzerSQL;
+export type { ProgressInfo };
