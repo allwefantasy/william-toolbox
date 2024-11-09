@@ -44,8 +44,7 @@ async def load_config():
             {"value": "saas/claude", "label": "Claude"}
         ],
         "openaiServerList": [],
-        "commons": [
-            {"value": "/Users/allwefantasy/Downloads/tokenizer.json", "label": "tokenizer_path"}
+        "commons": [            
         ]
     }
 
