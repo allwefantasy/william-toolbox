@@ -87,7 +87,7 @@ const handleDownloadComplete = (setProgress: Function, onServiceAdded: () => voi
     subTitle: '下载并解压完成'
   });
   setTimeout(() => {
-    setProgress(prev => ({ ...prev, visible: false }));
+    setProgress((prev: ProgressInfo) => ({ ...prev, visible: false }));
     onServiceAdded();
   }, 1500);
 };
@@ -149,7 +149,7 @@ const handleDownloadConfirm = async (taskId: string, onServiceAdded: () => void,
 
   eventSource.onerror = () => {
     eventSource.close();
-    handleDownloadError('下载过程发生错误', isMessageVisible);
+    handleDownloadError('下载过程发生错误', setProgress);
   };
 };
 
