@@ -1,4 +1,5 @@
 import json
+import sys
 from fastapi import APIRouter, HTTPException
 import os
 import aiofiles
@@ -366,6 +367,17 @@ async def download_byzer_sql(request: Dict[str, str]):
             start_script = os.path.join(install_dir, "bin", "byzer.sh")
             if os.path.exists(start_script):
                 await asyncio.to_thread(os.chmod, start_script, 0o755)
+                
+                # Check if system is macOS and add environment variable if needed
+                if sys.platform == "darwin":
+                    async with aiofiles.open(start_script, 'r') as f:
+                        content = await f.read()
+                    
+                    if "OBJC_DISABLE_INITIALIZE_FORK_SAFETY" not in content:
+                        env_var = "export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES\n"
+                        modified_content = env_var + content
+                        async with aiofiles.open(start_script, 'w') as f:
+                            await f.write(modified_content)
 
             download_progress_store[task_id] = {"task_id": task_id, "completed": True}
 
