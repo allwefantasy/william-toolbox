@@ -12,6 +12,7 @@ import psutil
 import asyncio
 import httpx
 from fastapi import Request
+import shutil
 from sse_starlette.sse import EventSourceResponse
 from ..storage.json_file import load_byzer_sql_from_json, save_byzer_sql_to_json
 from .request_types import AddByzerSQLRequest, RunSQLRequest, RunSQLRequest
@@ -245,37 +246,62 @@ async def download_byzer_sql(request: Dict[str, str]):
             logger.info("Starting extraction...")
 
             # Use tar command to list files to count total members
-            result = subprocess.run(
-                ["tar", "-tzf", tar_path], capture_output=True, text=True
-            )
-            total_members = len(result.stdout.splitlines())
+                import platform
+                os_type = platform.system()
+                import tarfile
+                
+                # 创建进度监控函数
+                def report_progress(total_members, task_id, download_progress_store):
+                    current_member = 0
+                    def progress_callback(member):
+                        nonlocal current_member
+                        current_member += 1
+                        progress = int((current_member / total_members) * 100)
+                        download_progress_store[task_id] = {
+                            "task_id": task_id,
+                            "type": "extract",
+                            "progress": min(progress, 100),
+                            "subTitle": f"正在解压文件: {member.name}"
+                        }
+                    return progress_callback
 
-            # Create pipe to monitor extraction progress
-            process = subprocess.Popen(
-                ["tar", "-xzf", tar_path, "-C", install_dir, "--strip-components=1"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
+                try:
+                    # 获取总文件数
+                    with tarfile.open(tar_path, 'r:gz') as tar:
+                        total_members = sum(1 for _ in tar.getmembers())
+                    
+                    # 创建临时目录
+                    temp_dir = os.path.join(install_dir, "__temp_extract")
+                    os.makedirs(temp_dir, exist_ok=True)
 
-            # Monitor progress
-            current_member = 0
-            while True:
-                if process.poll() is not None:
-                    break
+                    # 解压文件
+                    with tarfile.open(tar_path, 'r:gz') as tar:
+                        progress_callback = report_progress(total_members, task_id, download_progress_store)
+                        for member in tar.getmembers():
+                            progress_callback(member)
+                            tar.extract(member, temp_dir)
 
-                current_member += 1
-                progress = int((current_member / total_members) * 100)
-                download_progress_store[task_id] = {
-                    "task_id": task_id,
-                    "type": "extract",
-                    "progress": min(progress, 100),
-                }
-                await asyncio.sleep(0.1)
+                    # 获取第一级目录并移动文件
+                    items = os.listdir(temp_dir)
+                    if items:
+                        first_dir = os.path.join(temp_dir, items[0])
+                        for item in os.listdir(first_dir):
+                            src = os.path.join(first_dir, item)
+                            dst = os.path.join(install_dir, item)
+                            if os.path.exists(dst):
+                                if os.path.isdir(dst):
+                                    shutil.rmtree(dst)
+                                else:
+                                    os.remove(dst)
+                            shutil.move(src, dst)
 
-            if process.returncode != 0:
-                stderr = process.stderr.read().decode()
-                raise Exception(f"Extraction failed: {stderr}")
-
+                    # 清理临时目录
+                    shutil.rmtree(temp_dir)
+                    
+                except Exception as e:
+                    logger.error(f"Extraction failed: {str(e)}")
+                    logger.error(traceback.format_exc()) 
+                    raise Exception(f"Failed to extract archive: {str(e)}")
             # Download byzer-llm extension
             byzer_llm_url = "https://download.byzer.org/byzer-extensions/nightly-build/byzer-llm-3.3_2.12-0.1.9.jar"
             libs_dir = os.path.join(install_dir, "libs")
