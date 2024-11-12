@@ -273,12 +273,19 @@ async def download_byzer_sql(request: Dict[str, str]):
                 temp_dir = os.path.join(install_dir, "__temp_extract")
                 os.makedirs(temp_dir, exist_ok=True)
 
-                # 解压文件
+                # 解压文件，并指定特殊的参数避免生成隐藏文件
                 with tarfile.open(tar_path, 'r:gz') as tar:
                     progress_callback = report_progress(total_members, task_id, download_progress_store)
                     for member in tar.getmembers():
+                        # 修改文件权限信息，避免生成额外的属性文件
+                        member.mode = 0o755 if member.isdir() else 0o644
+                        member.uid = os.getuid()
+                        member.gid = os.getgid()
+                        member.uname = ""
+                        member.gname = ""
+                        
                         progress_callback(member)
-                        tar.extract(member, temp_dir)
+                        tar.extract(member, temp_dir, set_attrs=False)
 
                 # 获取第一级目录并移动文件
                 items = os.listdir(temp_dir)
