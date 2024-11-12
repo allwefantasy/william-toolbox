@@ -195,9 +195,17 @@ const Chat: React.FC = () => {
           }
         }
       }
-    } catch (error) {
-      console.error('Error regenerating response:', error);
-      MessageBox.error('Failed to regenerate response');
+      } catch (error: any) {
+        console.error('Error regenerating response:', error);
+        Modal.error({
+          title: 'Error regenerating response',
+          content: (
+            <div style={{ maxHeight: '400px', overflow: 'auto' }}>
+              {error.response?.data?.detail || error.message || 'Failed to regenerate response'}
+            </div>
+          ),
+          width: 600
+        });
     } finally {
       setIsLoading(false);
     }
@@ -428,9 +436,17 @@ const Chat: React.FC = () => {
             }
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error sending message:', error);
-        MessageBox.error('Failed to send message');
+        Modal.error({
+          title: 'Error sending message',
+          content: (
+            <div style={{ maxHeight: '400px', overflow: 'auto' }}>
+              {error.response?.data?.detail || error.message || 'Failed to send message'}
+            </div>
+          ),
+          width: 600
+        });
         // Remove the assistant message if there's an error
         setMessages(prevMessages => prevMessages.slice(0, -1));
       } finally {
