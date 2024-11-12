@@ -98,8 +98,8 @@ async def update_super_analysis(analysis_name: str, request: AddSuperAnalysisReq
         )
     
     # Update the analysis configuration
-    analysis_info.update(request.model_dump())
-    analyses[analysis_name] = analysis_info
+    analysis_info.update(request.model_dump())    
+    analyses[analysis_name] = analysis_info    
     logger.info(f"Super Analysis {analysis_name} updated: {analysis_info}")
     await save_super_analysis_to_json(analyses)
     
