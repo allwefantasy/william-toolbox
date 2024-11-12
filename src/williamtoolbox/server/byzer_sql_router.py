@@ -244,64 +244,61 @@ async def download_byzer_sql(request: Dict[str, str]):
 
             # Extract the file asynchronously using tar command
             logger.info("Starting extraction...")
+            
+            import tarfile
+            
+            # 创建进度监控函数
+            def report_progress(total_members, task_id, download_progress_store):
+                current_member = 0
+                def progress_callback(member):
+                    nonlocal current_member
+                    current_member += 1
+                    progress = int((current_member / total_members) * 100)
+                    download_progress_store[task_id] = {
+                        "task_id": task_id,
+                        "type": "extract",
+                        "progress": min(progress, 100),
+                        "subTitle": f"正在解压文件: {member.name}"
+                    }
+                return progress_callback
 
-            # Use tar command to list files to count total members
-                import platform
-                os_type = platform.system()
-                import tarfile
+            try:
+                # 获取总文件数
+                with tarfile.open(tar_path, 'r:gz') as tar:
+                    total_members = sum(1 for _ in tar.getmembers())
                 
-                # 创建进度监控函数
-                def report_progress(total_members, task_id, download_progress_store):
-                    current_member = 0
-                    def progress_callback(member):
-                        nonlocal current_member
-                        current_member += 1
-                        progress = int((current_member / total_members) * 100)
-                        download_progress_store[task_id] = {
-                            "task_id": task_id,
-                            "type": "extract",
-                            "progress": min(progress, 100),
-                            "subTitle": f"正在解压文件: {member.name}"
-                        }
-                    return progress_callback
+                # 创建临时目录
+                temp_dir = os.path.join(install_dir, "__temp_extract")
+                os.makedirs(temp_dir, exist_ok=True)
 
-                try:
-                    # 获取总文件数
-                    with tarfile.open(tar_path, 'r:gz') as tar:
-                        total_members = sum(1 for _ in tar.getmembers())
-                    
-                    # 创建临时目录
-                    temp_dir = os.path.join(install_dir, "__temp_extract")
-                    os.makedirs(temp_dir, exist_ok=True)
+                # 解压文件
+                with tarfile.open(tar_path, 'r:gz') as tar:
+                    progress_callback = report_progress(total_members, task_id, download_progress_store)
+                    for member in tar.getmembers():
+                        progress_callback(member)
+                        tar.extract(member, temp_dir)
 
-                    # 解压文件
-                    with tarfile.open(tar_path, 'r:gz') as tar:
-                        progress_callback = report_progress(total_members, task_id, download_progress_store)
-                        for member in tar.getmembers():
-                            progress_callback(member)
-                            tar.extract(member, temp_dir)
+                # 获取第一级目录并移动文件
+                items = os.listdir(temp_dir)
+                if items:
+                    first_dir = os.path.join(temp_dir, items[0])
+                    for item in os.listdir(first_dir):
+                        src = os.path.join(first_dir, item)
+                        dst = os.path.join(install_dir, item)
+                        if os.path.exists(dst):
+                            if os.path.isdir(dst):
+                                shutil.rmtree(dst)
+                            else:
+                                os.remove(dst)
+                        shutil.move(src, dst)
 
-                    # 获取第一级目录并移动文件
-                    items = os.listdir(temp_dir)
-                    if items:
-                        first_dir = os.path.join(temp_dir, items[0])
-                        for item in os.listdir(first_dir):
-                            src = os.path.join(first_dir, item)
-                            dst = os.path.join(install_dir, item)
-                            if os.path.exists(dst):
-                                if os.path.isdir(dst):
-                                    shutil.rmtree(dst)
-                                else:
-                                    os.remove(dst)
-                            shutil.move(src, dst)
-
-                    # 清理临时目录
-                    shutil.rmtree(temp_dir)
-                    
-                except Exception as e:
-                    logger.error(f"Extraction failed: {str(e)}")
-                    logger.error(traceback.format_exc()) 
-                    raise Exception(f"Failed to extract archive: {str(e)}")
+                # 清理临时目录
+                shutil.rmtree(temp_dir)
+                
+            except Exception as e:
+                logger.error(f"Extraction failed: {str(e)}")
+                logger.error(traceback.format_exc()) 
+                raise Exception(f"Failed to extract archive: {str(e)}")
             # Download byzer-llm extension
             byzer_llm_url = "https://download.byzer.org/byzer-extensions/nightly-build/byzer-llm-3.3_2.12-0.1.9.jar"
             libs_dir = os.path.join(install_dir, "libs")
