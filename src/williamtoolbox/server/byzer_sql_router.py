@@ -374,10 +374,19 @@ async def download_byzer_sql(request: Dict[str, str]):
                         content = await f.read()
                     
                     if "OBJC_DISABLE_INITIALIZE_FORK_SAFETY" not in content:
-                        env_var = "export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES\n"
-                        modified_content = env_var + content
-                        async with aiofiles.open(start_script, 'w') as f:
-                            await f.write(modified_content)
+                    env_var = "export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES\n"
+                    # Split content by newline to find shebang
+                    lines = content.split('\n')
+                    if lines and lines[0].startswith('#!'):
+                        # Insert env_var after shebang
+                        lines.insert(1, env_var.rstrip())
+                        modified_content = '\n'.join(lines)
+                    else:
+                        # If no shebang, add it at the beginning
+                        modified_content = "#!/usr/bin/env bash\n" + env_var + content
+                    
+                    async with aiofiles.open(start_script, 'w') as f:
+                        await f.write(modified_content)
 
             download_progress_store[task_id] = {"task_id": task_id, "completed": True}
 
