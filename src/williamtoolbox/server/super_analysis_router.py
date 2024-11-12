@@ -166,10 +166,27 @@ async def manage_super_analysis(analysis_name: str, action: str):
     else:  # action == "stop"
         if "process_id" in analysis_info:
             try:
-                os.kill(analysis_info["process_id"], signal.SIGTERM)
+                parent = psutil.Process(analysis_info["process_id"])
+                # Get all child processes
+                children = parent.children(recursive=True)
+                # Send SIGTERM to parent and all children
+                for child in children:
+                    try:
+                        child.terminate()
+                    except (psutil.NoSuchProcess, psutil.AccessDenied):
+                        pass
+                parent.terminate()
+                # Wait for processes to terminate
+                _, alive = psutil.wait_procs(children + [parent], timeout=3)
+                # If any processes are still alive, kill them
+                for proc in alive:
+                    try:
+                        proc.kill()
+                    except (psutil.NoSuchProcess, psutil.AccessDenied):
+                        pass
                 analysis_info["status"] = "stopped"
                 del analysis_info["process_id"]
-            except ProcessLookupError:
+            except (ProcessLookupError, psutil.NoSuchProcess):
                 analysis_info["status"] = "stopped"
                 if "process_id" in analysis_info:
                     del analysis_info["process_id"]
