@@ -92,3 +92,23 @@ async def get_openai_compatible_service_status():
                 await save_config(config)
     
     return {"isRunning": is_running}
+
+@router.get("/openai-compatible-service/logs/{log_type}")
+async def get_openai_compatible_service_logs(log_type: str):
+    """Get the logs of OpenAI compatible service."""
+    if log_type not in ["out", "err"]:
+        return {"error": "Invalid log type"}
+    
+    log_file = os.path.join("logs", f"openai_compatible_service.{log_type}")
+    
+    if not os.path.exists(log_file):
+        return {"content": ""}
+    
+    try:
+        with open(log_file, "r") as f:
+            # 读取最后1000行日志
+            lines = f.readlines()[-1000:]
+            return {"content": "".join(lines)}
+    except Exception as e:
+        logger.error(f"Failed to read log file: {str(e)}")
+        return {"error": f"Failed to read log file: {str(e)}"}

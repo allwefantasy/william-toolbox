@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Form, Input, Button, message, Card, Typography, Space, Switch } from 'antd';
+import { Form, Input, Button, message, Card, Typography, Space, Switch, Tabs } from 'antd';
 import { RocketOutlined, SyncOutlined } from '@ant-design/icons';
 
 const { Title } = Typography;
@@ -10,6 +10,35 @@ const OpenAICompatibleService: React.FC = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [outLog, setOutLog] = useState('');
+  const [errLog, setErrLog] = useState('');
+
+  const fetchLogs = async () => {
+    try {
+      const outResponse = await axios.get('/openai-compatible-service/logs/out');
+      const errResponse = await axios.get('/openai-compatible-service/logs/err');
+      setOutLog(outResponse.data.content);
+      setErrLog(errResponse.data.content);
+    } catch (error) {
+      console.error('Error fetching logs:', error);
+      message.error('获取日志失败');
+    }
+  };
+
+  useEffect(() => {
+    // 如果服务正在运行,每5秒刷新一次日志
+    let logInterval: NodeJS.Timeout | null = null;
+    if (isRunning) {
+      fetchLogs();
+      logInterval = setInterval(fetchLogs, 5000);
+    }
+
+    return () => {
+      if (logInterval) {
+        clearInterval(logInterval);
+      }
+    };
+  }, [isRunning]);
 
   useEffect(() => {
     fetchServiceStatus();
@@ -101,6 +130,35 @@ const OpenAICompatibleService: React.FC = () => {
           </Space>
         </Form.Item>
       </Form>
+
+      {isRunning && (
+        <Card style={{ marginTop: 16 }}>
+          <Tabs defaultActiveKey="out">
+            <Tabs.TabPane tab="标准输出" key="out">
+              <pre style={{ 
+                maxHeight: '400px', 
+                overflow: 'auto',
+                backgroundColor: '#f5f5f5',
+                padding: '12px',
+                borderRadius: '4px'
+              }}>
+                {outLog || '暂无日志'}
+              </pre>
+            </Tabs.TabPane>
+            <Tabs.TabPane tab="错误日志" key="err">
+              <pre style={{
+                maxHeight: '400px',
+                overflow: 'auto',
+                backgroundColor: '#f5f5f5',
+                padding: '12px',
+                borderRadius: '4px'
+              }}>
+                {errLog || '暂无日志'}
+              </pre>
+            </Tabs.TabPane>
+          </Tabs>
+        </Card>
+      )}
     </Card>
   );
 };
