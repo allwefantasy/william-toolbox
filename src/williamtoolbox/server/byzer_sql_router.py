@@ -296,6 +296,12 @@ async def download_byzer_sql(request: Dict[str, str]):
 
                 # 清理临时目录
                 shutil.rmtree(temp_dir)
+                def remove_dotunderscore(directory):
+                    for root, dirs, files in os.walk(directory):
+                        for file in files:
+                            if file.startswith('._'):
+                                os.remove(os.path.join(root, file))
+                remove_dotunderscore(install_dir)                
                 
             except Exception as e:
                 logger.error(f"Extraction failed: {str(e)}")
