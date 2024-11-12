@@ -29,14 +29,16 @@ async def run_script(request: RunSQLRequest):
             # 构建请求参数
             params = {
                 "sql": request.sql,
-                "owner": "admin",  # 默认使用admin账户
+                "owner": request.owner,  # 默认使用admin账户
                 "jobType": "script",
                 "executeMode": "query",
                 "jobName": f"test_sql_{uuid.uuid4()}",
                 "includeSchema": True,
-                "sessionPerRequest": True,
+                "sessionPerRequest": False,
                 "sessionPerUser": True,
             }
+
+            logger.info(f"Executing SQL: {params}")
 
             response = await client.post(
                 f"{request.engine_url}/run/script",
@@ -301,7 +303,7 @@ async def download_byzer_sql(request: Dict[str, str]):
                 raise Exception(f"Failed to extract archive: {str(e)}")
             # Download byzer-llm extension
             byzer_llm_url = "https://download.byzer.org/byzer-extensions/nightly-build/byzer-llm-3.3_2.12-0.1.9.jar"
-            libs_dir = os.path.join(install_dir, "libs")
+            libs_dir = os.path.join(install_dir, "plugin")
             os.makedirs(libs_dir, exist_ok=True)
             byzer_llm_path = os.path.join(libs_dir, "byzer-llm-3.3_2.12-0.1.9.jar")
 

@@ -114,6 +114,7 @@ class AddSuperAnalysisRequest(BaseModel):
 class RunSQLRequest(BaseModel):
     sql: str
     engine_url: str
+    owner: str
 
 class AddByzerSQLRequest(BaseModel):
     name: str

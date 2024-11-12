@@ -124,7 +124,13 @@ async def process_message_stream(
             config = await load_config()
             if request.list_type == "models":
                 openai_server = config.get("openaiServerList", [{}])[0]
-                base_url = f"http://{openai_server.get('host', 'localhost')}:{openai_server.get('port', 8000)}/v1"
+                
+                host = openai_server.get("host", "localhost")
+                port = openai_server.get("port", 8000)
+                if host == "0.0.0.0":
+                    host = "127.0.0.1"
+
+                base_url = f"http://{host}:{port}/v1"
                 client = AsyncOpenAI(base_url=base_url, api_key="xxxx")
 
                 response = await client.chat.completions.create(
