@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: williamtoolbox
-Version: 0.0.25
+Version: 0.0.26
 Summary: williamtoolbox: William Toolbox
 Author: allwefantasy
 Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
@@ -12,6 +12,7 @@ Requires-Dist: auto-coder
 Requires-Dist: aiofiles
 Requires-Dist: psutil
 Requires-Dist: jproperties
+Requires-Dist: sse-starlette
 
 # William Toolbox 🧰
 

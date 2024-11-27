@@ -71,7 +71,7 @@ const SuperAnalysisList: React.FC<SuperAnalysisListProps> = ({ refreshTrigger })
 
     const fetchLogs = async () => {
       try {
-        const response = await axios.get(`/super-analysis/${analysisName}/logs/${logType}/-10000`);
+        const response = await axios.get(`/super-analysis/${analysisName}/logs/${logType}/-100000`);
         if (response.data.content) {
           setLogModal(prev => ({
             ...prev,

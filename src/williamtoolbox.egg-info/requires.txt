@@ -2,3 +2,4 @@ auto-coder
 aiofiles
 psutil
 jproperties
+sse-starlette
