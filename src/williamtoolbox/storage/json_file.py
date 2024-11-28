@@ -50,20 +50,28 @@ SUPER_ANALYSIS_JSON_PATH = "super_analysis.json"
 CHAT_JSON_PATH = "chat.json"
 
 
-# Function to load chat data from JSON file
-async def load_chat_data():
-    async with with_file_lock(CHAT_JSON_PATH):
-        if os.path.exists(CHAT_JSON_PATH):
-            async with aiofiles.open(CHAT_JSON_PATH, "r") as f:
+# Function to load chat data from JSON file for a specific user
+async def load_chat_data(username: str):
+    chat_dir = os.path.join("chat_data", username)
+    chat_file = os.path.join(chat_dir, "chat.json")
+    os.makedirs(chat_dir, exist_ok=True)
+    
+    async with with_file_lock(chat_file):
+        if os.path.exists(chat_file):
+            async with aiofiles.open(chat_file, "r") as f:
                 content = await f.read()
                 return json.loads(content)
         return {"conversations": []}
 
 
-# Function to save chat data to JSON file
-async def save_chat_data(data):
-    async with with_file_lock(CHAT_JSON_PATH):
-        async with aiofiles.open(CHAT_JSON_PATH, "w") as f:
+# Function to save chat data to JSON file for a specific user
+async def save_chat_data(username: str, data):
+    chat_dir = os.path.join("chat_data", username)
+    chat_file = os.path.join(chat_dir, "chat.json")
+    os.makedirs(chat_dir, exist_ok=True)
+    
+    async with with_file_lock(chat_file):
+        async with aiofiles.open(chat_file, "w") as f:
             content = json.dumps(data, ensure_ascii=False)
             await f.write(content)
 

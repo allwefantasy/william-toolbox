@@ -83,11 +83,16 @@ const Chat: React.FC = () => {
     setIsLoading(true);
 
     try {
+      const username = sessionStorage.getItem('username');
       const streamResponse = await axios.post(`/chat/conversations/${currentConversationId}/messages/stream`, {
         conversation_id: currentConversationId,
         messages: messagesToSend,
         list_type: listType,
         selected_item: selectedItem
+      }, {
+        params: {
+          username: username
+        }
       });
 
       if (streamResponse.data && streamResponse.data.request_id) {
@@ -166,12 +171,17 @@ const Chat: React.FC = () => {
                         return { ...msg, content: assistantMessage, thoughts: msg.thoughts || [] };
                       }
                       return msg;
-                    });
+                    }, {
+          params: {
+            username: username
+          }
+        });
 
                     // Update conversation in server
                     (async () => {
                       try {
-                        await axios.put(`/chat/conversations/${currentConversationId}`, {
+                        const username = sessionStorage.getItem('username');
+        await axios.put(`/chat/conversations/${currentConversationId}`, {
                           id: currentConversationId,
                           title: currentConversationTitle,
                           messages: updatedMessages,
@@ -213,7 +223,8 @@ const Chat: React.FC = () => {
 
   const fetchConversations = async () => {
     try {
-      const response = await axios.get('/chat/conversations');
+      const username = sessionStorage.getItem('username');
+      const response = await axios.get(`/chat/conversations?username=${username}`);
       setConversations(response.data);
       if (response.data.length > 0) {
         setCurrentConversationId(response.data[0].id);
@@ -227,7 +238,8 @@ const Chat: React.FC = () => {
 
   const fetchMessages = async (conversationId: string) => {
     try {
-      const response = await axios.get(`/chat/conversations/${conversationId}`);
+      const username = sessionStorage.getItem('username');
+      const response = await axios.get(`/chat/conversations/${conversationId}?username=${username}`);
       setMessages(response.data.messages);
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -495,7 +507,12 @@ const Chat: React.FC = () => {
       content: '你确定要删除这个会话吗？',
       onOk: async () => {
         try {
-          await axios.delete(`/chat/conversations/${convId}`);
+          const username = sessionStorage.getItem('username');
+      await axios.delete(`/chat/conversations/${convId}`, {
+        params: {
+          username: username
+        }
+      });
           setConversations(conversations.filter(c => c.id !== convId));
           if (currentConversationId === convId) {
             setCurrentConversationId(null);
@@ -534,9 +551,14 @@ const Chat: React.FC = () => {
           style={{ marginBottom: 20, width: '100%' }}
           onClick={async () => {
             try {
-              const response = await axios.post("/chat/conversations", {
-                title: "新的聊天"
-              });
+        const username = sessionStorage.getItem('username');
+        const response = await axios.post("/chat/conversations", {
+          title: "新的聊天"
+        }, {
+          params: {
+            username: username
+          }
+        });
               const newConversation: Conversation = {
                 id: response.data.id,
                 title: response.data.title,

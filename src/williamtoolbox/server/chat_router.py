@@ -16,8 +16,8 @@ import traceback
 router = APIRouter()
 
 @router.get("/chat/conversations")
-async def get_conversation_list():
-    chat_data = await load_chat_data()
+async def get_conversation_list(username: str):
+    chat_data = await load_chat_data(username)
     conversation_list = [
         {
             "id": conv["id"],
@@ -31,8 +31,8 @@ async def get_conversation_list():
     return conversation_list
 
 @router.post("/chat/conversations", response_model=Conversation)
-async def create_conversation(request: CreateConversationRequest):
-    chat_data = await load_chat_data()
+async def create_conversation(username: str, request: CreateConversationRequest):
+    chat_data = await load_chat_data(username)
     new_conversation = Conversation(
         id=str(uuid.uuid4()),
         title=request.title,
@@ -41,12 +41,12 @@ async def create_conversation(request: CreateConversationRequest):
         messages=[],
     )
     chat_data["conversations"].append(new_conversation.model_dump())
-    await save_chat_data(chat_data)
+    await save_chat_data(username, chat_data)
     return new_conversation
 
 @router.get("/chat/conversations/{conversation_id}", response_model=Conversation)
-async def get_conversation(conversation_id: str):
-    chat_data = await load_chat_data()
+async def get_conversation(username: str, conversation_id: str):
+    chat_data = await load_chat_data(username)
     conversation = next(
         (conv for conv in chat_data["conversations"] if conv["id"] == conversation_id),
         None,
@@ -59,10 +59,10 @@ async def get_conversation(conversation_id: str):
     "/chat/conversations/{conversation_id}/messages/stream",
     response_model=AddMessageResponse,
 )
-async def add_message_stream(conversation_id: str, request: AddMessageRequest):
+async def add_message_stream(username: str, conversation_id: str, request: AddMessageRequest):
     request_id = str(uuid.uuid4())
 
-    chat_data = await load_chat_data()
+    chat_data = await load_chat_data(username)
     conversation = next(
         (conv for conv in chat_data["conversations"] if conv["id"] == conversation_id),
         None,
@@ -72,12 +72,12 @@ async def add_message_stream(conversation_id: str, request: AddMessageRequest):
 
     # Replace the entire conversation messages with the full message history
     conversation["messages"] = [msg.model_dump() for msg in request.messages]
-    await save_chat_data(chat_data)
+    await save_chat_data(username, chat_data)
     response_message_id = str(uuid.uuid4())
 
     asyncio.create_task(
         process_message_stream(
-            request_id, request, conversation, response_message_id, chat_data=chat_data
+            username, request_id, request, conversation, response_message_id, chat_data=chat_data
         )
     )
 
@@ -110,6 +110,7 @@ async def get_message_events(request_id: str, index: int):
 
 
 async def process_message_stream(
+    username: str,
     request_id: str,
     request: AddMessageRequest,
     conversation: Conversation,
@@ -346,13 +347,13 @@ async def process_message_stream(
             "thoughts": thoughts,
         }
     ]
-    await save_chat_data(chat_data)
+    await save_chat_data(username, chat_data)
 
 
 @router.put("/chat/conversations/{conversation_id}")
-async def update_conversation(conversation_id: str, request: Conversation):
+async def update_conversation(username: str, conversation_id: str, request: Conversation):
     """Update an existing conversation with new data."""
-    chat_data = await load_chat_data()
+    chat_data = await load_chat_data(username)
 
     # Find and update the conversation
     for conv in chat_data["conversations"]:
@@ -365,16 +366,16 @@ async def update_conversation(conversation_id: str, request: Conversation):
                     "updated_at": datetime.now().isoformat(),
                 }
             )
-            await save_chat_data(chat_data)
+            await save_chat_data(username, chat_data)
             return conv
 
     raise HTTPException(status_code=404, detail="Conversation not found")
 
 
 @router.put("/chat/conversations/{conversation_id}/title")
-async def update_conversation_title(conversation_id: str, request: UpdateTitleRequest):
+async def update_conversation_title(username: str, conversation_id: str, request: UpdateTitleRequest):
     """Update only the title of an existing conversation."""
-    chat_data = await load_chat_data()
+    chat_data = await load_chat_data(username)
 
     # Find and update the conversation title
     for conv in chat_data["conversations"]:
@@ -382,17 +383,17 @@ async def update_conversation_title(conversation_id: str, request: UpdateTitleRe
             logger.info(f"Updating title for conversation {conversation_id}")
             conv["title"] = request.title
             conv["updated_at"] = datetime.now().isoformat()
-            await save_chat_data(chat_data)
+            await save_chat_data(username, chat_data)
             return {"message": "Title updated successfully", "title": request.title}
 
     raise HTTPException(status_code=404, detail="Conversation not found")
 
 
 @router.delete("/chat/conversations/{conversation_id}")
-async def delete_conversation(conversation_id: str):
-    chat_data = await load_chat_data()
+async def delete_conversation(username: str, conversation_id: str):
+    chat_data = await load_chat_data(username)
     chat_data["conversations"] = [
         conv for conv in chat_data["conversations"] if conv["id"] != conversation_id
     ]
-    await save_chat_data(chat_data)
+    await save_chat_data(username, chat_data)
     return {"message": "Conversation deleted successfully"}
