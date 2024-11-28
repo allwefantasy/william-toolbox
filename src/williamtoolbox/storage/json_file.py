@@ -4,42 +4,47 @@ import aiofiles
 import aiofiles.os
 import asyncio
 from contextlib import asynccontextmanager
-from filelock import FileLock
-import contextlib
+import asyncio
+import aiofiles
+from contextlib import asynccontextmanager
+from pathlib import Path
 
-# Global dictionary to store locks for different files
-_file_locks = {}
+class AsyncFileLock:
+    def __init__(self, lock_file: str):
+        self.lock_file = Path(lock_file+".lock")
+        self._lock = asyncio.Lock()
+        self._lock_handle = None  # 初始化为 None
+
+    async def acquire(self, timeout: int = 30):
+        async with self._lock:  # 确保线程安全
+            start_time = asyncio.get_running_loop().time()
+            while True:
+                try:
+                    # 尝试创建锁文件
+                    self._lock_handle = await aiofiles.open(self.lock_file, mode="x")
+                    break
+                except FileExistsError:
+                    # 如果锁文件存在，等待一小段时间重试
+                    if asyncio.get_running_loop().time() - start_time > timeout:
+                        raise TimeoutError(f"Could not acquire lock within {timeout} seconds for {self.lock_file}")
+                    await asyncio.sleep(0.1)
+
+    async def release(self):
+        async with self._lock:  # 确保线程安全
+            if self._lock_handle:
+                await self._lock_handle.close()  # 关闭锁文件
+                self.lock_file.unlink()  # 删除锁文件
+                self._lock_handle = None  # 重置
 
 @asynccontextmanager
-async def async_file_lock(file_path: str):
-    """Asynchronous context manager for file locking."""
-    if file_path not in _file_locks:
-        _file_locks[file_path] = asyncio.Lock()
-    
-    lock = _file_locks[file_path]
+async def with_file_lock(file_path: str, timeout: int = 30):
+    lock = AsyncFileLock(file_path)
     try:
-        await lock.acquire()
+        await lock.acquire(timeout=timeout)
         yield
     finally:
-        lock.release()
+        await lock.release()
 
-def get_lock_path(file_path: str) -> str:
-    """Get the lock file path for a given file path."""
-    return f"{file_path}.lock"
-
-@asynccontextmanager
-async def with_file_lock(file_path: str):
-    """Async context manager for file locking."""
-    lock = FileLock(get_lock_path(file_path))
-    try:
-        with lock:
-            yield
-    finally:
-        if os.path.exists(get_lock_path(file_path)):
-            try:
-                os.remove(get_lock_path(file_path))
-            except:
-                pass
 
 # Path to the models.json file
 MODELS_JSON_PATH = "models.json"
@@ -54,14 +59,12 @@ CHAT_JSON_PATH = "chat.json"
 async def load_chat_data(username: str):
     chat_dir = os.path.join("chat_data", username)
     chat_file = os.path.join(chat_dir, "chat.json")
-    os.makedirs(chat_dir, exist_ok=True)
-    
-    async with with_file_lock(chat_file):
-        if os.path.exists(chat_file):
-            async with aiofiles.open(chat_file, "r") as f:
-                content = await f.read()
-                return json.loads(content)
-        return {"conversations": []}
+    os.makedirs(chat_dir, exist_ok=True)        
+    if os.path.exists(chat_file):
+        async with aiofiles.open(chat_file, "r") as f:
+            content = await f.read()
+            return json.loads(content)
+    return {"conversations": []}
 
 
 # Function to save chat data to JSON file for a specific user
@@ -145,20 +148,18 @@ async def save_models_to_json(models):
             await f.write(content)
 
 
-def b_load_models_from_json():
-    with FileLock(get_lock_path(MODELS_JSON_PATH)):
-        if os.path.exists(MODELS_JSON_PATH):
-            with open(MODELS_JSON_PATH, "r") as f:
-                content = f.read()
-                return json.loads(content)
-        return {}
+def b_load_models_from_json():    
+    if os.path.exists(MODELS_JSON_PATH):
+        with open(MODELS_JSON_PATH, "r") as f:
+            content = f.read()
+            return json.loads(content)
+    return {}
 
 
-def b_save_models_to_json(models):
-    with FileLock(get_lock_path(MODELS_JSON_PATH)):
-        with open(MODELS_JSON_PATH, "w") as f:
-            content = json.dumps(models, ensure_ascii=False)
-            f.write(content)
+def b_save_models_to_json(models):    
+    with open(MODELS_JSON_PATH, "w") as f:
+        content = json.dumps(models, ensure_ascii=False)
+        f.write(content)
 
 
 # Function to load RAGs from JSON file

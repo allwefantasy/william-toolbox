@@ -15,3 +15,5 @@ chat_events/
 events/
 chat.json
 users.json
+chat_data/
+byzer_sql.json

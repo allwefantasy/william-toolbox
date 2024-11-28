@@ -83,16 +83,12 @@ const Chat: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const username = sessionStorage.getItem('username');
-      const streamResponse = await axios.post(`/chat/conversations/${currentConversationId}/messages/stream`, {
+      const username = sessionStorage.getItem('username') || '';
+      const streamResponse = await axios.post(`/chat/conversations/${currentConversationId}/messages/stream?username=${encodeURIComponent(username)}`, {
         conversation_id: currentConversationId,
         messages: messagesToSend,
         list_type: listType,
         selected_item: selectedItem
-      }, {
-        params: {
-          username: username
-        }
       });
 
       if (streamResponse.data && streamResponse.data.request_id) {
@@ -163,59 +159,59 @@ const Chat: React.FC = () => {
             }
 
             if (event.event === 'done') {
-                // Update conversation after regeneration is complete
-                try {
-                  setMessages(prevMessages => {
-                    const updatedMessages = prevMessages.map(msg => {
-                      if (msg.id === assistant_message_id) {
-                        return { ...msg, content: assistantMessage, thoughts: msg.thoughts || [] };
-                      }
-                      return msg;
-                    }, {
-          params: {
-            username: username
-          }
-        });
-
-                    // Update conversation in server
-                    (async () => {
-                      try {
-                        const username = sessionStorage.getItem('username');
-        await axios.put(`/chat/conversations/${currentConversationId}`, {
-                          id: currentConversationId,
-                          title: currentConversationTitle,
-                          messages: updatedMessages,
-                          created_at: new Date().toISOString(),
-                          updated_at: new Date().toISOString()
-                        });
-                      } catch (error) {
-                        console.error('Error updating conversation:', error);
-                        MessageBox.error('Failed to update conversation');
-                      }
-                    })();
-
-                    return updatedMessages;
+              // Update conversation after regeneration is complete
+              try {
+                setMessages(prevMessages => {
+                  const updatedMessages = prevMessages.map(msg => {
+                    if (msg.id === assistant_message_id) {
+                      return { ...msg, content: assistantMessage, thoughts: msg.thoughts || [] };
+                    }
+                    return msg;
+                  }, {
+                    params: {
+                      username: username
+                    }
                   });
-                } catch (error) {
-                  console.error('Error updating conversation:', error);
-                  MessageBox.error('Failed to update conversation');
-                }
-                return;
+
+                  // Update conversation in server
+                  (async () => {
+                    try {
+                      const username = sessionStorage.getItem('username') || '';
+                      await axios.put(`/chat/conversations/${currentConversationId}?username=${encodeURIComponent(username)}`, {
+                        id: currentConversationId,
+                        title: currentConversationTitle,
+                        messages: updatedMessages,
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                      });
+                    } catch (error) {
+                      console.error('Error updating conversation:', error);
+                      MessageBox.error('Failed to update conversation');
+                    }
+                  })();
+
+                  return updatedMessages;
+                });
+              } catch (error) {
+                console.error('Error updating conversation:', error);
+                MessageBox.error('Failed to update conversation');
+              }
+              return;
             }
           }
         }
       }
-      } catch (error: any) {
-        console.error('Error regenerating response:', error);
-        Modal.error({
-          title: 'Error regenerating response',
-          content: (
-            <div style={{ maxHeight: '400px', overflow: 'auto' }}>
-              {error.response?.data?.detail || error.message || 'Failed to regenerate response'}
-            </div>
-          ),
-          width: 600
-        });
+    } catch (error: any) {
+      console.error('Error regenerating response:', error);
+      Modal.error({
+        title: 'Error regenerating response',
+        content: (
+          <div style={{ maxHeight: '400px', overflow: 'auto' }}>
+            {error.response?.data?.detail || error.message || 'Failed to regenerate response'}
+          </div>
+        ),
+        width: 600
+      });
     } finally {
       setIsLoading(false);
     }
@@ -223,8 +219,8 @@ const Chat: React.FC = () => {
 
   const fetchConversations = async () => {
     try {
-      const username = sessionStorage.getItem('username');
-      const response = await axios.get(`/chat/conversations?username=${username}`);
+      const username = sessionStorage.getItem('username') || '';
+      const response = await axios.get(`/chat/conversations?username=${encodeURIComponent(username)}`);
       setConversations(response.data);
       if (response.data.length > 0) {
         setCurrentConversationId(response.data[0].id);
@@ -238,8 +234,8 @@ const Chat: React.FC = () => {
 
   const fetchMessages = async (conversationId: string) => {
     try {
-      const username = sessionStorage.getItem('username');
-      const response = await axios.get(`/chat/conversations/${conversationId}?username=${username}`);
+      const username = sessionStorage.getItem('username') || '';
+      const response = await axios.get(`/chat/conversations/${conversationId}?username=${encodeURIComponent(username)}`);
       setMessages(response.data.messages);
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -332,7 +328,8 @@ const Chat: React.FC = () => {
       setCountdownInterval(interval);
 
       try {
-        const streamResponse = await axios.post(`/chat/conversations/${currentConversationId}/messages/stream`, {
+        const username = sessionStorage.getItem('username') || '';
+        const streamResponse = await axios.post(`/chat/conversations/${currentConversationId}/messages/stream?username=${encodeURIComponent(username)}`, {
           conversation_id: currentConversationId,
           messages: [...messages, newUserMessage],
           list_type: listType,
@@ -404,34 +401,34 @@ const Chat: React.FC = () => {
               }
 
               if (event.event === 'done') {
-              // Update conversation after receiving assistant's response
-              try {
-                setMessages(prevMessages => {
-                  const updatedMessages = prevMessages.map(msg => {
-                    if (msg.id === assistant_message_id) {
-                      return { ...msg, content: assistantMessage, thoughts: msg.thoughts || [] };
-                    }
-                    return msg;
+                // Update conversation after receiving assistant's response
+                try {
+                  setMessages(prevMessages => {
+                    const updatedMessages = prevMessages.map(msg => {
+                      if (msg.id === assistant_message_id) {
+                        return { ...msg, content: assistantMessage, thoughts: msg.thoughts || [] };
+                      }
+                      return msg;
+                    });
+
+                    // Update conversation in server
+                    (async () => {
+                      try {
+                        await axios.put(`/chat/conversations/${currentConversationId}?username=${encodeURIComponent(username)}`, {
+                          id: currentConversationId,
+                          title: currentConversationTitle,
+                          messages: updatedMessages,
+                          created_at: new Date().toISOString(),
+                          updated_at: new Date().toISOString()
+                        });
+                      } catch (error) {
+                        console.error('Error updating conversation:', error);
+                        MessageBox.error('Failed to update conversation');
+                      }
+                    })();
+
+                    return updatedMessages;
                   });
-
-                  // Update conversation in server
-                  (async () => {
-                    try {
-                      await axios.put(`/chat/conversations/${currentConversationId}`, {
-                        id: currentConversationId,
-                        title: currentConversationTitle,
-                        messages: updatedMessages,
-                        created_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString()
-                      });
-                    } catch (error) {
-                      console.error('Error updating conversation:', error);
-                      MessageBox.error('Failed to update conversation');
-                    }
-                  })();
-
-                  return updatedMessages;
-                });
                 } catch (error) {
                   console.error('Error updating conversation:', error);
                   MessageBox.error('Failed to update conversation');
@@ -487,7 +484,8 @@ const Chat: React.FC = () => {
 
     try {
       // 使用 /chat/conversations/{conversation_id}/title 接口
-      await axios.put(`/chat/conversations/${conv.id}/title`, { title: editingTitle });
+      const username = sessionStorage.getItem('username') || '';
+      await axios.put(`/chat/conversations/${conv.id}/title?username=${encodeURIComponent(username)}`, { title: editingTitle });
       setConversations(conversations.map(c =>
         c.id === conv.id ? { ...c, title: editingTitle } : c
       ));
@@ -507,12 +505,8 @@ const Chat: React.FC = () => {
       content: '你确定要删除这个会话吗？',
       onOk: async () => {
         try {
-          const username = sessionStorage.getItem('username');
-      await axios.delete(`/chat/conversations/${convId}`, {
-        params: {
-          username: username
-        }
-      });
+          const username = sessionStorage.getItem('username') || '';
+          await axios.delete(`/chat/conversations/${convId}?username=${encodeURIComponent(username)}`);
           setConversations(conversations.filter(c => c.id !== convId));
           if (currentConversationId === convId) {
             setCurrentConversationId(null);
@@ -551,14 +545,10 @@ const Chat: React.FC = () => {
           style={{ marginBottom: 20, width: '100%' }}
           onClick={async () => {
             try {
-        const username = sessionStorage.getItem('username');
-        const response = await axios.post("/chat/conversations", {
-          title: "新的聊天"
-        }, {
-          params: {
-            username: username
-          }
-        });
+              const username = sessionStorage.getItem('username') || '';
+              const response = await axios.post(`/chat/conversations?username=${encodeURIComponent(username)}`, {
+                title: "新的聊天"
+              });
               const newConversation: Conversation = {
                 id: response.data.id,
                 title: response.data.title,
@@ -683,9 +673,9 @@ const Chat: React.FC = () => {
                           </Timeline>
                         </div>
                       )}
-                      <div style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
                         alignItems: 'flex-start',
                         padding: '16px',
                         backgroundColor: item.role === 'assistant' ? '#fff' : 'transparent',
@@ -703,10 +693,10 @@ const Chat: React.FC = () => {
                                     dataIndex: field.name,
                                     key: field.name,
                                   }));
-                                  
+
                                   return (
-                                    <Table 
-                                      dataSource={result.data} 
+                                    <Table
+                                      dataSource={result.data}
                                       columns={columns}
                                       pagination={false}
                                       bordered
