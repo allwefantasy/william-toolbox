@@ -36,6 +36,8 @@ from .super_analysis_router import router as super_analysis_router
 app.include_router(super_analysis_router)
 from .byzer_sql_router import router as byzer_sql_router
 app.include_router(byzer_sql_router)
+from .user_router import router as user_router
+app.include_router(user_router)
 # Add CORS middleware with restricted origins
 app.add_middleware(
     CORSMiddleware,
