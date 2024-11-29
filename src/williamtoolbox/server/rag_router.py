@@ -3,12 +3,19 @@ import os
 import aiofiles
 from loguru import logger
 import traceback
-from typing import Dict, Any
+from typing import Dict, Any,List
 from pathlib import Path
 from ..storage.json_file import load_rags_from_json, save_rags_to_json
 from .request_types import AddRAGRequest
 
 router = APIRouter()
+
+
+@router.get("/rags", response_model=List[Dict[str, Any]])
+async def list_rags():
+    """List all RAGs and their current status."""
+    rags = await load_rags_from_json()
+    return [{"name": name, **info} for name, info in rags.items()]
 
 @router.delete("/rags/{rag_name}")
 async def delete_rag(rag_name: str):

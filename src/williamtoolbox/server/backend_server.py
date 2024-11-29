@@ -48,12 +48,6 @@ app.add_middleware(
 )
 
 
-@app.get("/rags", response_model=List[Dict[str, Any]])
-async def list_rags():
-    """List all RAGs and their current status."""
-    rags = await load_rags_from_json()
-    return [{"name": name, **info} for name, info in rags.items()]
-
 # Load supported models from JSON file
 supported_models = b_load_models_from_json()
 
