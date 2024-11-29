@@ -3,3 +3,4 @@ aiofiles
 psutil
 jproperties
 sse-starlette
+filelock

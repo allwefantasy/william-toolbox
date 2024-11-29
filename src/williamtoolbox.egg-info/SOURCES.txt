@@ -21,6 +21,8 @@ src/williamtoolbox/server/proxy_server.py
 src/williamtoolbox/server/rag_router.py
 src/williamtoolbox/server/request_types.py
 src/williamtoolbox/server/super_analysis_router.py
+src/williamtoolbox/server/user_manager.py
+src/williamtoolbox/server/user_router.py
 src/williamtoolbox/storage/__init__.py
 src/williamtoolbox/storage/json_file.py
 src/williamtoolbox/web/asset-manifest.json
@@ -34,6 +36,6 @@ src/williamtoolbox/web/static/css/main.3c907b64.css
 src/williamtoolbox/web/static/css/main.3c907b64.css.map
 src/williamtoolbox/web/static/js/453.abd36b29.chunk.js
 src/williamtoolbox/web/static/js/453.abd36b29.chunk.js.map
-src/williamtoolbox/web/static/js/main.bad29dd9.js
-src/williamtoolbox/web/static/js/main.bad29dd9.js.LICENSE.txt
-src/williamtoolbox/web/static/js/main.bad29dd9.js.map
+src/williamtoolbox/web/static/js/main.c7ce2ea6.js
+src/williamtoolbox/web/static/js/main.c7ce2ea6.js.LICENSE.txt
+src/williamtoolbox/web/static/js/main.c7ce2ea6.js.map
