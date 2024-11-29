@@ -68,7 +68,7 @@ async def get_users(token_payload: dict = Depends(verify_token)):
     return await user_manager.get_users()
 
 @router.post("/api/users")
-async def add_user(request: AddUserRequest):
+async def add_user(request: AddUserRequest, token_payload: dict = Depends(verify_token)):
     try:
         await user_manager.add_user(
             request.username,
@@ -81,7 +81,7 @@ async def add_user(request: AddUserRequest):
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.delete("/api/users/{username}")
-async def delete_user(username: str):
+async def delete_user(username: str,token_payload: dict = Depends(verify_token), ):
     try:
         await user_manager.delete_user(username)
         return {"success": True}
@@ -89,7 +89,7 @@ async def delete_user(username: str):
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.put("/api/users/{username}/permissions")
-async def update_permissions(username: str, request: UpdatePermissionsRequest):
+async def update_permissions(username: str, request: UpdatePermissionsRequest, token_payload: dict = Depends(verify_token)):
     try:
         await user_manager.update_permissions(username, request.permissions)
         return {"success": True}

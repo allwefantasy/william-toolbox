@@ -10,7 +10,7 @@ JWT_ALGORITHM = environ.get('JWT_ALGORITHM', 'HS256')
 security = HTTPBearer()
 
 def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    try:
+    try:        
         token = credentials.credentials
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
         return payload
@@ -19,7 +19,7 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
             status_code=401,
             detail="Token has expired"
         )
-    except jwt.JWTError:
+    except jwt.PyJWTError as e:        
         raise HTTPException(
             status_code=401,
             detail="Invalid token"
