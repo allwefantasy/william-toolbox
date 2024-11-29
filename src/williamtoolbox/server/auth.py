@@ -4,7 +4,7 @@ import jwt
 from os import environ
 
 # JWT configuration
-JWT_SECRET = environ.get('JWT_SECRET', 'your-secret-key')
+JWT_SECRET = environ.get('JWT_SECRET', 'williamtoolbox')
 JWT_ALGORITHM = environ.get('JWT_ALGORITHM', 'HS256')
 
 security = HTTPBearer()
