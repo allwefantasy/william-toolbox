@@ -48,10 +48,13 @@ function App() {
     // 从sessionStorage恢复登录状态
     const storedUsername = sessionStorage.getItem('username');
     const storedPermissions = sessionStorage.getItem('permissions');
-    if (storedUsername && storedPermissions) {
+    const storedToken = sessionStorage.getItem('access_token');
+    if (storedUsername && storedPermissions && storedToken) {
       setIsLoggedIn(true);
       setUsername(storedUsername);
       setPermissions(JSON.parse(storedPermissions));
+      // 设置axios默认headers
+      axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
     }
   }, []);
 
@@ -67,13 +70,16 @@ function App() {
     setRefreshConfigTrigger(prev => prev + 1);
   }, []);
 
-  const handleLoginSuccess = (username: string, permissions: string[]) => {
+  const handleLoginSuccess = (username: string, permissions: string[], access_token: string) => {
     setIsLoggedIn(true);
     setUsername(username);
     setPermissions(permissions);
     // 保存到sessionStorage
     sessionStorage.setItem('username', username);
     sessionStorage.setItem('permissions', JSON.stringify(permissions));
+    sessionStorage.setItem('access_token', access_token);
+    // 设置axios默认headers
+    axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
   };
 
   const handleLogout = () => {
@@ -83,6 +89,9 @@ function App() {
     // 清除sessionStorage
     sessionStorage.removeItem('username');
     sessionStorage.removeItem('permissions');
+    sessionStorage.removeItem('access_token');
+    // 清除axios默认headers
+    delete axios.defaults.headers.common['Authorization'];
   };
 
   const hasPermission = (key: string): boolean => {
