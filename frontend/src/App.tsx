@@ -16,6 +16,7 @@ import ByzerSQLList from './components/ByzerSQLList';
 import UserManagement from './components/UserManagement';
 import Login from './components/Login';
 import './App.css';
+import axios from 'axios';
 
 const { Header, Sider, Content } = Layout;
 const { Title, Text } = Typography;

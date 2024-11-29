@@ -1,29 +1,12 @@
 from fastapi import APIRouter, HTTPException, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 from .user_manager import UserManager
+from .auth import verify_token, JWT_SECRET, JWT_ALGORITHM
 import os
-import jwt
+import time
 from functools import wraps
-
-security = HTTPBearer()
-
-def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    try:
-        token = credentials.credentials
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        return payload
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(
-            status_code=401,
-            detail="Token has expired"
-        )
-    except jwt.JWTError:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid token"
-        )
+import jwt
 
 router = APIRouter()
 user_manager = UserManager()
@@ -46,12 +29,10 @@ class UpdatePermissionsRequest(BaseModel):
     username: str
     permissions: List[str]
 
-import jwt
-import time
+
 
 # 添加JWT密钥
-JWT_SECRET = "your-secret-key"  # 在实际应用中应该从环境变量或配置文件中读取
-JWT_ALGORITHM = "HS256"
+
 
 @router.post("/api/login")
 async def login(request: LoginRequest):

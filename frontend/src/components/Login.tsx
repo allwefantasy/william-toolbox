@@ -3,7 +3,7 @@ import { Form, Input, Button, message, Modal } from 'antd';
 import axios from 'axios';
 
 interface LoginProps {
-  onLoginSuccess: (username: string, permissions: string[]) => void;
+  onLoginSuccess: (username: string, permissions: string[], access_token: string) => void;
 }
 
 const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
@@ -18,7 +18,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         setUsername(values.username);
         setChangePasswordVisible(true);
       } else {
-        onLoginSuccess(values.username, response.data.permissions);
+        onLoginSuccess(values.username, response.data.permissions, response.data.access_token);
       }
     } catch (error) {
       message.error('登录失败');
@@ -38,7 +38,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         username,
         password: values.new_password,
       });
-      onLoginSuccess(username, response.data.permissions);
+      onLoginSuccess(username, response.data.permissions, response.data.access_token);
     } catch (error) {
       message.error('密码修改失败');
     }
