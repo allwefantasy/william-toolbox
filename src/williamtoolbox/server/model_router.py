@@ -6,6 +6,7 @@ from loguru import logger
 from .auth import verify_token, JWT_SECRET, JWT_ALGORITHM
 from fastapi import Depends
 from ..storage.json_file import *
+import asyncio
 import subprocess
 import traceback
 
@@ -190,14 +191,17 @@ async def manage_model(model_name: str, action: str):
     )
 
     try:
-        # Execute the command
+        # Execute the command asynchronously
         logger.info(f"manage model {model_name} with command: {command}")
-        result = subprocess.run(
-            command, shell=True, check=True, capture_output=True, text=True
+        process = await asyncio.create_subprocess_shell(
+            command,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
         )
+        stdout, stderr = await process.communicate()
 
         # Check if the command was successful
-        if result.returncode == 0:
+        if process.returncode == 0:
             # Update model status only if the command was successful
             model_info["status"] = "running" if action == "start" else "stopped"
             models[model_name] = model_info
@@ -207,15 +211,15 @@ async def manage_model(model_name: str, action: str):
 
             return {
                 "message": f"Model {model_name} {action}ed successfully",
-                "output": result.stdout,
+                "output": stdout.decode(),
             }
         else:
             # If the command failed, raise an exception
             logger.error(
-                f"Failed to {action} model: {result.stderr or result.stdout}")
+                f"Failed to {action} model: {stderr.decode() or stdout.decode()}")
             traceback.print_exc()
             raise subprocess.CalledProcessError(
-                result.returncode, command, result.stdout, result.stderr
+                process.returncode, command, stdout.decode(), stderr.decode()
             )
     except subprocess.CalledProcessError as e:
         # If an exception occurred, don't update the model status
@@ -240,17 +244,21 @@ async def get_model_status(model_name: str):
             and "status_command" in models[model_name]
             else f"byzerllm stat --model {model_name}"
         )
-        result = subprocess.run(command, shell=True,
-                                capture_output=True, text=True)
+        process = await asyncio.create_subprocess_shell(
+            command,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        stdout, stderr = await process.communicate()
 
         # Check the result status
-        if result.returncode == 0:
-            status_output = result.stdout.strip()
+        if process.returncode == 0:
+            status_output = stdout.decode().strip()
             models[model_name]["status"] = "running"
             await save_models_to_json(models)
             return {"model": model_name, "status": status_output, "success": True}
         else:
-            error_message = f"Command failed with return code {result.returncode}: {result.stderr.strip()}"
+            error_message = f"Command failed with return code {process.returncode}: {stderr.decode().strip()}"
             models[model_name]["status"] = "stopped"
             await save_models_to_json(models)
             return {

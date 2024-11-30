@@ -10,6 +10,7 @@ from .request_types import AddRAGRequest
 import subprocess
 import signal
 import psutil
+import asyncio
 
 router = APIRouter()
 
@@ -226,18 +227,24 @@ async def manage_rag(rag_name: str, action: str):
             # Create logs directory if it doesn't exist
             os.makedirs("logs", exist_ok=True)
 
-            # Open log files for stdout and stderr using os.path.join
+            # Open log files for stdout and stderr
             stdout_log = open(os.path.join(
                 "logs", f"{rag_info['name']}.out"), "w")
             stderr_log = open(os.path.join(
                 "logs", f"{rag_info['name']}.err"), "w")
 
-            # Use subprocess.Popen to start the process in the background
-            process = subprocess.Popen(
-                command, shell=True, stdout=stdout_log, stderr=stderr_log
+            # Use asyncio.create_subprocess_shell to start the process asynchronously
+            process = await asyncio.create_subprocess_shell(
+                command,
+                stdout=stdout_log,
+                stderr=stderr_log
             )
             rag_info["status"] = "running"
             rag_info["process_id"] = process.pid
+
+            # Close the file handles
+            stdout_log.close()
+            stderr_log.close()
         except Exception as e:
             logger.error(f"Failed to start RAG: {str(e)}")
             traceback.print_exc()
@@ -270,34 +277,36 @@ async def manage_rag(rag_name: str, action: str):
 
 
 @router.get("/rags/{rag_name}/status")
-async def get_rag_status(rag_name: str):
-    """Get the status of a specified RAG."""
+async def get_rag_status(rag_name: str) -> Dict[str, Any]:
+    """
+    Get the status of a specific RAG
+    """
     rags = await load_rags_from_json()
     if rag_name not in rags:
-        raise HTTPException(
-            status_code=404, detail=f"RAG {rag_name} not found")
+        raise HTTPException(status_code=404, detail=f"RAG {rag_name} not found")
 
     rag_info = rags[rag_name]
+    process_id = rag_info.get("process_id")
 
-    # Check if the process is running
-    is_alive = False
-    if "process_id" in rag_info:
-        try:
-            process = psutil.Process(rag_info["process_id"])
-            is_alive = process.is_running()
-        except psutil.NoSuchProcess:
-            is_alive = False
+    if process_id is None:
+        rag_info["status"] = "stopped"
+        return rag_info
 
-    # Update the status based on whether the process is alive
-    status = "running" if is_alive else "stopped"
-    rag_info["status"] = status
-    rags[rag_name] = rag_info
+    try:
+        # Use psutil to check process status asynchronously
+        process = psutil.Process(process_id)
+        if process.is_running():
+            rag_info["status"] = "running"
+        else:
+            rag_info["status"] = "stopped"
+            rag_info["process_id"] = None
+    except psutil.NoSuchProcess:
+        rag_info["status"] = "stopped"
+        rag_info["process_id"] = None
+    except Exception as e:
+        logger.error(f"Error checking RAG status: {str(e)}")
+        rag_info["status"] = "unknown"
+
+    # Save updated status
     await save_rags_to_json(rags)
-
-    return {
-        "rag": rag_name,
-        "status": status,
-        "process_id": rag_info.get("process_id"),
-        "is_alive": is_alive,
-        "success": True,
-    }
+    return rag_info
