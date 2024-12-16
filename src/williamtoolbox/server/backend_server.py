@@ -6,10 +6,12 @@ from .config_router import router as config_router
 from .openai_service_router import router as openai_service_router
 from .model_router import router as model_router
 from .rag_router import router as rag_router
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 import uvicorn
 from typing import Any, List
+import mimetypes
 import os
 import argparse
 import subprocess
@@ -38,6 +40,35 @@ app.include_router(auto_coder_chat_router)
 app.include_router(super_analysis_router)
 app.include_router(byzer_sql_router)
 app.include_router(user_router)
+
+@app.get("/{full_path:path}")
+async def serve_image(full_path: str, request: Request):
+    if "_images" in full_path:
+        try:
+            # 获取文件的完整路径
+            file_path = full_path
+            if file_path.startswith("/"):
+                file_path = file_path[1:]
+                
+            # 读取文件内容
+            with open(file_path, "rb") as f:
+                content = f.read()
+            
+            # 获取文件的 MIME 类型
+            content_type, _ = mimetypes.guess_type(file_path)
+            if not content_type:
+                content_type = "application/octet-stream"
+            
+            # 返回文件内容
+            return Response(content=content, media_type=content_type)
+        except FileNotFoundError:
+            raise HTTPException(status_code=404, detail="Image not found")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    
+    # 如果路径中没有 _images，返回 404
+    raise HTTPException(status_code=404, detail="Not found")
+
 # Add CORS middleware with restricted origins
 app.add_middleware(
     CORSMiddleware,
