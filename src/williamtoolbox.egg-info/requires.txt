@@ -4,3 +4,4 @@ psutil
 jproperties
 sse-starlette
 filelock
+PyJWT

@@ -27,6 +27,7 @@ import psutil
 from datetime import datetime
 import uuid
 from .request_types import *
+from urllib.parse import unquote
 
 from .chat_router import router as chat_router
 
@@ -45,11 +46,13 @@ app.include_router(user_router)
 async def serve_image(full_path: str, request: Request):
     if "_images" in full_path:
         try:
-            # 获取文件的完整路径
-            file_path = full_path
-            if file_path.startswith("/"):
-                file_path = file_path[1:]
-                
+            # 获取文件的完整路径，并进行URL解码            
+            file_path = unquote(full_path)            
+            # 使用 os.path.normpath 来标准化路径，自动处理不同操作系统的路径分隔符
+            file_path = os.path.normpath(file_path)
+            print(file_path)
+            if not os.path.isabs(file_path):
+                file_path = os.path.join("/", file_path)
             # 读取文件内容
             with open(file_path, "rb") as f:
                 content = f.read()

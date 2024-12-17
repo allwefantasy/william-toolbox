@@ -10,6 +10,7 @@ src/williamtoolbox.egg-info/entry_points.txt
 src/williamtoolbox.egg-info/requires.txt
 src/williamtoolbox.egg-info/top_level.txt
 src/williamtoolbox/server/__init__.py
+src/williamtoolbox/server/auth.py
 src/williamtoolbox/server/auto_coder_chat_router.py
 src/williamtoolbox/server/backend_server.py
 src/williamtoolbox/server/byzer_sql_router.py
