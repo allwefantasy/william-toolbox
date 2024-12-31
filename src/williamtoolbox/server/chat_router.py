@@ -12,6 +12,7 @@ from .request_types import *
 from ..storage.json_file import *
 import aiofiles
 import traceback
+from byzerllm.utils.client import code_utils
 
 router = APIRouter()
 
@@ -388,6 +389,19 @@ async def update_conversation_title(username: str, conversation_id: str, request
 
     raise HTTPException(status_code=404, detail="Conversation not found")
 
+
+@router.post("/chat/extract_csv")
+async def extract_csv(content: str):
+    """Extract CSV content from markdown code block"""
+    try:
+        code_blocks = code_utils.extract_code(content)
+        for code_block in code_blocks:
+            if code_block[0] == "csv":
+                return {"csv_content": code_block[1]}
+        return {"csv_content": ""}
+    except Exception as e:
+        logger.error(f"Failed to extract CSV: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to extract CSV content")
 
 @router.delete("/chat/conversations/{conversation_id}")
 async def delete_conversation(username: str, conversation_id: str):

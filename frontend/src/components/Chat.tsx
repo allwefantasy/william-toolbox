@@ -344,20 +344,27 @@ const Chat: React.FC = () => {
       }
 
       // 检查是否包含 CSV 内容
-      const csvMatch = inputMessage.match(/```csv([\s\S]*?)```/);
-      if (csvMatch) {
-        const csvContent = csvMatch[1].trim();
-        const rows = csvContent.split('\n');
-        const columns = rows[0].split(',');
+      try {
+        const response = await axios.post('/chat/extract_csv', {
+          content: inputMessage
+        });
+        const csvContent = response.data.csv_content;
+        if (csvContent) {
+          const rows = csvContent.split('\n');
+          const columns = rows[0].split(',');
 
-        if (columns.length > 2000) {
-          // 解析 CSV 数据
-          const parsedData = rows.map(row => row.split(','));
-          setCsvData(parsedData);
-          setPendingMessage(inputMessage);
-          setCsvPreviewVisible(true);
-          return;
+          if (columns.length > 2000) {
+            // 解析 CSV 数据
+            const parsedData = rows.map(row => row.split(','));
+            setCsvData(parsedData);
+            setPendingMessage(inputMessage);
+            setCsvPreviewVisible(true);
+            return;
+          }
         }
+      } catch (error) {
+        console.error('Error extracting CSV:', error);
+        MessageBox.error('Failed to extract CSV content');
       }
 
       const newUserMessage: Message = {
