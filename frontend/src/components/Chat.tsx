@@ -63,9 +63,16 @@ const Chat: React.FC = () => {
     fields?: string[];
   }
 
+  interface CSVColumn {
+    key: string;
+    title: string;
+    dataIndex: string;
+  }
+  
   const [csvData, setCsvData] = useState<CSVRow[]>([]);
   const [csvMeta, setCsvMeta] = useState<CSVMeta | null>(null);
-  const [selectedColumns, setSelectedColumns] = useState<number[]>([]);
+  const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
+  const [columns, setColumns] = useState<CSVColumn[]>([]);
   const [pendingMessage, setPendingMessage] = useState('');
 
   const scrollToBottom = () => {
@@ -324,14 +331,9 @@ const Chat: React.FC = () => {
       return;
     }
 
-    // 获取选中列的字段名
-    const selectedFields = csvMeta?.fields
-      ?.filter((_: any, index: number) => selectedColumns.includes(index))
-      .map((field: any) => field.name) || [];
-
-    // 使用字段名提取数据
+    // 使用选中的列提取数据
     const filteredData = csvData.map(row => 
-      selectedFields.map((field: string) => row[field]).join(',')
+      selectedColumns.map(field => row[field]).join(',')
     ).join('\n');
 
     // 替换原消息中的 CSV 内容
@@ -630,16 +632,16 @@ const Chat: React.FC = () => {
     </SyntaxHighlighter>
   );
 
-  const columns = csvMeta?.fields?.map((field, index) => ({
-    title: field,
-    dataIndex: field,
-    key: field,
-    render: (text: string) => (
-      <div style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {text}
-      </div>
-    )
-  })) || [];
+  useEffect(() => {
+    if (csvMeta?.fields) {
+      const newColumns: CSVColumn[] = csvMeta.fields.map((field) => ({
+        title: field,
+        dataIndex: field,
+        key: field,
+      }));
+      setColumns(newColumns);
+    }
+  }, [csvMeta]);
 
   return (
     <div className="chat-container">
@@ -650,26 +652,41 @@ const Chat: React.FC = () => {
         onCancel={handleCsvPreviewCancel}
         width={1200}
       >
-        <Table
-          dataSource={csvData.map((row, index) => ({ 
-            ...row, 
-            key: index,
-            ...(csvMeta?.fields?.reduce((acc, field) => {
-              acc[field] = row[field];
-              return acc;
-            }, {} as Record<string, any>) || {})
-          }))}
-          columns={columns}
-          pagination={false}
-          scroll={{ x: true, y: 500 }}
-          rowSelection={{
-            type: 'checkbox',
-            selectedRowKeys: selectedColumns,
-            onChange: (selectedRowKeys: React.Key[]) => {
-              setSelectedColumns(selectedRowKeys.map(Number));
-            },
-          }}
-        />
+        <div>
+          <div style={{ marginBottom: 16 }}>
+            <Typography.Text>请选择要包含的列：</Typography.Text>
+          </div>
+          <Table
+            dataSource={csvData.map((row, index) => ({ 
+              ...row, 
+              key: index,
+            }))}
+            columns={columns.map(col => ({
+              ...col,
+              render: (text: string) => (
+                <div style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {text}
+                </div>
+              )
+            }))}
+            pagination={false}
+            scroll={{ x: true, y: 500 }}
+            rowSelection={undefined}
+          />
+          <div style={{ marginTop: 16 }}>
+            <Select
+              mode="multiple"
+              style={{ width: '100%' }}
+              placeholder="请选择要包含的列"
+              value={selectedColumns}
+              onChange={(values: string[]) => setSelectedColumns(values)}
+              options={columns.map(col => ({
+                label: col.title,
+                value: col.key,
+              }))}
+            />
+          </div>
+        </div>
       </Modal>
       <div className="sidebar">
         <Button
