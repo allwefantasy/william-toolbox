@@ -715,23 +715,26 @@ const Chat: React.FC = () => {
           <div style={{ marginBottom: 16 }}>
             <Typography.Text>请选择要包含的列：</Typography.Text>
           </div>
-          <Table
-            dataSource={csvData.map((row, index) => ({
-              ...row,
-              key: index,
-            }))}
-            columns={columns.map(col => ({
-              ...col,
-              render: (text: string) => (
-                <div style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {text}
-                </div>
-              )
-            }))}
-            pagination={false}
-            scroll={{ x: true, y: 500 }}
-            rowSelection={undefined}
-          />
+          <div style={{ width: '100%', overflowX: 'auto' }}>
+            <Table
+              dataSource={csvData.map((row, index) => ({
+                ...row,
+                key: index,
+              }))}
+              columns={columns.map(col => ({
+                ...col,
+                render: (text: string) => (
+                  <div style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {text}
+                  </div>
+                )
+              }))}
+              pagination={false}
+              scroll={{ x: 'max-content', y: 500 }}
+              rowSelection={undefined}
+              style={{ minWidth: '100%' }}
+            />
+          </div>
           <div style={{ marginTop: 16 }}>
             <Select
               mode="multiple"
