@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import Papa from 'papaparse';
 import { Input, Button, List, Avatar, Typography, Select, Space, Dropdown, Menu, Modal, Spin, Tooltip, Timeline, Table } from 'antd';
 import { SendOutlined, PlusCircleOutlined, GithubOutlined, SettingOutlined, EditOutlined, PictureOutlined, FileOutlined, DatabaseOutlined, DeleteOutlined, LoadingOutlined, RobotOutlined, RedoOutlined, BulbOutlined } from '@ant-design/icons';
 import axios from 'axios';
@@ -350,12 +351,15 @@ const Chat: React.FC = () => {
         });
         const csvContent = response.data.csv_content;
         if (csvContent) {          
-          const cells = csvContent.split(',');
+          // 使用 PapaParse 解析 CSV 数据
+          const parsedData = Papa.parse(csvContent, {
+            header: true,
+            skipEmptyLines: true,
+            dynamicTyping: true,
+          });
 
-          if (cells.length > 2000) {
-            // 解析 CSV 数据
-            const parsedData = rows.map((row: string) => row.split(','));
-            setCsvData(parsedData);
+          if (parsedData.data.length > 0) {
+            setCsvData(parsedData.data);
             setPendingMessage(inputMessage);
             setCsvPreviewVisible(true);
             return;
