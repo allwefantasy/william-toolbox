@@ -374,6 +374,18 @@ const Chat: React.FC = () => {
     await handleSendMessageInternal(inputMessage);
   };
 
+  const ask = async (message: string) => {
+    try {
+      const response = await axios.post('/chat/ask', {
+        message: message
+      });
+      return response.data.response;
+    } catch (error) {
+      console.error('Error in ask:', error);
+      throw error;
+    }
+  };
+
   const handleSendMessageInternal = async (message: string) => {
     if (message.trim() && currentConversationId) {
       setIsLoading(true);
