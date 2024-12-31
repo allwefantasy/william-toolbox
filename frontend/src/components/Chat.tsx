@@ -358,10 +358,25 @@ const Chat: React.FC = () => {
             skipEmptyLines: true,
             dynamicTyping: true,
             header: true            
-          })          
+          });
 
-          if (parsedData.data.length > 0) {
-            setCsvData(parsedData.data as string[][]);
+          // Handle parsedData with data and meta
+          const csvRows = parsedData.data;
+          const csvMeta = parsedData.meta;
+          
+          if (csvRows.length > 0) {
+            // Extract columns from meta if available, otherwise from first row
+            const columns = csvMeta?.fields || Object.keys(csvRows[0]);
+            
+            // Create table data with columns and rows
+            const tableData = {
+              data: csvRows,
+              meta: {
+                fields: columns
+              }
+            };
+            
+            setCsvData(tableData);
             setPendingMessage(inputMessage);
             setCsvPreviewVisible(true);
             return;
@@ -604,13 +619,13 @@ const Chat: React.FC = () => {
     </SyntaxHighlighter>
   );
 
-  const columns = csvData.length > 0 ? csvData[0].map((_, index) => ({
-    title: `Column ${index + 1}`,
-    dataIndex: index.toString(),
-    key: index.toString(),
-    render: (_: any, record: any) => (
+  const columns = csvData?.meta?.fields ? csvData.meta.fields.map((field: string, index: number) => ({
+    title: field,
+    dataIndex: field,
+    key: field,
+    render: (text: string) => (
       <div style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {record[index]}
+        {text}
       </div>
     )
   })) : [];
@@ -624,8 +639,8 @@ const Chat: React.FC = () => {
         onCancel={handleCsvPreviewCancel}
         width={1200}
       >
-        <Table
-          dataSource={csvData.map((row, index) => ({ ...row, key: index }))}
+          <Table
+            dataSource={csvData?.data?.map((row: any, index: number) => ({ ...row, key: index }))}
           columns={columns}
           pagination={false}
           scroll={{ x: true, y: 500 }}
