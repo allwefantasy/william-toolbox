@@ -353,13 +353,14 @@ const Chat: React.FC = () => {
         if (csvContent) {          
           // 使用 PapaParse 解析 CSV 数据
           const parsedData = Papa.parse(csvContent, {
-            header: true,
+            delimiter: ',',
+            newline: '\n',
             skipEmptyLines: true,
-            dynamicTyping: true,
-          });
+            dynamicTyping: true,            
+          }).data;
 
-          if (parsedData.data.length > 0) {
-            setCsvData(parsedData.data);
+          if (parsedData.length > 0) {
+            setCsvData(parsedData as string[][]);
             setPendingMessage(inputMessage);
             setCsvPreviewVisible(true);
             return;
