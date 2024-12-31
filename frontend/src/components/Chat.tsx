@@ -325,9 +325,9 @@ const Chat: React.FC = () => {
     }
 
     // 获取选中列的字段名
-    const selectedFields = csvMeta.fields
-      .filter((_: any, index: number) => selectedColumns.includes(index))
-      .map((field: any) => field.name);
+    const selectedFields = csvMeta?.fields
+      ?.filter((_: any, index: number) => selectedColumns.includes(index))
+      .map((field: any) => field.name) || [];
 
     // 使用字段名提取数据
     const filteredData = csvData.map(row => 
@@ -352,6 +352,8 @@ const Chat: React.FC = () => {
     setPendingMessage('');
     setSelectedColumns([]);
     setCsvData([]);
+    setCsvMeta(null);
+    setIsLoading(false);
   };
 
   const handleSendMessage = async () => {
