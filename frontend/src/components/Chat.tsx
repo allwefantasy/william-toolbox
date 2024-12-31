@@ -331,6 +331,10 @@ const Chat: React.FC = () => {
     setCsvData([]);
   };
 
+  const handleSendMessage = async () => {
+    await handleSendMessageInternal(inputMessage);
+  };
+
   const handleSendMessageInternal = async (message: string) => {
     if (message.trim() && currentConversationId) {
       // 检查 OpenAI 兼容服务状态
