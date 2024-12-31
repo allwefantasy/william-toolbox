@@ -358,10 +358,10 @@ const Chat: React.FC = () => {
             skipEmptyLines: true,
             dynamicTyping: true,
             header: true            
-          }).data;
+          })          
 
-          if (parsedData.length > 0) {
-            setCsvData(parsedData as string[][]);
+          if (parsedData.data.length > 0) {
+            setCsvData(parsedData.data as string[][]);
             setPendingMessage(inputMessage);
             setCsvPreviewVisible(true);
             return;
