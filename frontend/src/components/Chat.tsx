@@ -316,7 +316,7 @@ const Chat: React.FC = () => {
 
     // 使用字段名提取数据
     const filteredData = csvData.map(row => 
-      selectedFields.map(field => row[field]).join(',')
+      selectedFields.map((field: string) => row[field]).join(',')
     ).join('\n');
 
     // 替换原消息中的 CSV 内容
@@ -364,7 +364,8 @@ const Chat: React.FC = () => {
             newline: '\n',
             skipEmptyLines: true,
             dynamicTyping: true,
-            header: true            
+            header: true,
+            preview: 10                 
           });        
 
           if (parsedData.data.length > 0) {
