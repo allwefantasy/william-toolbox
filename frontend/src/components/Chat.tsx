@@ -628,16 +628,16 @@ const Chat: React.FC = () => {
     </SyntaxHighlighter>
   );
 
-  const columns = csvMeta ? csvMeta.fields.map((field: any, index: number) => ({
-    title: field.name,
-    dataIndex: field.name,
-    key: field.name,
-    render: (text: any) => (
+  const columns = csvMeta?.fields?.map((field, index) => ({
+    title: field,
+    dataIndex: field,
+    key: field,
+    render: (text: string) => (
       <div style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {text}
       </div>
     )
-  })) : [];
+  })) || [];
 
   return (
     <div className="chat-container">
@@ -649,7 +649,14 @@ const Chat: React.FC = () => {
         width={1200}
       >
         <Table
-          dataSource={csvData.map((row, index) => ({ ...row, key: index }))}
+          dataSource={csvData.map((row, index) => ({ 
+            ...row, 
+            key: index,
+            ...(csvMeta?.fields?.reduce((acc, field) => {
+              acc[field] = row[field];
+              return acc;
+            }, {} as Record<string, any>) || {})
+          }))}
           columns={columns}
           pagination={false}
           scroll={{ x: true, y: 500 }}
