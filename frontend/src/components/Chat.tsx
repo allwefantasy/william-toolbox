@@ -65,7 +65,7 @@ const Chat: React.FC = () => {
 
   const [csvData, setCsvData] = useState<CSVRow[]>([]);
   const [csvMeta, setCsvMeta] = useState<CSVMeta | null>(null);
-  const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
+  const [selectedColumns, setSelectedColumns] = useState<number[]>([]);
   const [pendingMessage, setPendingMessage] = useState('');
 
   const scrollToBottom = () => {
@@ -325,11 +325,13 @@ const Chat: React.FC = () => {
     }
 
     // 获取选中列的字段名
-    const selectedFields = selectedColumns;
+    const selectedFields = csvMeta?.fields
+      ?.filter((_: any, index: number) => selectedColumns.includes(index))
+      .map((field: any) => field.name) || [];
 
     // 使用字段名提取数据
     const filteredData = csvData.map(row => 
-      selectedFields.map(field => row[field]).join(',')
+      selectedFields.map((field: string) => row[field]).join(',')
     ).join('\n');
 
     // 替换原消息中的 CSV 内容
@@ -664,18 +666,7 @@ const Chat: React.FC = () => {
             type: 'checkbox',
             selectedRowKeys: selectedColumns,
             onChange: (selectedRowKeys: React.Key[]) => {
-              setSelectedColumns(selectedRowKeys);
-            },
-            getCheckboxProps: (record: any) => ({
-              // 禁用行选择
-              disabled: true,
-            }),
-          }}
-          columnSelection={{
-            type: 'checkbox',
-            selectedColumnKeys: selectedColumns,
-            onChange: (selectedColumnKeys: React.Key[]) => {
-              setSelectedColumns(selectedColumnKeys);
+              setSelectedColumns(selectedRowKeys.map(Number));
             },
           }}
         />
