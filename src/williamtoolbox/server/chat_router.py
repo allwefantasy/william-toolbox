@@ -16,6 +16,50 @@ from byzerllm.utils.client import code_utils
 
 router = APIRouter()
 
+class AskRequest(BaseModel):
+    message: str
+
+@router.post("/chat/ask")
+async def ask(request: AskRequest):
+    try:
+        # 加载配置
+        config = await load_config()
+        
+        # 获取模型列表
+        models = await load_models_from_json()
+        if not models:
+            raise HTTPException(status_code=404, detail="No models available")
+            
+        # 获取第一个运行中的模型
+        first_model = next((model for model in models.values() if model.get("status") == "running"), None)
+        if not first_model:
+            raise HTTPException(status_code=404, detail="No running models available")
+            
+        # 获取OpenAI服务配置
+        openai_server = config.get("openaiServerList", [{}])[0]
+        host = openai_server.get("host", "localhost")
+        port = openai_server.get("port", 8000)
+        if host == "0.0.0.0":
+            host = "127.0.0.1"
+
+        base_url = f"http://{host}:{port}/v1"
+        client = AsyncOpenAI(base_url=base_url, api_key="xxxx")
+
+        # 调用模型
+        response = await client.chat.completions.create(
+            model=first_model["name"],
+            messages=[{"role": "user", "content": request.message}],
+            stream=False,
+            max_tokens=4096
+        )
+
+        return {"response": response.choices[0].message.content}
+        
+    except Exception as e:
+        logger.error(f"Error in ask endpoint: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/chat/conversations")
 async def get_conversation_list(username: str):
     chat_data = await load_chat_data(username)
