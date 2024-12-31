@@ -49,6 +49,12 @@ const Chat: React.FC = () => {
 
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
+  const [csvPreviewVisible, setCsvPreviewVisible] = useState(false);
+  const [csvData, setCsvData] = useState<any[]>([]);
+  const [csvMeta, setCsvMeta] = useState<any>(null);
+  const [selectedColumns, setSelectedColumns] = useState<number[]>([]);
+  const [pendingMessage, setPendingMessage] = useState('');
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -297,11 +303,7 @@ const Chat: React.FC = () => {
     return true;
   };
 
-  const [csvPreviewVisible, setCsvPreviewVisible] = useState(false);
-  const [csvData, setCsvData] = useState<any[]>([]);
-  const [csvMeta, setCsvMeta] = useState<any>(null);
-  const [selectedColumns, setSelectedColumns] = useState<number[]>([]);
-  const [pendingMessage, setPendingMessage] = useState('');
+
 
   const handleCsvPreviewOk = () => {
     if (selectedColumns.length === 0) {
@@ -345,6 +347,7 @@ const Chat: React.FC = () => {
 
   const handleSendMessageInternal = async (message: string) => {
     if (message.trim() && currentConversationId) {
+      setIsLoading(true);
       // 检查 OpenAI 兼容服务状态
       const canProceed = await checkOpenAIService();
       if (!canProceed) {
@@ -388,8 +391,7 @@ const Chat: React.FC = () => {
         id: Math.random().toString(36)
       };
       setMessages([...messages, newUserMessage]);
-      setInputMessage('');
-      setIsLoading(true);
+      setInputMessage('');      
 
       // Start 120s countdown
       setCountdown(120);
