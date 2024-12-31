@@ -407,7 +407,15 @@ const Chat: React.FC = () => {
             message: `下面是用户提供的信息：\n${message} \n\n请判断以下内容是否包含 CSV 表格数据，只需回答是或否`
           });
           if (askResponse.data.response !== "否") {
-            MessageBox.error('检测到可能包含 CSV 数据，请使用 ```csv ``` 代码块包裹 CSV 内容');
+            Modal.confirm({
+            title: 'CSV 数据检测',
+            content: '检测到可能包含 CSV 数据，请使用 ```csv ``` 代码块包裹 CSV 内容',
+            okText: '确认',
+            cancelText: '取消',
+            onOk: () => {
+              // 用户确认后的操作
+            },
+          });
             setIsLoading(false);
             return;
           }
@@ -441,7 +449,15 @@ const Chat: React.FC = () => {
           message: `下面是用户提供的信息：\n${message} \n\n请判断以下内容是否包含 CSV 表格数据，只需回答是或否`
         });
         if (askResponse.data.response !== "否") {
-          MessageBox.error('检测到可能包含 CSV 数据，请使用 ```csv ``` 代码块包裹 CSV 内容');
+          Modal.confirm({
+            title: 'CSV 数据检测',
+            content: '检测到可能包含 CSV 数据，请使用 ```csv ``` 代码块包裹 CSV 内容',
+            okText: '确认',
+            cancelText: '取消',
+            onOk: () => {
+              // 用户确认后的操作
+            },
+          });
           setIsLoading(false);
           return;
         }
