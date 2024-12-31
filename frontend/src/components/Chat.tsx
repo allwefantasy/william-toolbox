@@ -325,29 +325,42 @@ const Chat: React.FC = () => {
 
 
 
-  const handleCsvPreviewOk = () => {
-    if (selectedColumns.length === 0) {
-      MessageBox.error('请至少选择一列');
-      return;
-    }
+    const handleCsvPreviewOk = () => {
+        if (selectedColumns.length === 0) {
+            MessageBox.error('请至少选择一列');
+            return;
+        }
 
-    // 使用选中的列提取数据
-    const filteredData = csvData.map(row => 
-      selectedColumns.map(field => row[field]).join(',')
-    ).join('\n');
+        // 获取选中的列头
+        const selectedHeaders = selectedColumns.join(',');
 
-    // 替换原消息中的 CSV 内容
-    const newMessage = pendingMessage.replace(/```csv[\s\S]*```/, `\`\`\`csv\n${filteredData}\n\`\`\``);
-    setInputMessage(newMessage);
-    setCsvPreviewVisible(false);
-    setPendingMessage('');
-    setSelectedColumns([]);
-    setCsvData([]);
-    setCsvMeta(null);
-    
-    // 继续发送消息
-    handleSendMessageInternal(newMessage);
-  };
+        // 使用选中的列提取数据，并保留原始header
+        const filteredData = csvData.map(row => 
+            selectedColumns.map(field => row[field]).join(',')
+        ).join('\n');
+
+        // 构建完整的CSV内容
+        const fullCsvContent = `${selectedHeaders}\n${filteredData}`;
+
+        // 提取原始CSV代码块
+        const csvBlockMatch = pendingMessage.match(/```csv([\s\S]*?)```/);
+        if (!csvBlockMatch) {
+            MessageBox.error('未找到CSV代码块');
+            return;
+        }
+
+        // 使用原始CSV代码块进行替换
+        const newMessage = pendingMessage.replace(csvBlockMatch[0], `\`\`\`csv\n${fullCsvContent}\n\`\`\``);
+        setInputMessage(newMessage);
+        setCsvPreviewVisible(false);
+        setPendingMessage('');
+        setSelectedColumns([]);
+        setCsvData([]);
+        setCsvMeta(null);
+        
+        // 继续发送消息
+        handleSendMessageInternal(newMessage);
+    };
 
   const handleCsvPreviewCancel = () => {
     setCsvPreviewVisible(false);
