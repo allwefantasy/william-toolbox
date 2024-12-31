@@ -50,8 +50,21 @@ const Chat: React.FC = () => {
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
   const [csvPreviewVisible, setCsvPreviewVisible] = useState(false);
-  const [csvData, setCsvData] = useState<any[]>([]);
-  const [csvMeta, setCsvMeta] = useState<any>(null);
+  interface CSVRow {
+    [key: string]: string | number | boolean | null;
+  }
+
+  interface CSVMeta {
+    delimiter: string;
+    linebreak: string;
+    aborted: boolean;
+    truncated: boolean;
+    cursor: number;
+    fields?: string[];
+  }
+
+  const [csvData, setCsvData] = useState<CSVRow[]>([]);
+  const [csvMeta, setCsvMeta] = useState<CSVMeta | null>(null);
   const [selectedColumns, setSelectedColumns] = useState<number[]>([]);
   const [pendingMessage, setPendingMessage] = useState('');
 
@@ -362,7 +375,7 @@ const Chat: React.FC = () => {
         const csvContent = response.data.csv_content;
         if (csvContent) {          
           // 使用 PapaParse 解析 CSV 数据
-          const parsedData = Papa.parse(csvContent, {
+          const parsedData: { data: CSVRow[]; meta: CSVMeta } = Papa.parse(csvContent, {
             delimiter: ',',
             newline: '\n',
             skipEmptyLines: true,
