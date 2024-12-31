@@ -374,18 +374,6 @@ const Chat: React.FC = () => {
     await handleSendMessageInternal(inputMessage);
   };
 
-  const ask = async (message: string) => {
-    try {
-      const response = await axios.post('/chat/ask', {
-        message: message
-      });
-      return response.data.response;
-    } catch (error) {
-      console.error('Error in ask:', error);
-      throw error;
-    }
-  };
-
   const handleSendMessageInternal = async (message: string) => {
     if (message.trim() && currentConversationId) {
       setIsLoading(true);
@@ -428,29 +416,6 @@ const Chat: React.FC = () => {
         MessageBox.error('Failed to extract CSV content');
       }
 
-      // 先尝试使用 ask 接口
-      try {
-        const response = await ask(message);
-        const newUserMessage: Message = {
-          role: 'user',
-          content: message,
-          timestamp: new Date().toISOString(),
-          id: Math.random().toString(36)
-        };
-        const assistantMessage: Message = {
-          role: 'assistant',
-          content: response,
-          timestamp: new Date().toISOString(),
-          id: Math.random().toString(36)
-        };
-        setMessages([...messages, newUserMessage, assistantMessage]);
-        setInputMessage('');
-        return;
-      } catch (error) {
-        console.log('Fallback to normal chat flow');
-      }
-
-      // 如果 ask 接口失败，使用原来的聊天流程
       const newUserMessage: Message = {
         role: 'user',
         content: message,
@@ -458,7 +423,7 @@ const Chat: React.FC = () => {
         id: Math.random().toString(36)
       };
       setMessages([...messages, newUserMessage]);
-      setInputMessage('');
+      setInputMessage('');      
 
       // Start 120s countdown
       setCountdown(120);
