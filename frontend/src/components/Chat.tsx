@@ -355,7 +355,7 @@ const Chat: React.FC = () => {
 
           if (columns.length > 2000) {
             // 解析 CSV 数据
-            const parsedData = rows.map(row => row.split(','));
+            const parsedData = rows.map((row: string) => row.split(','));
             setCsvData(parsedData);
             setPendingMessage(inputMessage);
             setCsvPreviewVisible(true);
