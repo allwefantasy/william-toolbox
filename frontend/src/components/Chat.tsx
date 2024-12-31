@@ -425,8 +425,7 @@ const Chat: React.FC = () => {
             newline: '\n',
             skipEmptyLines: true,
             dynamicTyping: true,
-            header: true,
-            preview: 10
+            header: true            
           });
 
 
