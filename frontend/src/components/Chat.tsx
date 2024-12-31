@@ -412,7 +412,6 @@ const Chat: React.FC = () => {
             preview: 10                 
           });        
 
-
           const totalCells = parsedData.data.length * Object.keys(parsedData.data[0] || {}).length;
           console.log(totalCells);
           if (totalCells > 500) {
@@ -422,10 +421,20 @@ const Chat: React.FC = () => {
             setCsvPreviewVisible(true);
             return;
           }
+        } else {
+          // 如果没有直接提取到 CSV，使用 ask 方法检测是否包含 CSV 数据
+          const askResponse = await axios.post('/chat/ask', {
+            message: `请判断以下内容是否包含 CSV 表格数据，只需回答是或否：\n${message}`
+          });
+          if (askResponse.data.response === "是") {
+            MessageBox.error('检测到可能包含 CSV 数据，请使用 ```csv ``` 代码块包裹 CSV 内容');
+            return;
+          }
         }
       } catch (error) {
         console.error('Error extracting CSV:', error);
         MessageBox.error('Failed to extract CSV content');
+      }
       }
 
       const newUserMessage: Message = {
