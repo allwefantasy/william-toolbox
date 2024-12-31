@@ -309,9 +309,14 @@ const Chat: React.FC = () => {
     }
 
     // 提取选中的列
-    const filteredData = csvData.map(row => 
-      selectedColumns.map(colIndex => row[colIndex]).join(',')
-    ).join('\n');
+    const filteredData = csvData.map(row => {
+      if (row instanceof Array) {
+        return selectedColumns.map(colIndex => row[colIndex]).join(',');
+      } else {
+        const keys = Object.keys(row);
+        return selectedColumns.map(colIndex => row[keys[colIndex]]).join(',');
+      }
+    }).join('\n');
 
     // 替换原消息中的 CSV 内容
     const newMessage = pendingMessage.replace(/```csv[\s\S]*```/, `\`\`\`csv\n${filteredData}\n\`\`\``);
@@ -358,10 +363,14 @@ const Chat: React.FC = () => {
             skipEmptyLines: true,
             dynamicTyping: true,
             header: true            
-          })          
+          });
 
-          if (parsedData.data.length > 0) {
-            setCsvData(parsedData.data as string[][]);
+          // 处理包含 data 和 meta 的情况
+          const data = parsedData.data || [];
+          const meta = parsedData.meta || {fields: []};
+          
+          if (data.length > 0) {
+            setCsvData(data);
             setPendingMessage(inputMessage);
             setCsvPreviewVisible(true);
             return;
@@ -604,16 +613,29 @@ const Chat: React.FC = () => {
     </SyntaxHighlighter>
   );
 
-  const columns = csvData.length > 0 ? csvData[0].map((_, index) => ({
-    title: `Column ${index + 1}`,
-    dataIndex: index.toString(),
-    key: index.toString(),
-    render: (_: any, record: any) => (
-      <div style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {record[index]}
-      </div>
-    )
-  })) : [];
+  const columns = csvData.length > 0 ? 
+    (csvData[0] instanceof Array ? 
+      csvData[0].map((_, index) => ({
+        title: `Column ${index + 1}`,
+        dataIndex: index.toString(),
+        key: index.toString(),
+        render: (_: any, record: any) => (
+          <div style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {record[index]}
+          </div>
+        )
+      })) : 
+      Object.keys(csvData[0]).map((key) => ({
+        title: key,
+        dataIndex: key,
+        key: key,
+        render: (_: any, record: any) => (
+          <div style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {record[key]}
+          </div>
+        )
+      }))
+    ) : [];
 
   return (
     <div className="chat-container">
