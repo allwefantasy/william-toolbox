@@ -403,10 +403,8 @@ const Chat: React.FC = () => {
         const csvContent = response.data.csv_content;
         if (!csvContent) {
           // 如果没有直接提取到 CSV，使用 ask 方法检测是否包含 CSV 数据                             │
-          const askResponse = await axios.post('/chat/ask', {
-            message: `下面是用户提供的信息：\n${message} \n\n请判断以下内容是否包含 CSV 表格数据，只需回答是或否`
-          });
-          if (askResponse.data.response !== "否") {
+          const askResponse = await ask(`下面是用户提供的信息：\n${message} \n\n请判断以下内容是否包含 CSV 表格数据，只需回答是或否`);
+          if (askResponse !== "否") {
             Modal.confirm({
             title: 'CSV 数据检测',
             content: '检测到可能包含 CSV 数据，请使用 ```csv ``` 代码块包裹 CSV 内容',
@@ -445,10 +443,8 @@ const Chat: React.FC = () => {
       } catch (error) {
         console.error('Error extracting CSV:', error);
         // 如果没有直接提取到 CSV，使用 ask 方法检测是否包含 CSV 数据                             │
-        const askResponse = await axios.post('/chat/ask', {
-          message: `下面是用户提供的信息：\n${message} \n\n请判断以下内容是否包含 CSV 表格数据，只需回答是或否`
-        });
-        if (askResponse.data.response !== "否") {
+        const askResponse = await ask(`下面是用户提供的信息：\n${message} \n\n请判断以下内容是否包含 CSV 表格数据，只需回答是或否`);
+        if (askResponse !== "否") {
           Modal.confirm({
             title: 'CSV 数据检测',
             content: '检测到可能包含 CSV 数据，请使用 ```csv ``` 代码块包裹 CSV 内容',
