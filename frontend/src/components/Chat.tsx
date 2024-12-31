@@ -325,7 +325,7 @@ const Chat: React.FC = () => {
 
 
 
-    const handleCsvPreviewOk = () => {
+    const handleCsvPreviewOk = async () => {
         if (selectedColumns.length === 0) {
             MessageBox.error('请至少选择一列');
             return;
@@ -343,14 +343,13 @@ const Chat: React.FC = () => {
         const fullCsvContent = `${selectedHeaders}\n${filteredData}`;
 
         // 提取原始CSV代码块
-        const csvBlockMatch = pendingMessage.match(/```csv([\s\S]*?)```/);
-        if (!csvBlockMatch) {
-            MessageBox.error('未找到CSV代码块');
-            return;
-        }
+        const csvResponse = await axios.post('/chat/extract_csv', {
+          content: pendingMessage
+        });
+        const csvContent = csvResponse.data.csv_content;
 
         // 使用原始CSV代码块进行替换
-        const newMessage = pendingMessage.replace(csvBlockMatch[0], `\`\`\`csv\n${fullCsvContent}\n\`\`\``);
+        const newMessage = pendingMessage.replace(csvContent, fullCsvContent);
         setInputMessage(newMessage);
         setCsvPreviewVisible(false);
         setPendingMessage('');
@@ -387,7 +386,7 @@ const Chat: React.FC = () => {
       // 检查是否包含 CSV 内容
       try {
         const response = await axios.post('/chat/extract_csv', {
-          content: inputMessage
+          content: message
         });
         const csvContent = response.data.csv_content;
         if (csvContent) {          
@@ -401,10 +400,13 @@ const Chat: React.FC = () => {
             preview: 10                 
           });        
 
-          if (parsedData.data.length > 0) {
+
+          const totalCells = parsedData.data.length * Object.keys(parsedData.data[0] || {}).length;
+          console.log(totalCells);
+          if (totalCells > 500) {
             setCsvData(parsedData.data);
             setCsvMeta(parsedData.meta);
-            setPendingMessage(inputMessage);
+            setPendingMessage(message);
             setCsvPreviewVisible(true);
             return;
           }
@@ -416,7 +418,7 @@ const Chat: React.FC = () => {
 
       const newUserMessage: Message = {
         role: 'user',
-        content: inputMessage,
+        content: message,
         timestamp: new Date().toISOString(),
         id: Math.random().toString(36)
       };
@@ -659,7 +661,7 @@ const Chat: React.FC = () => {
   return (
     <div className="chat-container">
       <Modal
-        title="CSV 数据预览"
+        title="请筛选列以减少数据量（500个cell以内）"
         open={csvPreviewVisible}
         onOk={handleCsvPreviewOk}
         onCancel={handleCsvPreviewCancel}
