@@ -349,11 +349,10 @@ const Chat: React.FC = () => {
           content: inputMessage
         });
         const csvContent = response.data.csv_content;
-        if (csvContent) {
-          const rows = csvContent.split('\n');
-          const columns = rows[0].split(',');
+        if (csvContent) {          
+          const cells = csvContent.split(',');
 
-          if (columns.length > 2000) {
+          if (cells.length > 2000) {
             // 解析 CSV 数据
             const parsedData = rows.map((row: string) => row.split(','));
             setCsvData(parsedData);
