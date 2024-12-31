@@ -356,7 +356,8 @@ const Chat: React.FC = () => {
             delimiter: ',',
             newline: '\n',
             skipEmptyLines: true,
-            dynamicTyping: true,            
+            dynamicTyping: true,
+            header: true            
           }).data;
 
           if (parsedData.length > 0) {
