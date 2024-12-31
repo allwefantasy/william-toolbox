@@ -30,8 +30,13 @@ async def ask(request: AskRequest):
         if not models:
             raise HTTPException(status_code=404, detail="No models available")
             
-        # 获取第一个运行中的模型
-        first_model = next((model for model in models.values() if model.get("status") == "running"), None)
+        # 获取第一个运行中的模
+        first_model = None
+        for model in models.keys():
+            if models[model]["status"] == "running":
+                first_model = model
+                break
+
         if not first_model:
             raise HTTPException(status_code=404, detail="No running models available")
             
@@ -47,7 +52,7 @@ async def ask(request: AskRequest):
 
         # 调用模型
         response = await client.chat.completions.create(
-            model=first_model["name"],
+            model=first_model,
             messages=[{"role": "user", "content": request.message}],
             stream=False,
             max_tokens=4096

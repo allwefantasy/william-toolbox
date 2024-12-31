@@ -68,7 +68,7 @@ const Chat: React.FC = () => {
     title: string;
     dataIndex: string;
   }
-  
+
   const [csvData, setCsvData] = useState<CSVRow[]>([]);
   const [csvMeta, setCsvMeta] = useState<CSVMeta | null>(null);
   const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
@@ -325,41 +325,41 @@ const Chat: React.FC = () => {
 
 
 
-    const handleCsvPreviewOk = async () => {
-        if (selectedColumns.length === 0) {
-            MessageBox.error('请至少选择一列');
-            return;
-        }
+  const handleCsvPreviewOk = async () => {
+    if (selectedColumns.length === 0) {
+      MessageBox.error('请至少选择一列');
+      return;
+    }
 
-        // 获取选中的列头
-        const selectedHeaders = selectedColumns.join(',');
+    // 获取选中的列头
+    const selectedHeaders = selectedColumns.join(',');
 
-        // 使用选中的列提取数据，并保留原始header
-        const filteredData = csvData.map(row => 
-            selectedColumns.map(field => row[field]).join(',')
-        ).join('\n');
+    // 使用选中的列提取数据，并保留原始header
+    const filteredData = csvData.map(row =>
+      selectedColumns.map(field => row[field]).join(',')
+    ).join('\n');
 
-        // 构建完整的CSV内容
-        const fullCsvContent = `${selectedHeaders}\n${filteredData}`;
+    // 构建完整的CSV内容
+    const fullCsvContent = `${selectedHeaders}\n${filteredData}`;
 
-        // 提取原始CSV代码块
-        const csvResponse = await axios.post('/chat/extract_csv', {
-          content: pendingMessage
-        });
-        const csvContent = csvResponse.data.csv_content;
+    // 提取原始CSV代码块
+    const csvResponse = await axios.post('/chat/extract_csv', {
+      content: pendingMessage
+    });
+    const csvContent = csvResponse.data.csv_content;
 
-        // 使用原始CSV代码块进行替换
-        const newMessage = pendingMessage.replace(csvContent, fullCsvContent);
-        setInputMessage(newMessage);
-        setCsvPreviewVisible(false);
-        setPendingMessage('');
-        setSelectedColumns([]);
-        setCsvData([]);
-        setCsvMeta(null);
-        
-        // 继续发送消息
-        handleSendMessageInternal(newMessage);
-    };
+    // 使用原始CSV代码块进行替换
+    const newMessage = pendingMessage.replace(csvContent, fullCsvContent);
+    setInputMessage(newMessage);
+    setCsvPreviewVisible(false);
+    setPendingMessage('');
+    setSelectedColumns([]);
+    setCsvData([]);
+    setCsvMeta(null);
+
+    // 继续发送消息
+    handleSendMessageInternal(newMessage);
+  };
 
   const handleCsvPreviewCancel = () => {
     setCsvPreviewVisible(false);
@@ -401,7 +401,18 @@ const Chat: React.FC = () => {
           content: message
         });
         const csvContent = response.data.csv_content;
-        if (csvContent) {          
+        if (!csvContent) {
+          // 如果没有直接提取到 CSV，使用 ask 方法检测是否包含 CSV 数据                             │
+          const askResponse = await axios.post('/chat/ask', {
+            message: `下面是用户提供的信息：\n${message} \n\n请判断以下内容是否包含 CSV 表格数据，只需回答是或否`
+          });
+          if (askResponse.data.response !== "否") {
+            MessageBox.error('检测到可能包含 CSV 数据，请使用 ```csv ``` 代码块包裹 CSV 内容');
+            setIsLoading(false);
+            return;
+          }
+        }
+        if (csvContent) {
           // 使用 PapaParse 解析 CSV 数据
           const parsedData: { data: CSVRow[]; meta: CSVMeta } = Papa.parse(csvContent, {
             delimiter: ',',
@@ -409,8 +420,8 @@ const Chat: React.FC = () => {
             skipEmptyLines: true,
             dynamicTyping: true,
             header: true,
-            preview: 10                 
-          });        
+            preview: 10
+          });
 
 
           const totalCells = parsedData.data.length * Object.keys(parsedData.data[0] || {}).length;
@@ -425,8 +436,18 @@ const Chat: React.FC = () => {
         }
       } catch (error) {
         console.error('Error extracting CSV:', error);
-        MessageBox.error('Failed to extract CSV content');
+        // 如果没有直接提取到 CSV，使用 ask 方法检测是否包含 CSV 数据                             │
+        const askResponse = await axios.post('/chat/ask', {
+          message: `下面是用户提供的信息：\n${message} \n\n请判断以下内容是否包含 CSV 表格数据，只需回答是或否`
+        });
+        if (askResponse.data.response !== "否") {
+          MessageBox.error('检测到可能包含 CSV 数据，请使用 ```csv ``` 代码块包裹 CSV 内容');
+          setIsLoading(false);
+          return;
+        }
       }
+
+
 
       const newUserMessage: Message = {
         role: 'user',
@@ -435,7 +456,7 @@ const Chat: React.FC = () => {
         id: Math.random().toString(36)
       };
       setMessages([...messages, newUserMessage]);
-      setInputMessage('');      
+      setInputMessage('');
 
       // Start 120s countdown
       setCountdown(120);
@@ -684,8 +705,8 @@ const Chat: React.FC = () => {
             <Typography.Text>请选择要包含的列：</Typography.Text>
           </div>
           <Table
-            dataSource={csvData.map((row, index) => ({ 
-              ...row, 
+            dataSource={csvData.map((row, index) => ({
+              ...row,
               key: index,
             }))}
             columns={columns.map(col => ({
