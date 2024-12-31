@@ -814,42 +814,11 @@ const Chat: React.FC = () => {
                                   );
                                 }
                                 // 如果不是预期的格式，回退到普通文本显示
-                                try {
-                                  const result = JSON.parse(item.content);
-                                  if (typeof result === 'object' && !Array.isArray(result)) {
-                                    // Convert object to table
-                                    const columns = Object.keys(result).map(key => ({
-                                      title: key,
-                                      dataIndex: key,
-                                      key: key,
-                                    }));
-                                    const dataSource = [result];
-                                    
-                                    return (
-                                      <Table
-                                        dataSource={dataSource}
-                                        columns={columns}
-                                        pagination={false}
-                                        bordered
-                                        size="small"
-                                        style={{ marginTop: 16 }}
-                                      />
-                                    );
-                                  }
-                                  // If not an object, fallback to text display
-                                  return (
-                                    <Typography.Text style={{ color: '#389e0d' }}>
-                                      {item.content}
-                                    </Typography.Text>
-                                  );
-                                } catch (e) {
-                                  // If JSON parsing fails, fallback to text display
-                                  return (
-                                    <Typography.Text style={{ color: '#389e0d' }}>
-                                      {item.content}
-                                    </Typography.Text>
-                                  );
-                                }
+                                return (
+                                  <Typography.Text style={{ color: '#389e0d' }}>
+                                    {item.content}
+                                  </Typography.Text>
+                                );
                               } catch (e) {
                                 // 如果解析JSON失败，回退到普通文本显示
                                 return (
