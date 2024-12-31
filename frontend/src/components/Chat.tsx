@@ -724,15 +724,24 @@ const Chat: React.FC = () => {
               columns={columns.map(col => ({
                 ...col,
                 render: (text: string) => (
-                  <div style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ 
+                    maxWidth: '100%', 
+                    overflow: 'hidden', 
+                    textOverflow: 'ellipsis', 
+                    whiteSpace: 'nowrap',
+                    width: 'fit-content'
+                  }}>
                     {text}
                   </div>
-                )
+                ),
+                ellipsis: true,
+                width: 'auto'
               }))}
               pagination={false}
               scroll={{ x: 'max-content', y: 500 }}
               rowSelection={undefined}
               style={{ minWidth: '100%' }}
+              size="small"
             />
           </div>
           <div style={{ marginTop: 16 }}>
