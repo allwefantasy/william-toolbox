@@ -296,12 +296,64 @@ const Chat: React.FC = () => {
     return true;
   };
 
-  const handleSendMessage = async () => {
-    if (inputMessage.trim() && currentConversationId) {
+  const [csvPreviewVisible, setCsvPreviewVisible] = useState(false);
+  const [csvData, setCsvData] = useState<string[][]>([]);
+  const [selectedColumns, setSelectedColumns] = useState<number[]>([]);
+  const [pendingMessage, setPendingMessage] = useState('');
+
+  const handleCsvPreviewOk = () => {
+    if (selectedColumns.length === 0) {
+      MessageBox.error('请至少选择一列');
+      return;
+    }
+
+    // 提取选中的列
+    const filteredData = csvData.map(row => 
+      selectedColumns.map(colIndex => row[colIndex]).join(',')
+    ).join('\n');
+
+    // 替换原消息中的 CSV 内容
+    const newMessage = pendingMessage.replace(/```csv[\s\S]*```/, `\`\`\`csv\n${filteredData}\n\`\`\``);
+    setInputMessage(newMessage);
+    setCsvPreviewVisible(false);
+    setPendingMessage('');
+    setSelectedColumns([]);
+    setCsvData([]);
+    
+    // 继续发送消息
+    handleSendMessageInternal(newMessage);
+  };
+
+  const handleCsvPreviewCancel = () => {
+    setCsvPreviewVisible(false);
+    setPendingMessage('');
+    setSelectedColumns([]);
+    setCsvData([]);
+  };
+
+  const handleSendMessageInternal = async (message: string) => {
+    if (message.trim() && currentConversationId) {
       // 检查 OpenAI 兼容服务状态
       const canProceed = await checkOpenAIService();
       if (!canProceed) {
         return;
+      }
+
+      // 检查是否包含 CSV 内容
+      const csvMatch = inputMessage.match(/```csv([\s\S]*?)```/);
+      if (csvMatch) {
+        const csvContent = csvMatch[1].trim();
+        const rows = csvContent.split('\n');
+        const columns = rows[0].split(',');
+
+        if (columns.length > 2000) {
+          // 解析 CSV 数据
+          const parsedData = rows.map(row => row.split(','));
+          setCsvData(parsedData);
+          setPendingMessage(inputMessage);
+          setCsvPreviewVisible(true);
+          return;
+        }
       }
 
       const newUserMessage: Message = {
@@ -536,8 +588,40 @@ const Chat: React.FC = () => {
     </SyntaxHighlighter>
   );
 
+  const columns = csvData.length > 0 ? csvData[0].map((_, index) => ({
+    title: `Column ${index + 1}`,
+    dataIndex: index.toString(),
+    key: index.toString(),
+    render: (_: any, record: any) => (
+      <div style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {record[index]}
+      </div>
+    )
+  })) : [];
+
   return (
     <div className="chat-container">
+      <Modal
+        title="CSV 数据预览"
+        open={csvPreviewVisible}
+        onOk={handleCsvPreviewOk}
+        onCancel={handleCsvPreviewCancel}
+        width={1200}
+      >
+        <Table
+          dataSource={csvData.map((row, index) => ({ ...row, key: index }))}
+          columns={columns}
+          pagination={false}
+          scroll={{ x: true, y: 500 }}
+          rowSelection={{
+            type: 'checkbox',
+            selectedRowKeys: selectedColumns,
+            onChange: (selectedRowKeys: React.Key[]) => {
+              setSelectedColumns(selectedRowKeys.map(Number));
+            },
+          }}
+        />
+      </Modal>
       <div className="sidebar">
         <Button
           type="primary"
