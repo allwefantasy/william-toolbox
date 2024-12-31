@@ -298,7 +298,8 @@ const Chat: React.FC = () => {
   };
 
   const [csvPreviewVisible, setCsvPreviewVisible] = useState(false);
-  const [csvData, setCsvData] = useState<string[][]>([]);
+  const [csvData, setCsvData] = useState<any[]>([]);
+  const [csvMeta, setCsvMeta] = useState<any>(null);
   const [selectedColumns, setSelectedColumns] = useState<number[]>([]);
   const [pendingMessage, setPendingMessage] = useState('');
 
@@ -308,9 +309,14 @@ const Chat: React.FC = () => {
       return;
     }
 
-    // 提取选中的列
+    // 获取选中列的字段名
+    const selectedFields = csvMeta.fields
+      .filter((_: any, index: number) => selectedColumns.includes(index))
+      .map((field: any) => field.name);
+
+    // 使用字段名提取数据
     const filteredData = csvData.map(row => 
-      selectedColumns.map(colIndex => row[colIndex]).join(',')
+      selectedFields.map(field => row[field]).join(',')
     ).join('\n');
 
     // 替换原消息中的 CSV 内容
@@ -320,6 +326,7 @@ const Chat: React.FC = () => {
     setPendingMessage('');
     setSelectedColumns([]);
     setCsvData([]);
+    setCsvMeta(null);
     
     // 继续发送消息
     handleSendMessageInternal(newMessage);
@@ -358,10 +365,11 @@ const Chat: React.FC = () => {
             skipEmptyLines: true,
             dynamicTyping: true,
             header: true            
-          })          
+          });        
 
           if (parsedData.data.length > 0) {
-            setCsvData(parsedData.data as string[][]);
+            setCsvData(parsedData.data);
+            setCsvMeta(parsedData.meta);
             setPendingMessage(inputMessage);
             setCsvPreviewVisible(true);
             return;
@@ -604,13 +612,13 @@ const Chat: React.FC = () => {
     </SyntaxHighlighter>
   );
 
-  const columns = csvData.length > 0 ? csvData[0].map((_, index) => ({
-    title: `Column ${index + 1}`,
-    dataIndex: index.toString(),
-    key: index.toString(),
-    render: (_: any, record: any) => (
+  const columns = csvMeta ? csvMeta.fields.map((field: any, index: number) => ({
+    title: field.name,
+    dataIndex: field.name,
+    key: field.name,
+    render: (text: any) => (
       <div style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {record[index]}
+        {text}
       </div>
     )
   })) : [];
