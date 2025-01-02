@@ -19,7 +19,9 @@ class UserManager:
                         "password": "admin",
                         "is_admin": True,
                         "first_login": True,
-                        "permissions": ["*"]
+                        "permissions": ["*"],
+                        "model_permissions": ["*"],
+                        "rag_permissions": ["*"]
                     }
                 }, f, indent=2)
 
