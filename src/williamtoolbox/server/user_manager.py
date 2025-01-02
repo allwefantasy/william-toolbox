@@ -102,3 +102,19 @@ class UserManager:
 
         users[username]["permissions"] = permissions
         await self._save_users(users)
+
+    async def update_model_permissions(self, username: str, model_permissions: List[str]):
+        users = await self._load_users()
+        if username not in users:
+            raise ValueError("User not found")
+
+        users[username]["model_permissions"] = model_permissions
+        await self._save_users(users)
+
+    async def update_rag_permissions(self, username: str, rag_permissions: List[str]):
+        users = await self._load_users()
+        if username not in users:
+            raise ValueError("User not found")
+
+        users[username]["rag_permissions"] = rag_permissions
+        await self._save_users(users)
