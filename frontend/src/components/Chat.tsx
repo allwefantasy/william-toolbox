@@ -386,6 +386,38 @@ const Chat: React.FC = () => {
   };
 
   const handleSendMessage = async () => {
+    if (!currentConversationId) {
+      Modal.confirm({
+        title: '提示',
+        content: '当前没有会话，是否要创建一个新会话？',
+        okText: '创建',
+        cancelText: '取消',
+        onOk: async () => {
+          try {
+            const username = sessionStorage.getItem('username') || '';
+            const response = await axios.post(`/chat/conversations?username=${encodeURIComponent(username)}`, {
+              title: "新的聊天"
+            });
+            const newConversation: Conversation = {
+              id: response.data.id,
+              title: response.data.title,
+              time: response.data.created_at,
+              messages: response.data.messages.length
+            };
+            setConversations([newConversation, ...conversations]);
+            setCurrentConversationId(newConversation.id);
+            setCurrentConversationTitle(newConversation.title);
+            setMessages(response.data.messages);
+            // 创建会话后自动发送消息
+            await handleSendMessageInternal(inputMessage);
+          } catch (error) {
+            console.error('Error creating new conversation:', error);
+            MessageBox.error('创建新对话失败');
+          }
+        }
+      });
+      return;
+    }
     await handleSendMessageInternal(inputMessage);
   };
 
