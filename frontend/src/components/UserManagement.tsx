@@ -77,7 +77,9 @@ const UserManagement: React.FC = () => {
       await axios.post('/api/users', {
         username: values.username,
         password: values.password,
-        permissions: values.permissions,
+        page_permissions: values.page_permissions,
+        model_permissions: values.model_permissions,
+        rag_permissions: values.rag_permissions,
         is_admin: values.is_admin
       });
       message.success('添加用户成功');
@@ -263,13 +265,33 @@ const UserManagement: React.FC = () => {
             <Input.Password />
           </Form.Item>
           <Form.Item
-            name="permissions"
-            label="权限"
-            rules={[{ required: true, message: '请选择权限' }]}
+            name="page_permissions"
+            label="页面权限"
+            rules={[{ required: true, message: '请选择页面权限' }]}
           >
             <Select mode="multiple">
               {availablePages.map(page => (
                 <Option key={page} value={page}>{page}</Option>
+              ))}
+            </Select>
+          </Form.Item>
+          <Form.Item
+            name="model_permissions"
+            label="模型权限"
+          >
+            <Select mode="multiple">
+              {modelsList.map(model => (
+                <Option key={model} value={model}>{model}</Option>
+              ))}
+            </Select>
+          </Form.Item>
+          <Form.Item
+            name="rag_permissions"
+            label="RAG权限"
+          >
+            <Select mode="multiple">
+              {ragsList.map(rag => (
+                <Option key={rag} value={rag}>{rag}</Option>
               ))}
             </Select>
           </Form.Item>
