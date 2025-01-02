@@ -93,7 +93,7 @@ async def delete_user(username: str,token_payload: dict = Depends(verify_token),
 @router.put("/api/users/{username}/page_permissions")
 async def update_page_permissions(username: str, request: UpdatePermissionsRequest, token_payload: dict = Depends(verify_token)):
     try:
-        await user_manager.update_permissions(username, request.permissions)
+        await user_manager.update_page_permissions(username, request.page_permissions)
         return {"success": True}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
