@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Modal, Form, Input, Select, Space, message } from 'antd';
+import { Table, Button, Modal, Form, Input, Select, Space, message, Spin } from 'antd';
 import axios from 'axios';
 
 const { Option } = Select;
@@ -14,6 +14,9 @@ const UserManagement: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
+  const [modelsList, setModelsList] = useState<string[]>([]);
+  const [ragsList, setRagsList] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
   const [availablePages] = useState([
     '模型列表',
     'OpenAI兼容服务',
@@ -26,6 +29,31 @@ const UserManagement: React.FC = () => {
     '超级分析',
     'ByzerSQL'
   ]);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      // Fetch users
+      const usersResponse = await axios.get('/api/users');
+      const usersArray = Object.entries(usersResponse.data).map(([username, data]: [string, any]) => ({
+        username,
+        ...data
+      }));
+      setUsers(usersArray);
+
+      // Fetch models
+      const modelsResponse = await axios.get('/models');
+      setModelsList(modelsResponse.data.map((model: any) => model.name));
+
+      // Fetch RAGs
+      const ragsResponse = await axios.get('/rags');
+      setRagsList(ragsResponse.data.map((rag: any) => rag.name));
+    } catch (error) {
+      message.error('获取数据失败');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -41,7 +69,7 @@ const UserManagement: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchUsers();
+    fetchData();
   }, []);
 
   const handleAddUser = async (values: any) => {
@@ -71,14 +99,21 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  const handleUpdatePermissions = async (username: string, permissions: string[]) => {
+  const handleUpdatePermissions = async (
+    username: string, 
+    permissions: string[], 
+    model_permissions: string[] = [], 
+    rag_permissions: string[] = []
+  ) => {
     try {
       await axios.put(`/api/users/${username}/permissions`, {
         username,
-        permissions
+        permissions,
+        model_permissions,
+        rag_permissions
       });
       message.success('更新权限成功');
-      fetchUsers();
+      fetchData();
     } catch (error) {
       message.error('更新权限失败');
     }
@@ -97,7 +132,7 @@ const UserManagement: React.FC = () => {
       render: (isAdmin: boolean) => isAdmin ? '是' : '否',
     },
     {
-      title: '权限',
+      title: '页面权限',
       dataIndex: 'permissions',
       key: 'permissions',
       render: (permissions: string[], record: User) => (
@@ -110,6 +145,42 @@ const UserManagement: React.FC = () => {
         >
           {availablePages.map(page => (
             <Option key={page} value={page}>{page}</Option>
+          ))}
+        </Select>
+      ),
+    },
+    {
+      title: '模型权限',
+      dataIndex: 'model_permissions',
+      key: 'model_permissions',
+      render: (model_permissions: string[], record: User) => (
+        <Select
+          mode="multiple"
+          style={{ width: '100%' }}
+          value={model_permissions || []}
+          onChange={(value) => handleUpdatePermissions(record.username, record.permissions, value, record.rag_permissions)}
+          disabled={record.username === 'admin'}
+        >
+          {modelsList.map(model => (
+            <Option key={model} value={model}>{model}</Option>
+          ))}
+        </Select>
+      ),
+    },
+    {
+      title: 'RAG权限',
+      dataIndex: 'rag_permissions',
+      key: 'rag_permissions',
+      render: (rag_permissions: string[], record: User) => (
+        <Select
+          mode="multiple"
+          style={{ width: '100%' }}
+          value={rag_permissions || []}
+          onChange={(value) => handleUpdatePermissions(record.username, record.permissions, record.model_permissions, value)}
+          disabled={record.username === 'admin'}
+        >
+          {ragsList.map(rag => (
+            <Option key={rag} value={rag}>{rag}</Option>
           ))}
         </Select>
       ),
@@ -130,6 +201,10 @@ const UserManagement: React.FC = () => {
       ),
     },
   ];
+
+  if (loading) {
+    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><Spin /></div>;
+  }
 
   return (
     <div style={{ padding: '24px' }}>
