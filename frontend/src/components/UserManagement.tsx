@@ -99,23 +99,39 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  const handleUpdatePermissions = async (
-    username: string, 
-    permissions: string[], 
-    model_permissions: string[] = [], 
-    rag_permissions: string[] = []
-  ) => {
+  const handleUpdatePagePermissions = async (username: string, permissions: string[]) => {
     try {
-      await axios.put(`/api/users/${username}/permissions`, {
-        username,
-        permissions,
-        model_permissions,
-        rag_permissions
+      await axios.put(`/api/users/${username}/page_permissions`, {
+        permissions
       });
-      message.success('更新权限成功');
+      message.success('更新页面权限成功');
       fetchData();
     } catch (error) {
-      message.error('更新权限失败');
+      message.error('更新页面权限失败');
+    }
+  };
+
+  const handleUpdateModelPermissions = async (username: string, model_permissions: string[]) => {
+    try {
+      await axios.put(`/api/users/${username}/model_permissions`, {
+        model_permissions
+      });
+      message.success('更新模型权限成功');
+      fetchData();
+    } catch (error) {
+      message.error('更新模型权限失败');
+    }
+  };
+
+  const handleUpdateRagPermissions = async (username: string, rag_permissions: string[]) => {
+    try {
+      await axios.put(`/api/users/${username}/rag_permissions`, {
+        rag_permissions
+      });
+      message.success('更新RAG权限成功');
+      fetchData();
+    } catch (error) {
+      message.error('更新RAG权限失败');
     }
   };
 
@@ -140,7 +156,7 @@ const UserManagement: React.FC = () => {
           mode="multiple"
           style={{ width: '100%' }}
           value={permissions}
-          onChange={(value) => handleUpdatePermissions(record.username, value)}
+          onChange={(value) => handleUpdatePagePermissions(record.username, value)}
           disabled={record.username === 'admin'}
         >
           {availablePages.map(page => (
@@ -158,7 +174,7 @@ const UserManagement: React.FC = () => {
           mode="multiple"
           style={{ width: '100%' }}
           value={model_permissions || []}
-          onChange={(value) => handleUpdatePermissions(record.username, record.permissions, value, record.rag_permissions)}
+          onChange={(value) => handleUpdateModelPermissions(record.username, value)}
           disabled={record.username === 'admin'}
         >
           {modelsList.map(model => (
@@ -176,7 +192,7 @@ const UserManagement: React.FC = () => {
           mode="multiple"
           style={{ width: '100%' }}
           value={rag_permissions || []}
-          onChange={(value) => handleUpdatePermissions(record.username, record.permissions, record.model_permissions, value)}
+          onChange={(value) => handleUpdateRagPermissions(record.username, value)}
           disabled={record.username === 'admin'}
         >
           {ragsList.map(rag => (

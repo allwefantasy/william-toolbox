@@ -90,14 +90,27 @@ async def delete_user(username: str,token_payload: dict = Depends(verify_token),
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.put("/api/users/{username}/permissions")
-async def update_permissions(username: str, request: UpdatePermissionsRequest, token_payload: dict = Depends(verify_token)):
+@router.put("/api/users/{username}/page_permissions")
+async def update_page_permissions(username: str, request: UpdatePermissionsRequest, token_payload: dict = Depends(verify_token)):
     try:
-        await user_manager.update_page_permissions(username, request.page_permissions)
-        if request.model_permissions:
-            await user_manager.update_model_permissions(username, request.model_permissions)
-        if request.rag_permissions:
-            await user_manager.update_rag_permissions(username, request.rag_permissions)
+        await user_manager.update_permissions(username, request.permissions)
         return {"success": True}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.put("/api/users/{username}/model_permissions")
+async def update_model_permissions(username: str, request: UpdatePermissionsRequest, token_payload: dict = Depends(verify_token)):
+    try:
+        await user_manager.update_model_permissions(username, request.model_permissions)
+        return {"success": True}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.put("/api/users/{username}/rag_permissions")
+async def update_rag_permissions(username: str, request: UpdatePermissionsRequest, token_payload: dict = Depends(verify_token)):
+    try:
+        await user_manager.update_rag_permissions(username, request.rag_permissions)
+        return {"success": True}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
