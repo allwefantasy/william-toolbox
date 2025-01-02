@@ -272,17 +272,32 @@ const Chat: React.FC = () => {
 
   const fetchItemList = async () => {
     try {
+      const username = sessionStorage.getItem('username') || '';
       let response;
       if (listType === 'models') {
+        // 获取用户模型权限
+        const userResponse = await axios.get(`/api/users/${username}`);
+        const modelPermissions = userResponse.data.model_permissions || [];
+        
         response = await axios.get('/models');
-        const runningModels = response.data.filter((model: any) => model.status === 'running').map((model: any) => model.name);
+        const runningModels = response.data
+          .filter((model: any) => model.status === 'running' && 
+                  (modelPermissions.includes('*') || modelPermissions.includes(model.name)))
+          .map((model: any) => model.name);
         setItemList(runningModels);
         if (runningModels.length > 0 && !selectedItem) {
           setSelectedItem(runningModels[0]);
         }
       } else if (listType === 'rags') {
+        // 获取用户RAG权限
+        const userResponse = await axios.get(`/api/users/${username}`);
+        const ragPermissions = userResponse.data.rag_permissions || [];
+        
         response = await axios.get('/rags');
-        const runningRags = response.data.filter((rag: any) => rag.status === 'running').map((rag: any) => rag.name);
+        const runningRags = response.data
+          .filter((rag: any) => rag.status === 'running' && 
+                  (ragPermissions.includes('*') || ragPermissions.includes(rag.name)))
+          .map((rag: any) => rag.name);
         setItemList(runningRags);
         if (runningRags.length > 0 && !selectedItem) {
           setSelectedItem(runningRags[0]);
