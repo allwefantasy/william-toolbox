@@ -117,3 +117,19 @@ async def update_rag_permissions(username: str, request: UpdatePermissionsReques
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+@router.get("/api/users/{username}")
+async def get_user_permissions(username: str, token_payload: dict = Depends(verify_token)):
+    try:
+        users = await user_manager.get_users()
+        if username not in users:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        user_data = users[username]
+        return {
+            "model_permissions": user_data.get("model_permissions", []),
+            "rag_permissions": user_data.get("rag_permissions", []),
+            "permissions": user_data.get("permissions", [])
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
