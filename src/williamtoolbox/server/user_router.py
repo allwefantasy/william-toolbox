@@ -22,7 +22,9 @@ class ChangePasswordRequest(BaseModel):
 class AddUserRequest(BaseModel):
     username: str
     password: str
-    permissions: List[str]
+    page_permissions: List[str] = []
+    model_permissions: List[str] = []
+    rag_permissions: List[str] = []
     is_admin: bool = False
 
 class UpdatePermissionsRequest(BaseModel):
@@ -75,7 +77,9 @@ async def add_user(request: AddUserRequest, token_payload: dict = Depends(verify
         await user_manager.add_user(
             request.username,
             request.password,
-            request.permissions,
+            request.page_permissions,
+            request.model_permissions,
+            request.rag_permissions,
             request.is_admin
         )
         return {"success": True}
