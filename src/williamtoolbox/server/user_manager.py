@@ -5,6 +5,7 @@ from typing import Dict, List, Optional
 import aiofiles
 from ..storage.json_file import with_file_lock
 
+
 class UserManager:
     def __init__(self):
         self.user_file = "./users.json"
@@ -43,35 +44,38 @@ class UserManager:
         users = await self._load_users()
         if username not in users:
             return False, False, []
-        
+
         user = users[username]
         if user["password"] == password:  # For first time admin login
             return True, user.get("first_login", False), user.get("permissions", [])
-        
+
         if user["password"] == self._hash_password(password):
             return True, user.get("first_login", False), user.get("permissions", [])
-        
+
         return False, False, []
 
     async def change_password(self, username: str, new_password: str):
         users = await self._load_users()
         if username not in users:
             raise ValueError("User not found")
-        
+
         users[username]["password"] = self._hash_password(new_password)
         users[username]["first_login"] = False
         await self._save_users(users)
 
-    async def add_user(self, username: str, password: str, permissions: List[str], is_admin: bool = False):
+    async def add_user(self, username: str, password: str, permissions: List[str],
+                       model_permissions: List[str], rag_permissions: List[str], is_admin: bool = False):
         users = await self._load_users()
         if username in users:
             raise ValueError("User already exists")
-        
+
         users[username] = {
             "password": self._hash_password(password),
             "is_admin": is_admin,
             "first_login": False,
-            "permissions": permissions
+            "permissions": permissions,
+            "model_permissions": model_permissions,
+            "rag_permissions": rag_permissions
         }
         await self._save_users(users)
 
@@ -81,7 +85,7 @@ class UserManager:
             raise ValueError("User not found")
         if username == "admin":
             raise ValueError("Cannot delete admin user")
-        
+
         del users[username]
         await self._save_users(users)
 
@@ -95,6 +99,6 @@ class UserManager:
         users = await self._load_users()
         if username not in users:
             raise ValueError("User not found")
-        
+
         users[username]["permissions"] = permissions
         await self._save_users(users)
