@@ -27,8 +27,7 @@ class AddUserRequest(BaseModel):
     rag_permissions: List[str] = []
     is_admin: bool = False
 
-class UpdatePermissionsRequest(BaseModel):
-    username: str
+class UpdatePermissionsRequest(BaseModel):    
     page_permissions: List[str] = []
     model_permissions: List[str] = []
     rag_permissions: List[str] = []
