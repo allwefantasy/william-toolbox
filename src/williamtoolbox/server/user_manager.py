@@ -95,12 +95,12 @@ class UserManager:
         return {username: {k: v for k, v in data.items() if k != "password"}
                 for username, data in users.items()}
 
-    async def update_permissions(self, username: str, permissions: List[str]):
+    async def update_page_permissions(self, username: str, page_permissions: List[str]):
         users = await self._load_users()
         if username not in users:
             raise ValueError("User not found")
 
-        users[username]["permissions"] = permissions
+        users[username]["permissions"] = page_permissions
         await self._save_users(users)
 
     async def update_model_permissions(self, username: str, model_permissions: List[str]):

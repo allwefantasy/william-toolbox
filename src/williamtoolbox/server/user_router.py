@@ -27,7 +27,7 @@ class AddUserRequest(BaseModel):
 
 class UpdatePermissionsRequest(BaseModel):
     username: str
-    permissions: List[str]
+    page_permissions: List[str] = []
     model_permissions: List[str] = []
     rag_permissions: List[str] = []
 
@@ -93,7 +93,7 @@ async def delete_user(username: str,token_payload: dict = Depends(verify_token),
 @router.put("/api/users/{username}/permissions")
 async def update_permissions(username: str, request: UpdatePermissionsRequest, token_payload: dict = Depends(verify_token)):
     try:
-        await user_manager.update_permissions(username, request.permissions)
+        await user_manager.update_page_permissions(username, request.page_permissions)
         if request.model_permissions:
             await user_manager.update_model_permissions(username, request.model_permissions)
         if request.rag_permissions:
