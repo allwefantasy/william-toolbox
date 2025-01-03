@@ -16,6 +16,7 @@ src/williamtoolbox/server/backend_server.py
 src/williamtoolbox/server/byzer_sql_router.py
 src/williamtoolbox/server/chat_router.py
 src/williamtoolbox/server/config_router.py
+src/williamtoolbox/server/file_router.py
 src/williamtoolbox/server/model_router.py
 src/williamtoolbox/server/openai_service_router.py
 src/williamtoolbox/server/proxy_server.py
@@ -37,6 +38,6 @@ src/williamtoolbox/web/static/css/main.abb440a0.css
 src/williamtoolbox/web/static/css/main.abb440a0.css.map
 src/williamtoolbox/web/static/js/453.abd36b29.chunk.js
 src/williamtoolbox/web/static/js/453.abd36b29.chunk.js.map
-src/williamtoolbox/web/static/js/main.32a3c3ce.js
-src/williamtoolbox/web/static/js/main.32a3c3ce.js.LICENSE.txt
-src/williamtoolbox/web/static/js/main.32a3c3ce.js.map
+src/williamtoolbox/web/static/js/main.200ade7e.js
+src/williamtoolbox/web/static/js/main.200ade7e.js.LICENSE.txt
+src/williamtoolbox/web/static/js/main.200ade7e.js.map
