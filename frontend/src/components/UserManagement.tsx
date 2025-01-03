@@ -27,7 +27,8 @@ const UserManagement: React.FC = () => {
     '聊天',
     'AutoCoder',
     '超级分析',
-    'ByzerSQL'
+    'ByzerSQL',
+    '文件管理'
   ]);
 
   const fetchData = async () => {
