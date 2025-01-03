@@ -30,9 +30,11 @@ from .request_types import *
 from urllib.parse import unquote
 
 from .chat_router import router as chat_router
+from .file_router import router as file_router
 
 app = FastAPI()
 app.include_router(chat_router)
+app.include_router(file_router)
 app.include_router(rag_router)
 app.include_router(model_router)
 app.include_router(openai_service_router)
