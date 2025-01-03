@@ -50,7 +50,6 @@ const Chat: React.FC = () => {
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
   const [csvPreviewVisible, setCsvPreviewVisible] = useState(false);
-  const [skipCsvCheck, setSkipCsvCheck] = useState(false); // 新增状态
   interface CSVRow {
     [key: string]: string | number | boolean | null;
   }
@@ -384,7 +383,6 @@ const Chat: React.FC = () => {
     setCsvData([]);
     setCsvMeta(null);
     setIsLoading(false);
-    setSkipCsvCheck(true); // 用户取消时设置跳过检测标记
   };
 
   const handleSendMessage = async () => {
@@ -445,29 +443,28 @@ const Chat: React.FC = () => {
       }
 
       // 检查是否包含 CSV 内容
-      if (!skipCsvCheck) { // 只有未跳过检测时才执行
-        try {
-          const response = await axios.post('/chat/extract_csv', {
-            content: message
+      try {
+        const response = await axios.post('/chat/extract_csv', {
+          content: message
+        });
+        const csvContent = response.data.csv_content;
+        if (!csvContent) {
+          // 如果没有直接提取到 CSV，使用 ask 方法检测是否包含 CSV 数据                             │
+          const askResponse = await ask(`下面是用户提供的信息：\n${message} \n\n请判断以下内容是否包含 CSV 表格数据，只需回答是或否`);
+          if (askResponse !== "否") {
+            Modal.confirm({
+            title: 'CSV 数据检测',
+            content: '检测到可能包含 CSV 数据，请使用 ```csv ``` 代码块包裹 CSV 内容',
+            okText: '确认',
+            cancelText: '取消',
+            onOk: () => {
+              // 用户确认后的操作
+            },
           });
-          const csvContent = response.data.csv_content;
-          if (!csvContent) {
-            // 如果没有直接提取到 CSV，使用 ask 方法检测是否包含 CSV 数据                             │
-            const askResponse = await ask(`下面是用户提供的信息：\n${message} \n\n请判断以下内容是否包含 CSV 表格数据，只需回答是或否`);
-            if (askResponse !== "否") {
-              Modal.confirm({
-              title: 'CSV 数据检测',
-              content: '检测到可能包含 CSV 数据，请使用 ```csv ``` 代码块包裹 CSV 内容',
-              okText: '确认',
-              cancelText: '取消',
-              onOk: () => {
-                // 用户确认后的操作
-              },
-            });
-              setIsLoading(false);
-              return;
-            }
+            setIsLoading(false);
+            return;
           }
+        }
         if (csvContent) {
           // 使用 PapaParse 解析 CSV 数据
           const parsedData: { data: CSVRow[]; meta: CSVMeta } = Papa.parse(csvContent, {
@@ -516,7 +513,6 @@ const Chat: React.FC = () => {
         timestamp: new Date().toISOString(),
         id: Math.random().toString(36)
       };
-      setSkipCsvCheck(false); // 用户发送消息后重置检测标记
       setMessages([...messages, newUserMessage]);
       setInputMessage('');
 
