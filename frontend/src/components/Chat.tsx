@@ -74,6 +74,7 @@ const Chat: React.FC = () => {
   const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
   const [columns, setColumns] = useState<CSVColumn[]>([]);
   const [pendingMessage, setPendingMessage] = useState('');
+const [skipCSVCheck, setSkipCSVCheck] = useState(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -448,19 +449,22 @@ const Chat: React.FC = () => {
           content: message
         });
         const csvContent = response.data.csv_content;
-        if (!csvContent) {
+        if (!csvContent && !skipCSVCheck) {
           // 如果没有直接提取到 CSV，使用 ask 方法检测是否包含 CSV 数据                             │
           const askResponse = await ask(`下面是用户提供的信息：\n${message} \n\n请判断以下内容是否包含 CSV 表格数据，只需回答是或否`);
           if (askResponse !== "否") {
             Modal.confirm({
-            title: 'CSV 数据检测',
-            content: '检测到可能包含 CSV 数据，请使用 ```csv ``` 代码块包裹 CSV 内容',
-            okText: '确认',
-            cancelText: '取消',
-            onOk: () => {
-              // 用户确认后的操作
-            },
-          });
+              title: 'CSV 数据检测',
+              content: '检测到可能包含 CSV 数据，请使用 ```csv ``` 代码块包裹 CSV 内容',
+              okText: '确认',
+              cancelText: '不再检测',
+              onCancel: () => {
+                setSkipCSVCheck(true);
+              },
+              onOk: () => {
+                // 用户确认后的操作
+              },
+            });
             setIsLoading(false);
             return;
           }
@@ -515,6 +519,7 @@ const Chat: React.FC = () => {
       };
       setMessages([...messages, newUserMessage]);
       setInputMessage('');
+      setSkipCSVCheck(false); // 发送消息后重置跳过检测标记
 
       // Start 120s countdown
       setCountdown(120);
