@@ -31,16 +31,20 @@ async def get_rag_files(rag_name: str):
         rag_dir = await ensure_rag_dir(rag_name)
         files = []
         for root, dirs, filenames in os.walk(rag_dir):
+            # 过滤掉 _images 和 .cache 目录
+            dirs[:] = [d for d in dirs if d not in ["_images", ".cache"]]
             for filename in filenames:
                 file_path = os.path.join(root, filename)
                 if os.path.isfile(file_path):
                     stat = os.stat(file_path)
                     relative_path = os.path.relpath(file_path, rag_dir)
-                    files.append({
-                        "name": relative_path,
-                        "size": f"{stat.st_size / 1024:.2f} KB",
-                        "modified": stat.st_mtime
-                    })
+                    # 过滤掉 _images 和 .cache 目录下的文件
+                    if not any(part in ["_images", ".cache"] for part in relative_path.split(os.sep)):
+                        files.append({
+                            "name": relative_path,
+                            "size": f"{stat.st_size / 1024:.2f} KB",
+                            "modified": stat.st_mtime
+                        })
         return files
     except Exception as e:
         logger.error(f"Error getting files for RAG {rag_name}: {str(e)}")
