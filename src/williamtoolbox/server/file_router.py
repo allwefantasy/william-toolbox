@@ -8,12 +8,19 @@ from loguru import logger
 
 router = APIRouter()
 
-# 存储RAG文件的基础路径
-RAG_FILES_BASE = "./rag_files"
+from ..storage.json_file import load_rags_from_json
 
 async def ensure_rag_dir(rag_name: str):
     """确保RAG目录存在"""
-    rag_dir = os.path.join(RAG_FILES_BASE, rag_name)
+    rags = await load_rags_from_json()
+    if rag_name not in rags:
+        raise HTTPException(status_code=404, detail=f"RAG {rag_name} not found")
+    
+    rag_info = rags[rag_name]
+    if "doc_dir" not in rag_info:
+        raise HTTPException(status_code=400, detail=f"RAG {rag_name} has no doc_dir configured")
+    
+    rag_dir = rag_info["doc_dir"]
     os.makedirs(rag_dir, exist_ok=True)
     return rag_dir
 
@@ -23,15 +30,17 @@ async def get_rag_files(rag_name: str):
     try:
         rag_dir = await ensure_rag_dir(rag_name)
         files = []
-        for filename in os.listdir(rag_dir):
-            file_path = os.path.join(rag_dir, filename)
-            if os.path.isfile(file_path):
-                stat = os.stat(file_path)
-                files.append({
-                    "name": filename,
-                    "size": f"{stat.st_size / 1024:.2f} KB",
-                    "modified": stat.st_mtime
-                })
+        for root, dirs, filenames in os.walk(rag_dir):
+            for filename in filenames:
+                file_path = os.path.join(root, filename)
+                if os.path.isfile(file_path):
+                    stat = os.stat(file_path)
+                    relative_path = os.path.relpath(file_path, rag_dir)
+                    files.append({
+                        "name": relative_path,
+                        "size": f"{stat.st_size / 1024:.2f} KB",
+                        "modified": stat.st_mtime
+                    })
         return files
     except Exception as e:
         logger.error(f"Error getting files for RAG {rag_name}: {str(e)}")
@@ -42,21 +51,22 @@ async def upload_file_to_rag(rag_name: str, file: UploadFile = File(...)):
     """上传文件到RAG"""
     try:
         rag_dir = await ensure_rag_dir(rag_name)
-        # 生成唯一文件名
-        file_ext = os.path.splitext(file.filename)[1]
-        unique_filename = f"{uuid.uuid4().hex}{file_ext}"
-        file_path = os.path.join(rag_dir, unique_filename)
+        # 保持原始文件名
+        file_path = os.path.join(rag_dir, file.filename)
+        
+        # 确保目录存在
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
         
         # 异步写入文件
         async with aiofiles.open(file_path, "wb") as f:
             await f.write(await file.read())
         
-        return {"filename": unique_filename}
+        return {"filename": file.filename}
     except Exception as e:
         logger.error(f"Error uploading file to RAG {rag_name}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.delete("/rags/{rag_name}/files/{filename}")
+@router.delete("/rags/{rag_name}/files/{filename:path}")
 async def delete_rag_file(rag_name: str, filename: str):
     """删除RAG文件"""
     try:
