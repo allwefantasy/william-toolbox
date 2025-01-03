@@ -439,21 +439,15 @@ async def update_conversation_title(username: str, conversation_id: str, request
     raise HTTPException(status_code=404, detail="Conversation not found")
 
 
+from .csv_utils import extract_csv_from_markdown
+
 class ExtractCSVRequest(BaseModel):
     content: str
 
 @router.post("/chat/extract_csv")
 async def extract_csv(request: ExtractCSVRequest):
     """Extract CSV content from markdown code block"""
-    try:
-        code_blocks = code_utils.extract_code(request.content)
-        for code_block in code_blocks:
-            if code_block[0] == "csv":
-                return {"csv_content": code_block[1]}
-        return {"csv_content": ""}
-    except Exception as e:
-        logger.error(f"Failed to extract CSV: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to extract CSV content")
+    return extract_csv_from_markdown(request.content)
 
 @router.delete("/chat/conversations/{conversation_id}")
 async def delete_conversation(username: str, conversation_id: str):
