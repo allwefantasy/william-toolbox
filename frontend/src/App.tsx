@@ -15,6 +15,7 @@ import SuperAnalysisList from './components/SuperAnalysisList';
 import ByzerSQLList from './components/ByzerSQLList';
 import UserManagement from './components/UserManagement';
 import Login from './components/Login';
+import FileManagement from './components/FileManagement';
 import './App.css';
 import axios from 'axios';
 
@@ -33,7 +34,8 @@ const menuKeyToPermission: { [key: string]: string } = {
   '5': 'AutoCoder',
   '6': '超级分析',
   '7': 'ByzerSQL',
-  '8': '用户管理'
+  '8': '用户管理',
+  '9': '文件管理'
 };
 
 function App() {
@@ -139,6 +141,8 @@ function App() {
         return <ByzerSQLList refreshTrigger={refreshTrigger} />;
       case '8':
         return <UserManagement />;
+      case '9':
+        return <FileManagement />;
       default:
         return (
           <>
@@ -215,6 +219,11 @@ function App() {
           {(username === 'admin' || permissions.includes('*')) && (
             <Menu.Item key="8" icon={<SettingOutlined />}>
               用户管理
+            </Menu.Item>
+          )}
+          {hasPermission('9') && (
+            <Menu.Item key="9" icon={<FolderOutlined />}>
+              文件管理
             </Menu.Item>
           )}
         </Menu>
