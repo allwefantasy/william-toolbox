@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { detectAndHandleCSV } from '../utils/csvDetector';
 import Papa from 'papaparse';
 import { Input, Button, List, Avatar, Typography, Select, Space, Dropdown, Menu, Modal, Spin, Tooltip, Timeline, Table } from 'antd';
 import { SendOutlined, PlusCircleOutlined, GithubOutlined, SettingOutlined, EditOutlined, PictureOutlined, FileOutlined, DatabaseOutlined, DeleteOutlined, LoadingOutlined, RobotOutlined, RedoOutlined, BulbOutlined } from '@ant-design/icons';
@@ -446,69 +447,35 @@ const [skipCSVCheck, setSkipCSVCheck] = useState(false);
       }
 
       // 检查是否包含 CSV 内容
-      try {
-        const response = await axios.post('/chat/extract_csv', {
-          content: message
+      const csvResult = await detectAndHandleCSV(message, skipCSVCheck);
+      
+      if (csvResult.showCSVWarning) {
+        Modal.confirm({
+          title: 'CSV 数据检测',
+          content: '检测到可能包含 CSV 数据，请使用 ```csv ``` 代码块包裹 CSV 内容',
+          okText: '确认',
+          cancelText: '不再检测',
+          onCancel: () => {
+            setSkipCSVCheck(true);
+          },
+          onOk: () => {
+            // 用户确认后的操作
+          },
         });
-        const csvContent = response.data.csv_content;
-        if (!csvContent && !skipCSVCheck) {
-          // 如果没有直接提取到 CSV，使用 ask 方法检测是否包含 CSV 数据                             │
-          const askResponse = await ask(`下面是用户提供的信息：\n${message} \n\n请判断以下内容是否包含 CSV 表格数据，只需回答是或否`);
-          if (askResponse !== "否") {
-            Modal.confirm({
-              title: 'CSV 数据检测',
-              content: '检测到可能包含 CSV 数据，请使用 ```csv ``` 代码块包裹 CSV 内容',
-              okText: '确认',
-              cancelText: '不再检测',
-              onCancel: () => {
-                setSkipCSVCheck(true);
-              },
-              onOk: () => {
-                // 用户确认后的操作
-              },
-            });
-            setIsLoading(false);
-            return;
-          }
-        }
-        if (csvContent) {
-          // 使用 PapaParse 解析 CSV 数据
-          const parsedData: { data: CSVRow[]; meta: CSVMeta } = Papa.parse(csvContent, {
-            delimiter: ',',
-            newline: '\n',
-            skipEmptyLines: true,
-            dynamicTyping: true,
-            header: true            
-          });
+        setIsLoading(false);
+        return;
+      }
 
+      if (csvResult.showCSVPreview) {
+        setCsvData(csvResult.csvData);
+        setCsvMeta(csvResult.csvMeta);
+        setPendingMessage(csvResult.pendingMessage);
+        setCsvPreviewVisible(true);
+        return;
+      }
 
-          const totalCells = parsedData.data.length * Object.keys(parsedData.data[0] || {}).length;
-          console.log(totalCells);
-          if (totalCells > 500) {
-            setCsvData(parsedData.data);
-            setCsvMeta(parsedData.meta);
-            setPendingMessage(message);
-            setCsvPreviewVisible(true);
-            return;
-          }
-        }
-      } catch (error) {
-        console.error('Error extracting CSV:', error);
-        // 如果没有直接提取到 CSV，使用 ask 方法检测是否包含 CSV 数据                             │
-        const askResponse = await ask(`下面是用户提供的信息：\n${message} \n\n请判断以下内容是否包含 CSV 表格数据，只需回答是或者否，不要有其他内容`);
-        if (askResponse.includes("否")) {
-          Modal.confirm({
-            title: 'CSV 数据检测',
-            content: '检测到可能包含 CSV 数据，请使用 ```csv ``` 代码块包裹 CSV 内容',
-            okText: '确认',
-            cancelText: '取消',
-            onOk: () => {
-              // 用户确认后的操作
-            },
-          });
-          setIsLoading(false);
-          return;
-        }
+      if (!csvResult.shouldHandle) {
+        return;
       }
 
 
