@@ -40,6 +40,8 @@ const Chat: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [countdownInterval, setCountdownInterval] = useState<NodeJS.Timeout | null>(null);
+  const [cancelTokenSource, setCancelTokenSource] = useState<axios.CancelTokenSource | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   const [listType, setListType] = useState<'models' | 'rags' | 'super-analysis'>('models');
   const [selectedItem, setSelectedItem] = useState<string>('');
@@ -536,12 +538,22 @@ const [skipCSVCheck, setSkipCSVCheck] = useState(false);
 
       try {
         const username = sessionStorage.getItem('username') || '';
-        const streamResponse = await axios.post(`/chat/conversations/${currentConversationId}/messages/stream?username=${encodeURIComponent(username)}`, {
-          conversation_id: currentConversationId,
-          messages: [...messages, newUserMessage],
-          list_type: listType,
-          selected_item: selectedItem
-        });
+        const cancelToken = axios.CancelToken;
+        const source = cancelToken.source();
+        setCancelTokenSource(source);
+
+        const streamResponse = await axios.post(
+          `/chat/conversations/${currentConversationId}/messages/stream?username=${encodeURIComponent(username)}`,
+          {
+            conversation_id: currentConversationId,
+            messages: [...messages, newUserMessage],
+            list_type: listType,
+            selected_item: selectedItem
+          },
+          {
+            cancelToken: source.token
+          }
+        );
 
         if (streamResponse.data && streamResponse.data.request_id) {
           const requestId = streamResponse.data.request_id;
@@ -653,6 +665,12 @@ const [skipCSVCheck, setSkipCSVCheck] = useState(false);
           }
         }
       } catch (error: any) {
+        if (axios.isCancel(error)) {
+          // 如果是取消操作，移除最后一条消息
+          setMessages(prevMessages => prevMessages.slice(0, -1));
+          setIsCancelling(false);
+          return;
+        }
         console.error('Error sending message:', error);
         Modal.error({
           title: 'Error sending message',
@@ -667,12 +685,14 @@ const [skipCSVCheck, setSkipCSVCheck] = useState(false);
         setMessages(prevMessages => prevMessages.slice(0, -1));
       } finally {
         setIsLoading(false);
+        setIsCancelling(false);
         // Clear countdown
         if (countdownInterval) {
           clearInterval(countdownInterval);
           setCountdownInterval(null);
         }
         setCountdown(null);
+        setCancelTokenSource(null);
       }
     }
   };
@@ -1060,9 +1080,28 @@ const [skipCSVCheck, setSkipCSVCheck] = useState(false);
                   <Option key={item} value={item}>{item}</Option>
                 ))}
               </Select>
-              <Button type="primary" icon={<SendOutlined />} onClick={handleSendMessage} disabled={isLoading}>
-                发送
-              </Button>
+              <Space>
+                <Button 
+                  type="primary" 
+                  icon={<SendOutlined />} 
+                  onClick={handleSendMessage} 
+                  disabled={isLoading || isCancelling}
+                >
+                  发送
+                </Button>
+                {isLoading && cancelTokenSource && (
+                  <Button 
+                    danger 
+                    icon={<DeleteOutlined />}
+                    onClick={() => {
+                      setIsCancelling(true);
+                      cancelTokenSource.cancel('用户取消操作');
+                    }}
+                  >
+                    取消
+                  </Button>
+                )}
+              </Space>
             </div>
             <TextArea
               value={inputMessage}
