@@ -19,6 +19,22 @@ router = APIRouter()
 async def list_rags():
     """List all RAGs and their current status."""
     rags = await load_rags_from_json()
+    
+    # Check and update status for each RAG
+    for rag_name, rag_info in rags.items():
+        process_id = rag_info.get("process_id")
+        if process_id is not None:
+            try:
+                process = psutil.Process(process_id)
+                if not process.is_running():
+                    rag_info["status"] = "stopped"
+                    del rag_info["process_id"]
+            except psutil.NoSuchProcess:
+                rag_info["status"] = "stopped"
+                if "process_id" in rag_info:
+                    del rag_info["process_id"]
+    
+    await save_rags_to_json(rags)
     return [{"name": name, **info} for name, info in rags.items()]
 
 
@@ -64,7 +80,21 @@ async def get_rag(rag_name: str):
         raise HTTPException(
             status_code=404, detail=f"RAG {rag_name} not found")
 
-    return rags[rag_name]
+    rag_info = rags[rag_name]
+    process_id = rag_info.get("process_id")
+    if process_id is not None:
+        try:
+            process = psutil.Process(process_id)
+            if not process.is_running():
+                rag_info["status"] = "stopped"
+                del rag_info["process_id"]
+        except psutil.NoSuchProcess:
+            rag_info["status"] = "stopped"
+            if "process_id" in rag_info:
+                del rag_info["process_id"]
+    
+    await save_rags_to_json(rags)
+    return rag_info
 
 
 @router.put("/rags/{rag_name}")
