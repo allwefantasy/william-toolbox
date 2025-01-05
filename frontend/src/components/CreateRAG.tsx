@@ -66,14 +66,26 @@ const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
     }
   };
 
-  const showModal = () => {
+  const showModal = async () => {
     setIsModalVisible(true);
-      form.setFieldsValue({ 
+    
+    // 获取当前RAG列表以计算最大端口号
+    let maxPort = 8000;
+    try {
+      const response = await axios.get('/rags');
+      if (response.data && response.data.length > 0) {
+        maxPort = Math.max(...response.data.map((rag: any) => rag.port || 8000)) + 1;
+      }
+    } catch (error) {
+      console.error('Error fetching RAGs:', error);
+    }
+
+    form.setFieldsValue({ 
       rag_doc_filter_relevance: 2.0,
       host: '0.0.0.0',
-      port: 8000,
+      port: maxPort,
       required_exts: '',
-      disable_inference_enhance: false,
+      disable_inference_enhance: true,
       inference_deep_thought: false,
       enable_hybrid_index: false,
       hybrid_index_max_output_tokens: 1000000,
