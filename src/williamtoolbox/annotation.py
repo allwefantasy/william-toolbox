@@ -266,7 +266,16 @@ async def auto_generate_annotations(doc: str) -> List[DocText]:
     # 解析 RAG 返回的文档路径
     docs = []
     try:
-        docs = [DocPath(**doc) for doc in json.loads(rag_response)]
+        # 先用 code_utils 抽取 JSON 内容
+        from byzerllm.utils.client import code_utils
+        json_blocks = code_utils.extract_code(rag_response)
+        if json_blocks:
+            # 取第一个 json 代码块
+            json_content = json_blocks[0][1]
+            docs = [DocPath(**doc) for doc in json.loads(json_content)]
+        else:
+            # 如果没有找到 json 代码块，尝试直接解析
+            docs = [DocPath(**doc) for doc in json.loads(rag_response)]
     except Exception as e:
         logger.error(f"Failed to parse RAG response: {str(e)}")
         return DocText(doc_name="", doc_text=doc, annotations=[])
