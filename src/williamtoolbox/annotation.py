@@ -8,7 +8,7 @@ from pydantic import BaseModel
 import json
 from openai import AsyncOpenAI
 from loguru import logger
-from ..storage.json_file import load_config, load_models_from_json, load_rags_from_json
+from williamtoolbox.storage.json_file import load_config, load_models_from_json, load_rags_from_json
 
 
 class Annotation(BaseModel):
