@@ -8,6 +8,7 @@ import asyncio
 import aiofiles
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Dict, Any
 
 class AsyncFileLock:
     def __init__(self, lock_file: str):
