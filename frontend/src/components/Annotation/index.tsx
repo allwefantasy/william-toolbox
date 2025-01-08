@@ -177,9 +177,54 @@ const Annotation: React.FC = () => {
           <div
             className="document-content"
             onMouseUp={handleTextSelection}
-            style={{ whiteSpace: 'pre-wrap' }}
+            style={{ whiteSpace: 'pre-wrap', position: 'relative' }}
           >
-            {documentContent}
+            {annotations.reduce((content, annotation) => {
+              // 找到文本中对应的位置并添加高亮标记
+              const startIndex = content.indexOf(annotation.text);
+              if (startIndex === -1) return content;
+              
+              const before = content.slice(0, startIndex);
+              const highlighted = (
+                <span 
+                  key={annotation.id}
+                  id={`annotation-${annotation.id}`}
+                  style={{
+                    backgroundColor: '#fff3cd',
+                    padding: '2px 4px',
+                    borderRadius: '4px',
+                    border: '1px solid #ffeeba',
+                    position: 'relative'
+                  }}
+                >
+                  {annotation.text}
+                  <span 
+                    style={{
+                      position: 'absolute',
+                      right: 0,
+                      top: '-1.2em',
+                      fontSize: '0.8em',
+                      color: '#666',
+                      backgroundColor: 'white',
+                      padding: '0 4px',
+                      borderRadius: '2px',
+                      border: '1px solid #ddd'
+                    }}
+                  >
+                    #{annotations.indexOf(annotation) + 1}
+                  </span>
+                </span>
+              );
+              const after = content.slice(startIndex + annotation.text.length);
+              
+              return (
+                <>
+                  {before}
+                  {highlighted}
+                  {after}
+                </>
+              );
+            }, documentContent)}
           </div>
         )}
       </Content>
@@ -204,6 +249,22 @@ const Annotation: React.FC = () => {
                     onClick={() => handleDeleteAnnotation(item.id)}
                   >
                     删除
+                  </Button>,
+                  <Button
+                    type="text"
+                    icon={<MessageOutlined />}
+                    onClick={() => {
+                      const element = document.getElementById(`annotation-${item.id}`);
+                      if (element) {
+                        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        element.style.backgroundColor = '#ffd700';
+                        setTimeout(() => {
+                          element.style.backgroundColor = '#fff3cd';
+                        }, 1000);
+                      }
+                    }}
+                  >
+                    定位
                   </Button>
                 ]}
               >
