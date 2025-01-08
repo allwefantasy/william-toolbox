@@ -41,13 +41,18 @@ const Annotation: React.FC = () => {
   const handleFileUpload = async (file: File) => {
     setLoading(true);
     try {
+      const username = sessionStorage.getItem('username') || '';
       const formData = new FormData();
       formData.append('file', file);
       
       // 上传文件
       const uploadResponse = await axios.post('/api/annotations/upload', formData, {
         headers: {
-          'Content-Type': 'multipart/form-data'
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${sessionStorage.getItem('access_token')}`
+        },
+        params: {
+          username
         }
       });
       
@@ -117,11 +122,24 @@ const Annotation: React.FC = () => {
                 timestamp: new Date().toISOString(),
               };
               setAnnotations(prev => [...prev, newAnnotation]);
+              
+              // 保存批注到后端
+              const username = sessionStorage.getItem('username') || '';
+              axios.post('/api/annotations/save', {
+                annotation: newAnnotation,
+                username
+              }, {
+                headers: {
+                  'Authorization': `Bearer ${sessionStorage.getItem('access_token')}`
+                }
+              }).catch(error => {
+                console.error('保存批注失败:', error);
+                message.error('保存批注失败');
+              });
             }}
           />
         ),
         onOk: () => {
-          // 这里可以添加保存批注到后端的逻辑
           message.success('批注已添加');
         },
       });
