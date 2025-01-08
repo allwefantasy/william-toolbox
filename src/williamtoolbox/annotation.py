@@ -1,5 +1,6 @@
 import re
-from typing import List, Dict
+import os
+from typing import List, Dict, Optional
 import byzerllm
 from docx.oxml import parse_xml
 from docx import Document
@@ -71,6 +72,36 @@ def extract_annotations(text: str) -> List[Dict[str, str]]:
         })
     
     return annotations
+
+
+def process_docx_files(directory: str) -> List[DocText]:
+    """
+    遍历指定目录中的所有 .docx 文件，提取文本和注释
+    
+    Args:
+        directory: 要遍历的目录路径
+        
+    Returns:
+        包含所有文档文本和注释的 DocText 对象列表
+    """
+    doc_texts = []
+    
+    for root, _, files in os.walk(directory):
+        for file in files:
+            if file.endswith('.docx'):
+                file_path = os.path.join(root, file)
+                try:
+                    text = extract_text_from_docx(file_path)
+                    annotations = extract_annotations_from_docx(file_path)
+                    doc_texts.append(DocText(
+                        doc_text=text,
+                        annotations=[Annotation(**a) for a in annotations]
+                    ))
+                except Exception as e:
+                    print(f"Error processing file {file_path}: {str(e)}")
+                    continue
+                
+    return doc_texts
 
 
 @byzerllm.prompt()
