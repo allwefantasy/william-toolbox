@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import axios from 'axios';
-import { Layout, Upload, Button, Typography, List, Avatar, Empty, Spin, Modal, message } from 'antd';
+import { Layout, Upload, Button, Typography, List, Avatar, Empty, Spin, Modal, message, Select } from 'antd';
 import {
   UploadOutlined,
   FileTextOutlined,
   MessageOutlined,
   RobotOutlined,
   DeleteOutlined,
+  DatabaseOutlined,
 } from '@ant-design/icons';
 import mammoth from 'mammoth';
 import ReactQuill from 'react-quill';
@@ -50,6 +51,34 @@ interface Annotation {
 
 const Annotation: React.FC = () => {
   const [documentContent, setDocumentContent] = useState<string>('');
+  const [ragList, setRagList] = useState<string[]>([]);
+  const [selectedRAG, setSelectedRAG] = useState<string>('');
+
+  // 获取 RAG 列表
+  const fetchRAGList = async () => {
+    try {
+      const username = sessionStorage.getItem('username') || '';
+      // 获取用户 RAG 权限
+      const userResponse = await axios.get(`/api/users/${username}`);
+      const ragPermissions = userResponse.data.rag_permissions || [];
+      
+      const response = await axios.get('/rags');
+      const runningRags = response.data
+        .filter((rag: any) => rag.status === 'running' && 
+                (ragPermissions.includes('*') || ragPermissions.includes(rag.name)))
+        .map((rag: any) => rag.name);
+      setRagList(runningRags);
+      if (runningRags.length > 0) {
+        setSelectedRAG(runningRags[0]);
+      }
+    } catch (error) {
+      console.error('Error fetching RAG list:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchRAGList();
+  }, []);
 
   // 用于安全渲染 HTML 的 sanitizer
   const sanitizeHTML = useMemo(() => {
@@ -185,13 +214,26 @@ const Annotation: React.FC = () => {
       <Content className="document-container">
         <div className="document-header">
           <Title level={4}>文档查看器</Title>
-          <Upload
-            accept=".docx,.pdf"
-            showUploadList={false}
-            beforeUpload={handleFileUpload}
-          >
-            <Button icon={<UploadOutlined />}>上传文档</Button>
-          </Upload>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Select
+              style={{ width: 200 }}
+              value={selectedRAG}
+              onChange={(value: string) => setSelectedRAG(value)}
+              options={ragList.map((rag) => ({
+                label: rag,
+                value: rag
+              }))}
+              placeholder="选择 RAG"
+              suffixIcon={<DatabaseOutlined />}
+            />
+            <Upload
+              accept=".docx,.pdf"
+              showUploadList={false}
+              beforeUpload={handleFileUpload}
+            >
+              <Button icon={<UploadOutlined />}>上传文档</Button>
+            </Upload>
+          </div>
         </div>
         {loading ? (
           <div className="loading-container">
