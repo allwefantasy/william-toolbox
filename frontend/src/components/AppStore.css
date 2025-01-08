@@ -1,0 +1,55 @@
+.app-store-container {
+  padding: 24px;
+}
+
+.app-store-header {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.search-bar {
+  margin-top: 24px;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.app-grid {
+  margin-top: 32px;
+}
+
+.app-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 120px;
+  background: #f0f2f5;
+  font-size: 48px;
+  padding: 16px;
+  transition: all 0.3s ease;
+}
+
+.app-icon:hover {
+  background: #e6f7ff;
+  transform: scale(1.05);
+}
+
+.ant-card {
+  height: 100%;
+  transition: all 0.3s ease;
+}
+
+.ant-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+}
+
+.ant-card-meta-title {
+  font-size: 18px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.ant-card-meta-description {
+  color: rgba(0, 0, 0, 0.65);
+}

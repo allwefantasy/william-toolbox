@@ -16,6 +16,7 @@ import ByzerSQLList from './components/ByzerSQLList';
 import UserManagement from './components/UserManagement';
 import Login from './components/Login';
 import FileManagement from './components/FileManagement';
+import AppStore from './components/AppStore';
 import './App.css';
 import axios from 'axios';
 
@@ -35,7 +36,8 @@ const menuKeyToPermission: { [key: string]: string } = {
   '6': '超级分析',
   '7': 'ByzerSQL',
   '8': '用户管理',
-  '9': '文件管理'
+  '9': '文件管理',
+  '10': '应用广场'
 };
 
 function App() {
@@ -143,6 +145,8 @@ function App() {
         return <UserManagement />;
       case '9':
         return <FileManagement />;
+      case '10':
+        return <AppStore />;
       default:
         return (
           <>
@@ -224,6 +228,11 @@ function App() {
           {hasPermission('9') && (
             <Menu.Item key="9" icon={<FolderOutlined />}>
               文件管理
+            </Menu.Item>
+          )}
+          {hasPermission('10') && (
+            <Menu.Item key="10" icon={<AppstoreOutlined />}>
+              应用广场
             </Menu.Item>
           )}
         </Menu>
