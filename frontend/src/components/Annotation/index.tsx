@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { Layout, Upload, Button, Typography, List, Avatar, Empty, Spin, Modal, message } from 'antd';
 import {
@@ -50,6 +50,15 @@ interface Annotation {
 
 const Annotation: React.FC = () => {
   const [documentContent, setDocumentContent] = useState<string>('');
+
+  // 用于安全渲染 HTML 的 sanitizer
+  const sanitizeHTML = useMemo(() => {
+    const div = document.createElement('div');
+    return (html: string) => {
+      div.innerHTML = html;
+      return div.innerHTML;
+    };
+  }, []);
   const [documentType, setDocumentType] = useState<'docx' | 'pdf' | null>(null);
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [selectedText, setSelectedText] = useState('');
@@ -83,7 +92,9 @@ const Annotation: React.FC = () => {
         axios.get(`/api/annotations/document/${fileUuid}/info`)
       ]);
       
-      const { full_text, comments } = contentResponse.data;
+      // 对 HTML 内容进行安全处理
+      const full_text = sanitizeHTML(contentResponse.data.full_text);
+      const comments = contentResponse.data.comments;
       const fileInfo = infoResponse.data;
       
       if (fileInfo.original_name.endsWith('.pdf')) {
@@ -198,13 +209,14 @@ const Annotation: React.FC = () => {
             className="document-content"
             onMouseUp={handleTextSelection}
             style={{ whiteSpace: 'pre-wrap' }}
-          >
-            {annotations.reduce((content, annotation) => {
-              // 为每个注释的文本添加高亮标记
-              const highlightedText = `<span id="annotation-${annotation.id}" class="highlighted-text" style="background-color: #fff3cd; padding: 2px; border-radius: 4px;">${annotation.text}</span>`;
-              return content.replace(annotation.text, highlightedText);
-            }, documentContent)}
-          </div>
+            dangerouslySetInnerHTML={{
+              __html: annotations.reduce((content, annotation) => {
+                // 为每个注释的文本添加高亮标记
+                const highlightedText = `<span id="annotation-${annotation.id}" class="highlighted-text" style="background-color: #fff3cd; padding: 2px; border-radius: 4px;">${annotation.text}</span>`;
+                return content.replace(annotation.text, highlightedText);
+              }, documentContent)
+            }}
+          />
         )}
       </Content>
       <Sider width={400} className="annotation-sider">
