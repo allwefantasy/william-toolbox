@@ -20,14 +20,19 @@ def extract_annotations_from_docx(file_path: str) -> List[Dict[str, str]]:
     # Extract comments from the document's XML
     comments = {}
     try:
-        comments_part = doc.part.package.part_related_by(
-            "http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments"
-        )
-        comments_xml = etree.fromstring(comments_part.blob)
-        for comment in comments_xml.findall(".//w:comment", namespaces=comments_part.nsmap):
-            comment_id = comment.attrib.get("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}id")
-            comment_text = "".join(comment.itertext())
-            comments[comment_id] = comment_text.strip()
+        try:
+            comments_part = doc.part.package.part_related_by(
+                "http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments"
+            )
+            comments_xml = etree.fromstring(comments_part.blob)
+            for comment in comments_xml.findall(".//w:comment", namespaces=comments_part.nsmap):
+                comment_id = comment.attrib.get("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}id")
+                comment_text = "".join(comment.itertext())
+                comments[comment_id] = comment_text.strip()
+        except KeyError:
+            print("No comments relationship found in the document.")
+        except Exception as e:
+            print(f"Error extracting comments: {e}")
     except Exception as e:
         print(f"Error extracting comments: {e}")
 
