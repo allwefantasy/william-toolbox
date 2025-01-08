@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import axios from 'axios';
 import { Layout, Upload, Button, Typography, List, Avatar, Empty, Spin, Modal, message } from 'antd';
 import {
   UploadOutlined,
@@ -40,22 +41,49 @@ const Annotation: React.FC = () => {
   const handleFileUpload = async (file: File) => {
     setLoading(true);
     try {
-      if (file.type === 'application/pdf') {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      // 上传文件
+      const uploadResponse = await axios.post('/api/annotations/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      const fileUuid = uploadResponse.data.uuid;
+      
+      // 获取文档内容
+      const [contentResponse, infoResponse] = await Promise.all([
+        axios.get(`/api/annotations/document/${fileUuid}`),
+        axios.get(`/api/annotations/document/${fileUuid}/info`)
+      ]);
+      
+      const { full_text, comments } = contentResponse.data;
+      const fileInfo = infoResponse.data;
+      
+      if (fileInfo.original_name.endsWith('.pdf')) {
         setDocumentType('pdf');
-        setPdfUrl(URL.createObjectURL(file));
-      } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-        setDocumentType('docx');
-        const arrayBuffer = await file.arrayBuffer();
-        const result = await mammoth.convertToHtml({ arrayBuffer });
-        setDocumentContent(result.value);
+        setPdfUrl(`/data/upload/${fileUuid}`);
       } else {
-        message.error('仅支持 DOCX 和 PDF 文件格式');
-        return false;
+        setDocumentType('docx');
+        setDocumentContent(full_text);
+        // 将注释转换为 annotations 状态
+        const formattedAnnotations = comments.map((comment: any) => ({
+          id: comment.id,
+          text: comment.text,
+          comment: comment.comment,
+          timestamp: comment.timestamp,
+          aiAnalysis: comment.aiAnalysis
+        }));
+        setAnnotations(formattedAnnotations);
       }
+      
       return false;
     } catch (error) {
-      message.error('文件处理失败');
+      message.error('文件上传或处理失败');
       console.error(error);
+      return false;
     } finally {
       setLoading(false);
     }
@@ -64,7 +92,9 @@ const Annotation: React.FC = () => {
   const handleTextSelection = () => {
     const selection = window.getSelection();
     if (selection && !selection.isCollapsed) {
-      setSelectedText(selection.toString());
+      const selectedText = selection.toString();
+      setSelectedText(selectedText);
+      
       Modal.confirm({
         title: '添加批注',
         content: (
@@ -78,31 +108,21 @@ const Annotation: React.FC = () => {
                 [{ list: 'ordered' }, { list: 'bullet' }],
               ],
             }}
+            onChange={(value) => {
+              // 更新批注内容
+              const newAnnotation: Annotation = {
+                id: Date.now().toString(),
+                text: selectedText,
+                comment: value,
+                timestamp: new Date().toISOString(),
+              };
+              setAnnotations(prev => [...prev, newAnnotation]);
+            }}
           />
         ),
-        onOk: async () => {
-          // 添加批注逻辑
-          const newAnnotation: Annotation = {
-            id: Date.now().toString(),
-            text: selectedText,
-            comment: '',
-            timestamp: new Date().toISOString(),
-          };
-          
-          try {
-            // 调用 AI 分析接口
-            const response = await fetch('/api/analyze-text', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ text: selectedText }),
-            });
-            const aiAnalysis = await response.json();
-            newAnnotation.aiAnalysis = aiAnalysis.content;
-          } catch (error) {
-            console.error('AI 分析失败:', error);
-          }
-
-          setAnnotations([...annotations, newAnnotation]);
+        onOk: () => {
+          // 这里可以添加保存批注到后端的逻辑
+          message.success('批注已添加');
         },
       });
     }
