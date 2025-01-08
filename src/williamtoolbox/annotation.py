@@ -1,25 +1,44 @@
 import re
 from typing import List, Dict
 import byzerllm
+from docx.oxml import parse_xml
 from docx import Document
 
-def extract_annotations_from_docx(file_path: str) -> List[Dict[str, str]]:
-    '''
-    Extract annotations from a docx document.
-    Args:
-        file_path: Path to the docx file
-    Returns:
-        A list of dictionaries with keys 'text' and 'comment'
-    '''    
+def extract_text_from_docx(file_path: str) -> str:
+    doc = Document(file_path)    
+    return '\n'.join([paragraph.text for paragraph in doc.paragraphs])
+
+
+def extract_annotations_from_docx(file_path: str) -> List[Dict[str, str]]:  
+    # Define namespace manually
+    NAMESPACE = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+    COMMENTS_REL_TYPE = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments"
+
     document = Document(file_path)
     annotations = []
 
+    # Extract comments from the document
+    comments = {}
+    if document.part.rels:
+        for rel in document.part.rels.values():
+            if rel.reltype == COMMENTS_REL_TYPE:
+                comments_part = rel.target_part
+                comments_xml = parse_xml(comments_part.blob)
+                for comment in comments_xml.findall(".//w:comment", namespaces=NAMESPACE):
+                    comment_id = comment.attrib.get(f'{{{NAMESPACE["w"]}}}id')
+                    if comment_id:
+                        comment_text = ''.join(comment.itertext()).strip()
+                        comments[comment_id] = comment_text
+
+    # Match comments to paragraphs
     for paragraph in document.paragraphs:
-        for comment in paragraph.runs:
-            if comment.comment and comment.comment.text.strip():
+        paragraph_xml = paragraph._element
+        for comment_start in paragraph_xml.findall(".//w:commentRangeStart", namespaces=NAMESPACE):
+            comment_id = comment_start.attrib.get(f'{{{NAMESPACE["w"]}}}id')
+            if comment_id and comment_id in comments:
                 annotations.append({
                     'text': paragraph.text.strip(),
-                    'comment': comment.comment.text.strip()
+                    'comment': comments[comment_id]
                 })
 
     return annotations
