@@ -47,6 +47,10 @@
   padding-right: 16px;
 }
 
+.ant-list-item {
+  transition: background-color 0.3s;
+}
+
 .annotation-content {
   margin: 16px 0;
 }

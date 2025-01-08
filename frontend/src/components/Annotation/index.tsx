@@ -212,7 +212,23 @@ const Annotation: React.FC = () => {
             dangerouslySetInnerHTML={{
               __html: annotations.reduce((content, annotation) => {
                 // 为每个注释的文本添加高亮标记
-                const highlightedText = `<span id="annotation-${annotation.id}" class="highlighted-text" style="background-color: #fff3cd; padding: 2px; border-radius: 4px;">${annotation.text}</span>`;
+                const highlightedText = `<span 
+                  id="annotation-${annotation.id}" 
+                  class="highlighted-text" 
+                  style="background-color: #fff3cd; padding: 2px; border-radius: 4px;"
+                  onDoubleClick={() => {
+                    // 找到对应的评论项并滚动到视图
+                    const commentItem = document.getElementById(`comment-${annotation.id}`);
+                    if (commentItem) {
+                      commentItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      // 添加临时高亮效果
+                      commentItem.style.backgroundColor = '#f0f0f0';
+                      setTimeout(() => {
+                        commentItem.style.backgroundColor = 'transparent';
+                      }, 1000);
+                    }
+                  }}
+                >${annotation.text}</span>`;
                 return content.replace(annotation.text, highlightedText);
               }, documentContent)
             }}
@@ -232,6 +248,7 @@ const Annotation: React.FC = () => {
             dataSource={annotations}
             renderItem={item => (
               <List.Item
+                id={`comment-${item.id}`}
                 actions={[
                   <Button
                     type="text"
@@ -256,11 +273,16 @@ const Annotation: React.FC = () => {
                     highlightedElement.style.backgroundColor = '#fff3cd';
                   }
                 }}
-                onClick={() => {
-                  // 点击时滚动到对应的文本位置
+                onDoubleClick={() => {
+                  // 双击评论项时滚动到对应的文本位置
                   const highlightedElement = document.getElementById(`annotation-${item.id}`);
                   if (highlightedElement) {
                     highlightedElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // 添加临时高亮效果
+                    highlightedElement.style.backgroundColor = '#ffd700';
+                    setTimeout(() => {
+                      highlightedElement.style.backgroundColor = '#fff3cd';
+                    }, 1000);
                   }
                 }}
               >
