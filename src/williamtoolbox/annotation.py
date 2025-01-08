@@ -14,23 +14,24 @@ def extract_annotations_from_docx(file_path: str) -> List[Dict[str, str]]:
     doc = Document(file_path)
     annotations = []
     
-    # Find annotated text and comments
+    # Extract comments
+    comments = {}
+    for comment in doc.comments:
+        comments[comment._id] = comment.text
+    
+    # Find annotated text and match with comments
     for paragraph in doc.paragraphs:
         for run in paragraph.runs:
             if run.comment_reference:
-                # Get comment text from the comment reference
-                comment = doc.part.element.xpath(
-                    f"//w:comment[@w:id='{run.comment_reference}']"
-                )
-                if comment:
-                    comment_text = comment[0].xpath("string(w:p/w:r/w:t)")
-                    annotated_text = run.text
-                    
-                    if annotated_text and comment_text:
-                        annotations.append({
-                            'text': annotated_text.strip(),
-                            'comment': comment_text.strip()
-                        })
+                comment_id = run.comment_reference
+                comment_text = comments.get(comment_id, "")
+                annotated_text = run.text
+                
+                if annotated_text and comment_text:
+                    annotations.append({
+                        'text': annotated_text.strip(),
+                        'comment': comment_text.strip()
+                    })
     
     return annotations
 
