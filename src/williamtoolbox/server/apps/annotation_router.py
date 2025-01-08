@@ -7,10 +7,14 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Any
 from williamtoolbox.storage.json_file import load_file_resources, save_file_resources
-from williamtoolbox.annotation import extract_text_from_docx, extract_annotations_from_docx
+from williamtoolbox.annotation import extract_text_from_docx, extract_annotations_from_docx, auto_generate_annotations
 from datetime import datetime
+import byzerllm
 
 router = APIRouter()
+
+# 初始化 LLM
+llm = byzerllm.ByzerLLM.from_default_model("deepseek_chat")
 
 # 线程池用于处理阻塞操作
 executor = ThreadPoolExecutor(max_workers=4)
@@ -86,3 +90,38 @@ async def get_document_info(file_uuid: str):
         raise HTTPException(status_code=404, detail="File not found")
     
     return JSONResponse(file_resources[file_uuid])
+
+@router.post("/api/annotations/auto_generate")
+async def auto_generate_annotation(file_uuid: str):
+    """自动生成文档批注"""
+    file_resources = await load_file_resources()
+    if file_uuid not in file_resources:
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    file_path = file_resources[file_uuid]["path"]
+    
+    try:
+        # 读取文档内容
+        loop = asyncio.get_event_loop()
+        doc_text = await loop.run_in_executor(
+            executor, extract_text_from_docx, file_path
+        )
+        
+        # 调用自动生成批注
+        result = await loop.run_in_executor(
+            executor, auto_generate_annotations, llm, doc_text
+        )
+        
+        return JSONResponse({
+            "doc_text": result.doc_text,
+            "annotations": [
+                {
+                    "text": annotation.text,
+                    "comment": annotation.comment,
+                    "timestamp": annotation.timestamp if hasattr(annotation, "timestamp") else None
+                }
+                for annotation in result.annotations
+            ]
+        })
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate annotations: {str(e)}")
