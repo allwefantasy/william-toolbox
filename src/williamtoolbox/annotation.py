@@ -14,40 +14,30 @@ def extract_annotations_from_docx(file_path: str) -> List[Dict[str, str]]:
     doc = Document(file_path)
     annotations = []
     
-    # Get all comments from the document
+    # Extract all comments from the document
     comments = {}
     try:
-        comments_part = doc._element.body.xpath('//w:comment')
-        if comments_part:
-            for comment in comments_part:
-                comment_id = comment.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}id')
-                comment_text = ''.join([node.text for node in comment.itertext()])
-                comments[comment_id] = comment_text
+        for comment in doc.part.comments._element.findall('.//w:comment', 
+            {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}):
+            comment_id = comment.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}id')
+            comment_text = ''.join([node.text for node in comment.itertext()])
+            comments[comment_id] = comment_text
     except Exception as e:
         print(f"Error extracting comments: {e}")
-        
-    # Find annotated text with comments
+
+    # Match comments to the annotated text in the document
     for paragraph in doc.paragraphs:
-        for run in paragraph._element.findall('.//w:commentReference', 
-            {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}):
-            try:
-                comment_id = run.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}id')
+        for run in paragraph.runs:
+            comment_reference = run._element.find('.//w:commentReference', 
+                {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'})
+            if comment_reference is not None:
+                comment_id = comment_reference.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}id')
                 if comment_id in comments:
-                    # Get the parent run text
-                    parent_run = run.getparent()
-                    if parent_run is not None:
-                        text_elements = parent_run.findall('.//w:t',
-                            {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'})
-                        annotated_text = ''.join([elem.text for elem in text_elements if elem.text])
-                        
-                        if annotated_text and comments[comment_id]:
-                            annotations.append({
-                                'text': annotated_text.strip(),
-                                'comment': comments[comment_id].strip()
-                            })
-            except Exception as e:
-                print(f"Error processing comment reference: {e}")
-                continue
+                    annotated_text = run.text
+                    annotations.append({
+                        'text': annotated_text.strip(),
+                        'comment': comments[comment_id].strip()
+                    })
     
     return annotations
 
