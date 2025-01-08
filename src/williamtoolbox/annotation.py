@@ -1,7 +1,39 @@
 import re
 from typing import List, Dict
 import byzerllm
+from docx import Document
 
+def extract_annotations_from_docx(file_path: str) -> List[Dict[str, str]]:
+    '''
+    Extract annotations from a docx document.
+    Args:
+        file_path: Path to the docx file
+    Returns:
+        A list of dictionaries with keys 'text' and 'comment'
+    '''
+    doc = Document(file_path)
+    annotations = []
+    
+    # Extract comments
+    comments = {}
+    for comment in doc.comments:
+        comments[comment._id] = comment.text
+    
+    # Find annotated text and match with comments
+    for paragraph in doc.paragraphs:
+        for run in paragraph.runs:
+            if run.comment_reference:
+                comment_id = run.comment_reference
+                comment_text = comments.get(comment_id, "")
+                annotated_text = run.text
+                
+                if annotated_text and comment_text:
+                    annotations.append({
+                        'text': annotated_text.strip(),
+                        'comment': comment_text.strip()
+                    })
+    
+    return annotations
 
 def extract_annotations(text: str) -> List[Dict[str, str]]:
     '''
