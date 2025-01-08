@@ -1,13 +1,12 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import axios from 'axios';
-import { Layout, Upload, Button, Typography, List, Avatar, Empty, Spin, Modal, message, Select } from 'antd';
+import { Layout, Upload, Button, Typography, List, Avatar, Empty, Spin, Modal, message } from 'antd';
 import {
   UploadOutlined,
   FileTextOutlined,
   MessageOutlined,
   RobotOutlined,
   DeleteOutlined,
-  DatabaseOutlined,
 } from '@ant-design/icons';
 import mammoth from 'mammoth';
 import ReactQuill from 'react-quill';
@@ -51,35 +50,6 @@ interface Annotation {
 
 const Annotation: React.FC = () => {
   const [documentContent, setDocumentContent] = useState<string>('');
-  const [ragList, setRagList] = useState<string[]>([]);
-  const [selectedRag, setSelectedRag] = useState<string>('');
-
-  // 获取 RAG 列表
-  const fetchRagList = async () => {
-    try {
-      const username = sessionStorage.getItem('username') || '';
-      // 获取用户 RAG 权限
-      const userResponse = await axios.get(`/api/users/${username}`);
-      const ragPermissions = userResponse.data.rag_permissions || [];
-      
-      const response = await axios.get('/rags');
-      const runningRags = response.data
-        .filter((rag: any) => rag.status === 'running' && 
-                (ragPermissions.includes('*') || ragPermissions.includes(rag.name)))
-        .map((rag: any) => rag.name);
-      setRagList(runningRags);
-      if (runningRags.length > 0) {
-        setSelectedRag(runningRags[0]);
-      }
-    } catch (error) {
-      console.error('Error fetching RAG list:', error);
-      message.error('Failed to load RAG list');
-    }
-  };
-
-  useEffect(() => {
-    fetchRagList();
-  }, []);
 
   // 用于安全渲染 HTML 的 sanitizer
   const sanitizeHTML = useMemo(() => {
@@ -268,19 +238,6 @@ const Annotation: React.FC = () => {
       <Sider width={400} className="annotation-sider">
         <div className="annotation-header">
           <Title level={4}>批注列表</Title>
-        </div>
-        <div style={{ padding: '0 16px 16px 16px' }}>
-          <Select
-            style={{ width: '100%' }}
-            value={selectedRag}
-            onChange={(value: string) => setSelectedRag(value)}
-            options={ragList.map((rag) => ({
-              label: rag,
-              value: rag,
-            }))}
-            placeholder="选择 RAG 服务"
-            suffixIcon={<DatabaseOutlined />}
-          />
         </div>
         {annotations.length === 0 ? (
           <Empty description="暂无批注" />
