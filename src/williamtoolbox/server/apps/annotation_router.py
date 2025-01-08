@@ -89,7 +89,7 @@ async def get_document_info(file_uuid: str):
     return JSONResponse(file_resources[file_uuid])
 
 @router.post("/api/annotations/auto_generate")
-async def auto_generate_annotation(file_uuid: str, rag_name: str):
+async def auto_generate_annotation(file_uuid: str):
     """自动生成文档批注"""
     file_resources = await load_file_resources()
     if file_uuid not in file_resources:
