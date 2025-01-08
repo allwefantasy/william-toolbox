@@ -9,12 +9,9 @@ from typing import Dict, Any
 from williamtoolbox.storage.json_file import load_file_resources, save_file_resources
 from williamtoolbox.annotation import extract_text_from_docx, extract_annotations_from_docx, auto_generate_annotations
 from datetime import datetime
-import byzerllm
 
 router = APIRouter()
 
-# 初始化 LLM
-llm = byzerllm.ByzerLLM.from_default_model("deepseek_chat")
 
 # 线程池用于处理阻塞操作
 executor = ThreadPoolExecutor(max_workers=4)
