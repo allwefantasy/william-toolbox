@@ -26,7 +26,8 @@ def main():
         
         # Save as JSON files
         for doc_text in doc_texts:
-            json_path = doc_dir / f"{Path(doc_text.doc_text).stem}.json"
+            name = os.path.basename(doc_text.doc_name)
+            json_path = doc_dir / f"{name}.json"
             data = {
                 "doc_text": doc_text.doc_text,
                 "annotations": [

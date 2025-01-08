@@ -11,6 +11,7 @@ class Annotation(BaseModel):
     text: str
     comment: str
 class DocText(BaseModel):
+    doc_name: str
     doc_text: str
     annotations: List[Annotation]
 
@@ -88,8 +89,8 @@ def process_docx_files(directory: str) -> List[DocText]:
     
     for root, _, files in os.walk(directory):
         for file in files:
-            # 跳过隐藏文件和临时文件
-            if file.startswith(('.', '~$')) or file.endswith('.tmp'):
+            # 跳过隐藏文件
+            if file.startswith(('.', '~$')):
                 continue
                 
             if file.endswith('.docx'):
@@ -98,6 +99,7 @@ def process_docx_files(directory: str) -> List[DocText]:
                     text = extract_text_from_docx(file_path)
                     annotations = extract_annotations_from_docx(file_path)
                     doc_texts.append(DocText(
+                        doc_name=file_path,
                         doc_text=text,
                         annotations=[Annotation(**a) for a in annotations]
                     ))
