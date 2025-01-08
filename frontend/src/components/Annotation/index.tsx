@@ -218,7 +218,7 @@ const Annotation: React.FC = () => {
                   style="background-color: #fff3cd; padding: 2px; border-radius: 4px;"
                   onDoubleClick={() => {
                     // 找到对应的评论项并滚动到视图
-                    const commentItem = document.getElementById(`comment-${annotation.id}`);
+                    const commentItem = document.getElementById("comment-${annotation.id}");
                     if (commentItem) {
                       commentItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
                       // 添加临时高亮效果

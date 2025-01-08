@@ -3,6 +3,15 @@ from typing import List, Dict
 import byzerllm
 from docx.oxml import parse_xml
 from docx import Document
+from pydantic import BaseModel
+
+
+class Annotation(BaseModel):    
+    text: str
+    comment: str
+class DocText(BaseModel):
+    doc_text: str
+    annotations: List[Annotation]
 
 def extract_text_from_docx(file_path: str) -> str:
     doc = Document(file_path)    
@@ -65,32 +74,41 @@ def extract_annotations(text: str) -> List[Dict[str, str]]:
 
 
 @byzerllm.prompt()
-def generate_annotations(text: str,examples: List[Dict[str, str]]) -> str:
+def generate_annotations(text: str,examples: List[DocText]) -> str:
     '''
-    根据输入的内容，帮我生成批注。请你理解文本的含义，对重要的部分进行批注。
-    规则：
-    1. 用 [[[]]] 括住需要批注的文本
-    2. 紧跟着用 <<<>>> 括住对该文本的批注内容
-    3. 批注要简明扼要，突出重点
-    4. 每段文字可以有多个批注
+    给定一个文本，我们会对里面的特定内容做批注。
     
-    示例：
-    输入：Python是一个高级编程语言，以其简洁的语法和丰富的生态系统而闻名。
-    输出：Python是一个高级编程语言，以其[[[简洁的语法和丰富的生态系统]]]<<<Python的两个主要特点>>>而闻名。
-
     下面是历史批注内容：
 
     <history>
     {% for example in examples %}
+    原始文本：
+    <text>
+    {{ example.doc_text }}
+    </text>
     
+    批注：
+    {% for annotation in example.annotations %} 
+    [[[{{ annotation.text }}]]]<<<{{ annotation.comment }}>>>
+    {% endfor %}
     {% endfor %}
     </history>
+
+
+    请参考历史批注，模仿批注的：
+    1. 语气和风格
+    2. 批注的角度
+    3. 关注的内容点      
 
     下面是等待批注的文本：
     <text>
     {{ text }}
     </text>
 
-    请根据历史批注内容，生成新的批注内容。
+    请你理解文本的含义，模仿上面示例生成对带批注的内容进行批注。
+    规则：
+    1. 用 [[[]]] 括住需要批注的文本
+    2. 紧跟着用 <<<>>> 括住对该文本的批注内容
+    3. 批注要简明扼要，突出重点  
     '''
 
