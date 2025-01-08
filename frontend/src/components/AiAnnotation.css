@@ -1,0 +1,25 @@
+.ai-annotation-container {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: row;
+  background-color: #f0f2f5;
+}
+
+/* 左侧文档展示区域 */
+.left-doc-display {
+  height: 100%;
+  background-color: #fff;
+  overflow-y: auto;
+  border-right: 1px solid #e8e8e8;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 右侧批注展示区域 */
+.right-annotation-display {
+  height: 100%;
+  background-color: #fafafa;
+  overflow-y: auto;
+}

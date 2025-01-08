@@ -17,6 +17,7 @@ import UserManagement from './components/UserManagement';
 import Login from './components/Login';
 import FileManagement from './components/FileManagement';
 import AppStore from './components/AppStore';
+import AiAnnotation from './components/AiAnnotation';
 import './App.css';
 import axios from 'axios';
 
@@ -37,7 +38,8 @@ const menuKeyToPermission: { [key: string]: string } = {
   '7': 'ByzerSQL',
   '8': '用户管理',
   '9': '文件管理',
-  '10': '应用广场'
+  '10': '应用广场',
+  '11': 'AI批注'
 };
 
 function App() {
@@ -147,6 +149,8 @@ function App() {
         return <FileManagement />;
       case '10':
         return <AppStore />;
+      case '11':
+        return <AiAnnotation />;
       default:
         return (
           <>
@@ -233,6 +237,11 @@ function App() {
           {hasPermission('10') && (
             <Menu.Item key="10" icon={<AppstoreOutlined />}>
               应用广场
+            </Menu.Item>
+          )}
+          {hasPermission('11') && (
+            <Menu.Item key="11" icon={<ThunderboltOutlined />}>
+              AI批注
             </Menu.Item>
           )}
         </Menu>
