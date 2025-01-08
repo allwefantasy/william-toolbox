@@ -249,8 +249,8 @@ function App() {
           </Routes>
         </Content>
         </Layout>
+      </Layout>
     </Router>
-    </Layout>
   );
 }
 
