@@ -1,0 +1,91 @@
+.annotation-container {
+  height: calc(100vh - 64px);
+  background: #fff;
+}
+
+.document-container {
+  padding: 24px;
+  overflow: auto;
+  background: #fff;
+  border-right: 1px solid #f0f0f0;
+}
+
+.document-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.document-content {
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  min-height: 600px;
+}
+
+.annotation-sider {
+  background: #fff !important;
+  padding: 24px;
+  overflow: auto;
+}
+
+.annotation-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.annotation-list {
+  overflow-y: auto;
+  padding-right: 16px;
+}
+
+.annotation-content {
+  margin: 16px 0;
+}
+
+.ai-analysis {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 12px;
+  background: #f9f9f9;
+  border-radius: 8px;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 400px;
+}
+
+:root {
+  --ql-border-color: #f0f0f0;
+}
+
+.ql-container {
+  border-radius: 0 0 8px 8px;
+}
+
+.ql-toolbar {
+  border-radius: 8px 8px 0 0;
+}
+
+.ql-editor {
+  min-height: 120px;
+}
+
+.ant-upload-list {
+  margin-top: 16px;
+}
+
+.pdf-container {
+  height: calc(100vh - 180px);
+  overflow: auto;
+}

@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Layout, Menu, Typography, Space, Button } from 'antd';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { RocketOutlined, AppstoreOutlined, DatabaseOutlined, FolderOutlined, SettingOutlined, MessageOutlined, CodeOutlined, ThunderboltOutlined, LogoutOutlined } from '@ant-design/icons';
 import ModelList from './components/ModelList';
 import CreateModel from './components/CreateModel';
@@ -17,6 +18,7 @@ import UserManagement from './components/UserManagement';
 import Login from './components/Login';
 import FileManagement from './components/FileManagement';
 import AppStore from './components/AppStore';
+import Annotation from './components/Annotation';
 import './App.css';
 import axios from 'axios';
 
@@ -162,7 +164,8 @@ function App() {
   }
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Router>
+      <Layout style={{ minHeight: '100vh' }}>
       <Sider width={250} style={{ background: '#fff' }}>
         <div className="logo" style={{ height: 64, margin: 16, background: 'rgba(255, 255, 255, 0.2)' }}>
           <div style={{ padding: '20px', color: '#1890ff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -240,9 +243,13 @@ function App() {
       <Layout>
         <Header style={{ background: '#fff', padding: 0, boxShadow: '0 1px 4px rgba(0,21,41,.08)' }} />
         <Content style={{ margin: '24px 16px', padding: 24, background: '#fff', minHeight: 280 }}>
-          {renderContent()}
+          <Routes>
+            <Route path="/annotation" element={<Annotation />} />
+            <Route path="*" element={renderContent()} />
+          </Routes>
         </Content>
-      </Layout>
+        </Layout>
+    </Router>
     </Layout>
   );
 }
