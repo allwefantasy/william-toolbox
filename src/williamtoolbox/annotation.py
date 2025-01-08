@@ -3,51 +3,55 @@ from typing import List, Dict
 import byzerllm
 from docx import Document
 
+import zipfile
+import xml.etree.ElementTree as ET
+from typing import List, Dict
+
 def extract_annotations_from_docx(file_path: str) -> List[Dict[str, str]]:
     '''
-    Extract annotations from a docx document.
+    Extract annotations from a docx document using zipfile and xml parsing.
     Args:
         file_path: Path to the docx file
     Returns:
         A list of dictionaries with keys 'text' and 'comment'
     '''
-    doc = Document(file_path)
     annotations = []
     
-    # Get all comments from the document
-    comments = {}
     try:
-        comments_part = doc._element.body.xpath('//w:comment')
-        if comments_part:
-            for comment in comments_part:
-                comment_id = comment.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}id')
-                comment_text = ''.join([node.text for node in comment.itertext()])
-                comments[comment_id] = comment_text
-    except Exception as e:
-        print(f"Error extracting comments: {e}")
-        
-    # Find annotated text with comments
-    for paragraph in doc.paragraphs:
-        for run in paragraph._element.findall('.//w:commentReference', 
-            {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}):
-            try:
-                comment_id = run.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}id')
-                if comment_id in comments:
-                    # Get the parent run text
-                    parent_run = run.getparent()
-                    if parent_run is not None:
-                        text_elements = parent_run.findall('.//w:t',
-                            {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'})
-                        annotated_text = ''.join([elem.text for elem in text_elements if elem.text])
+        # Open the docx file as a zip archive
+        with zipfile.ZipFile(file_path, 'r') as docx:
+            # Read comments.xml from the docProps folder
+            comments_xml = docx.read('docProps/comments.xml')
+            # Read document.xml from the word folder
+            document_xml = docx.read('word/document.xml')
+            
+        # Parse comments
+        comments_root = ET.fromstring(comments_xml)
+        comments = {}
+        for comment in comments_root.findall('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}comment'):
+            comment_id = comment.get('id')
+            comment_text = ''.join(comment.itertext())
+            comments[comment_id] = comment_text.strip()
+            
+        # Parse document to find comment references
+        doc_root = ET.fromstring(document_xml)
+        for comment_ref in doc_root.findall('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}commentReference'):
+            comment_id = comment_ref.get('id')
+            if comment_id in comments:
+                # Find the parent run and get its text
+                parent_run = comment_ref.getparent()
+                if parent_run is not None:
+                    text_elements = parent_run.findall('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t')
+                    annotated_text = ''.join([elem.text for elem in text_elements if elem.text])
+                    
+                    if annotated_text:
+                        annotations.append({
+                            'text': annotated_text.strip(),
+                            'comment': comments[comment_id]
+                        })
                         
-                        if annotated_text and comments[comment_id]:
-                            annotations.append({
-                                'text': annotated_text.strip(),
-                                'comment': comments[comment_id].strip()
-                            })
-            except Exception as e:
-                print(f"Error processing comment reference: {e}")
-                continue
+    except Exception as e:
+        print(f"Error extracting annotations: {e}")
     
     return annotations
 
