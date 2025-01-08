@@ -196,3 +196,114 @@ const Annotation: React.FC = () => {
 };
 
 export default Annotation;
+import React, { useState } from 'react';
+import { Upload, Button, message, Spin, Typography, List, Card } from 'antd';
+import { UploadOutlined } from '@ant-design/icons';
+import axios from 'axios';
+import './styles.css';
+
+const { Title, Text } = Typography;
+
+const Annotation: React.FC = () => {
+  const [fileUuid, setFileUuid] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [documentContent, setDocumentContent] = useState<{
+    full_text: string;
+    comments: any[];
+  } | null>(null);
+  const [fileInfo, setFileInfo] = useState<any>(null);
+
+  const handleUpload = async (file: File) => {
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      // 获取当前用户名
+      const username = sessionStorage.getItem('username') || 'anonymous';
+      
+      // 上传文件
+      const uploadResponse = await axios.post('/api/annotations/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        params: {
+          username,
+        },
+      });
+      
+      setFileUuid(uploadResponse.data.uuid);
+      message.success('文件上传成功');
+      
+      // 获取文档内容和注释
+      const contentResponse = await axios.get(`/api/annotations/document/${uploadResponse.data.uuid}`);
+      setDocumentContent(contentResponse.data);
+      
+      // 获取文档信息
+      const infoResponse = await axios.get(`/api/annotations/document/${uploadResponse.data.uuid}/info`);
+      setFileInfo(infoResponse.data);
+    } catch (error) {
+      message.error('文件上传或处理失败');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+    return false; // 阻止默认上传行为
+  };
+
+  return (
+    <div className="annotation-container">
+      <Title level={3}>文档标注工具</Title>
+      
+      <div className="upload-section">
+        <Upload
+          beforeUpload={handleUpload}
+          showUploadList={false}
+          accept=".docx"
+        >
+          <Button icon={<UploadOutlined />} disabled={loading}>
+            {loading ? '处理中...' : '上传文档'}
+          </Button>
+        </Upload>
+      </div>
+
+      {loading && <Spin size="large" />}
+
+      {fileInfo && (
+        <Card title="文档信息" style={{ marginTop: 20 }}>
+          <p><Text strong>文件名:</Text> {fileInfo.original_name}</p>
+          <p><Text strong>上传时间:</Text> {new Date(fileInfo.upload_time).toLocaleString()}</p>
+        </Card>
+      )}
+
+      {documentContent && (
+        <div className="content-section">
+          <div className="text-section">
+            <Title level={4}>文档内容</Title>
+            <div className="text-content">
+              {documentContent.full_text}
+            </div>
+          </div>
+
+          <div className="comments-section">
+            <Title level={4}>标注信息</Title>
+            <List
+              dataSource={documentContent.comments}
+              renderItem={(comment: any) => (
+                <List.Item>
+                  <Card size="small">
+                    <p><Text strong>作者:</Text> {comment.author}</p>
+                    <p><Text strong>时间:</Text> {comment.date}</p>
+                    <p><Text strong>内容:</Text> {comment.text}</p>
+                  </Card>
+                </List.Item>
+              )}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Annotation;

@@ -89,3 +89,33 @@
   height: calc(100vh - 180px);
   overflow: auto;
 }
+.annotation-container {
+  padding: 20px;
+}
+
+.upload-section {
+  margin-bottom: 20px;
+}
+
+.content-section {
+  margin-top: 20px;
+  display: flex;
+  gap: 20px;
+}
+
+.text-section {
+  flex: 2;
+}
+
+.comments-section {
+  flex: 1;
+}
+
+.text-content {
+  white-space: pre-wrap;
+  background: #f5f5f5;
+  padding: 15px;
+  border-radius: 4px;
+  max-height: 500px;
+  overflow-y: auto;
+}
