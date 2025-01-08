@@ -10,49 +10,8 @@ def extract_annotations_from_docx(file_path: str) -> List[Dict[str, str]]:
         file_path: Path to the docx file
     Returns:
         A list of dictionaries with keys 'text' and 'comment'
-    '''
-    doc = Document(file_path)
-    annotations = []
-    
-    # Extract all comments from the document
-    from lxml import etree
-
-    # Extract comments from the document's XML
-    comments = {}
-    try:
-        try:
-            comments_part = doc.part.package.part_related_by(
-                "http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments"
-            )
-            comments_xml = etree.fromstring(comments_part.blob)
-            for comment in comments_xml.findall(".//w:comment", namespaces=comments_part.nsmap):
-                comment_id = comment.attrib.get("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}id")
-                comment_text = "".join(comment.itertext())
-                comments[comment_id] = comment_text.strip()
-        except KeyError:
-            print("No comments relationship found in the document.")
-        except Exception as e:
-            print(f"Error extracting comments: {e}")
-    except Exception as e:
-        print(f"Error extracting comments: {e}")
-
-    # Match comments to the annotated text in the document
-    for paragraph in doc.paragraphs:
-        for run in paragraph.runs:
-            comment_reference = run._element.find(
-                ".//w:commentReference",
-                {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"},
-            )
-            if comment_reference is not None:
-                comment_id = comment_reference.attrib.get("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}id")
-                if comment_id in comments:
-                    annotated_text = run.text
-                    annotations.append({
-                        "text": annotated_text.strip(),
-                        "comment": comments[comment_id],
-                    })
-    
-    return annotations
+    '''    
+    pass
 
 def extract_annotations(text: str) -> List[Dict[str, str]]:
     '''
