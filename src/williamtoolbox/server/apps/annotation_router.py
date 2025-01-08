@@ -6,8 +6,9 @@ import os
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Any
-from ..storage.json_file import load_file_resources, save_file_resources
-from ...annotation import extract_text_from_docx, extract_annotations_from_docx
+from williamtoolbox.storage.json_file import load_file_resources, save_file_resources
+from williamtoolbox.annotation import extract_text_from_docx, extract_annotations_from_docx
+from datetime import datetime
 
 router = APIRouter()
 
@@ -30,7 +31,7 @@ async def save_uploaded_file(file: UploadFile) -> str:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to save file: {str(e)}")
 
-@router.post("/upload")
+@router.post("/api/annotations/upload")
 async def upload_file(file: UploadFile, username: str):
     """上传文档接口"""
     file_uuid = await save_uploaded_file(file)
@@ -51,7 +52,7 @@ async def upload_file(file: UploadFile, username: str):
         "message": "File uploaded successfully"
     })
 
-@router.get("/document/{file_uuid}")
+@router.get("/api/annotations/document/{file_uuid}")
 async def get_document_content(file_uuid: str):
     """获取文档内容和注释"""
     file_resources = await load_file_resources()
@@ -77,7 +78,7 @@ async def get_document_content(file_uuid: str):
         "comments": comments
     })
 
-@router.get("/document/{file_uuid}/info")
+@router.get("/api/annotations/document/{file_uuid}/info")
 async def get_document_info(file_uuid: str):
     """获取文档元信息"""
     file_resources = await load_file_resources()

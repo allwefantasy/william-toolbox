@@ -44,7 +44,7 @@ app.include_router(auto_coder_chat_router)
 app.include_router(super_analysis_router)
 app.include_router(byzer_sql_router)
 app.include_router(user_router)
-app.include_router(annotation_router, prefix="/api/annotations")
+app.include_router(annotation_router)
 
 @app.get("/{full_path:path}")
 async def serve_image(full_path: str, request: Request):
