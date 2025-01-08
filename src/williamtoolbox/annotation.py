@@ -112,3 +112,71 @@ def generate_annotations(text: str,examples: List[DocText]) -> str:
     3. 批注要简明扼要，突出重点  
     '''
 
+
+from typing import List, Dict, Any
+from pathlib import Path
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+from loguru import logger
+
+async def process_directory(directory_path: str) -> List[Dict[str, Any]]:
+    """
+    处理指定目录中的所有 .docx 文件，返回包含文档内容和注释的集合
+    
+    Args:
+        directory_path: 要处理的目录路径
+        
+    Returns:
+        包含所有文档内容和注释的列表，每个元素是一个字典，包含 full_text 和 comments
+    """
+    docx_files = list(Path(directory_path).glob("*.docx"))
+    if not docx_files:
+        logger.warning(f"No .docx files found in directory: {directory_path}")
+        return []
+
+    results = []
+    executor = ThreadPoolExecutor(max_workers=4)
+    loop = asyncio.get_event_loop()
+
+    try:
+        # 使用线程池并发处理所有 .docx 文件
+        tasks = []
+        for docx_file in docx_files:
+            task = loop.run_in_executor(
+                executor,
+                _process_single_docx,
+                str(docx_file)
+            )
+            tasks.append(task)
+
+        # 等待所有任务完成
+        results = await asyncio.gather(*tasks)
+    except Exception as e:
+        logger.error(f"Error processing directory {directory_path}: {str(e)}")
+        raise
+    finally:
+        executor.shutdown(wait=True)
+
+    return results
+
+def _process_single_docx(file_path: str) -> Dict[str, Any]:
+    """
+    处理单个 .docx 文件
+    
+    Args:
+        file_path: .docx 文件路径
+        
+    Returns:
+        包含文档内容和注释的字典
+    """
+    try:
+        full_text = extract_text_from_docx(file_path)
+        comments = extract_annotations_from_docx(file_path)
+        return {
+            "file_path": file_path,
+            "full_text": full_text,
+            "comments": comments
+        }
+    except Exception as e:
+        logger.error(f"Error processing file {file_path}: {str(e)}")
+        raise
