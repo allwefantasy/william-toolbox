@@ -11,7 +11,18 @@ def extract_annotations_from_docx(file_path: str) -> List[Dict[str, str]]:
     Returns:
         A list of dictionaries with keys 'text' and 'comment'
     '''    
-    pass
+    document = Document(file_path)
+    annotations = []
+
+    for paragraph in document.paragraphs:
+        for comment in paragraph.runs:
+            if comment.comment and comment.comment.text.strip():
+                annotations.append({
+                    'text': paragraph.text.strip(),
+                    'comment': comment.comment.text.strip()
+                })
+
+    return annotations
 
 def extract_annotations(text: str) -> List[Dict[str, str]]:
     '''
