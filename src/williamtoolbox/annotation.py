@@ -257,15 +257,35 @@ async def chat_with_rag(rag_name: str, messages: List[Dict[str, str]]) -> str:
         logger.error(f"Error in chat_with_rag: {str(e)}")
         raise
 
-def auto_generate_annotations(llm: byzerllm.LLM, doc: str) -> List[DocText]:
-    docs = query_rag.with_llm(llm=llm).with_return_type(DocPath).run(text=doc)
+async def auto_generate_annotations(llm: byzerllm.LLM, doc: str) -> List[DocText]:
+    # 使用 chat_with_rag 替换 query_rag
+    rag_response = await chat_with_rag("default_rag", [
+        {"role": "user", "content": query_rag.prompt(text=doc)}
+    ])
+    
+    # 解析 RAG 返回的文档路径
+    docs = []
+    try:
+        docs = [DocPath(**doc) for doc in json.loads(rag_response)]
+    except Exception as e:
+        logger.error(f"Failed to parse RAG response: {str(e)}")
+        return DocText(doc_name="", doc_text=doc, annotations=[])
+    
     examples = []
     for doc in docs:
-        with open(doc.doc_path, 'r', encoding='utf-8') as f:
-            v = f.read()
-            doc_text = DocText.model_validate_json(v)
-            examples.append(doc_text)
-    result = generate_annotations.with_llm(
-        llm=llm).run(text=doc, examples=examples)
-    annotations = extract_annotations(result)
+        try:
+            with open(doc.doc_path, 'r', encoding='utf-8') as f:
+                v = f.read()
+                doc_text = DocText.model_validate_json(v)
+                examples.append(doc_text)
+        except Exception as e:
+            logger.error(f"Failed to load document {doc.doc_path}: {str(e)}")
+            continue
+    
+    # 使用 chat_with_model 替换 generate_annotations
+    model_response = await chat_with_model("default_model", [
+        {"role": "user", "content": generate_annotations.prompt(text=doc, examples=examples)}
+    ])
+    
+    annotations = extract_annotations(model_response)
     return DocText(doc_name="", doc_text=doc, annotations=annotations)
