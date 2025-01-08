@@ -11,7 +11,7 @@ const apps = [
     title: 'AI批注',
     description: '智能文档批注工具，支持自动标注和内容分析',
     icon: '📄',
-    url: '/annotation'
+    url: '#'
   }
 ];
 
