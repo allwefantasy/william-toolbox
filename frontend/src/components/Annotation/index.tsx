@@ -177,8 +177,10 @@ const Annotation: React.FC = () => {
           <div
             className="document-content"
             onMouseUp={handleTextSelection}
-            dangerouslySetInnerHTML={{ __html: documentContent }}
-          />
+            style={{ whiteSpace: 'pre-wrap' }}
+          >
+            {documentContent}
+          </div>
         )}
       </Content>
       <Sider width={400} className="annotation-sider">
