@@ -15,17 +15,21 @@ def extract_annotations_from_docx(file_path: str) -> List[Dict[str, str]]:
     annotations = []
     
     # Get all comments from the document
-    namespaces = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
-    comments_part = doc.part.element.xpath('//w:comments//w:comment', namespaces=namespaces)
     comments = {}
-    for comment in comments_part:
-        comment_id = comment.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}id')
-        comment_text = ''.join([node.text for node in comment.itertext()])
-        comments[comment_id] = comment_text
+    try:
+        comments_part = doc._element.body.xpath('//w:comment')
+        if comments_part:
+            for comment in comments_part:
+                comment_id = comment.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}id')
+                comment_text = ''.join([node.text for node in comment.itertext()])
+                comments[comment_id] = comment_text
+    except Exception as e:
+        print(f"Error extracting comments: {e}")
         
     # Find annotated text with comments
     for paragraph in doc.paragraphs:
-        for run in paragraph._element.xpath('.//w:commentReference', namespaces=namespaces):
+        for run in paragraph._element.findall('.//w:commentReference', 
+            {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}):
             try:
                 comment_id = run.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}id')
                 if comment_id in comments:
