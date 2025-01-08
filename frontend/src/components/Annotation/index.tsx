@@ -48,8 +48,7 @@ const Annotation: React.FC = () => {
       // 上传文件
       const uploadResponse = await axios.post('/api/annotations/upload', formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${sessionStorage.getItem('access_token')}`
+          'Content-Type': 'multipart/form-data'          
         },
         params: {
           username
