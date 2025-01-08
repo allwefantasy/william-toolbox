@@ -184,15 +184,45 @@ def query_rag(text: str):
     '''
 
 
-def auto_generate_annotations(llm: byzerllm.LLM, doc: str) -> List[DocText]:
-    docs = query_rag.with_llm(llm=llm).with_return_type(DocPath).run(text=doc)
-    examples = []
-    for doc in docs:
-        with open(doc.doc_path, 'r', encoding='utf-8') as f:
-            v = f.read()
-            doc_text = DocText.model_validate_json(v)
-            examples.append(doc_text)
-    result = generate_annotations.with_llm(
-        llm=llm).run(text=doc, examples=examples)
-    annotations = extract_annotations(result)
-    return DocText(doc_name="", doc_text=doc, annotations=annotations)
+from fastapi import HTTPException
+from openai import AsyncOpenAI
+from loguru import logger
+from ..server.json_file import load_config
+
+async def auto_generate_annotations(rag_name: str, doc: str) -> List[DocText]:
+    # 获取配置
+    config = await load_config()
+    
+    # 获取RAG信息
+    rags = await load_rags_from_json()
+    if rag_name not in rags:
+        raise HTTPException(status_code=404, detail=f"RAG {rag_name} not found")
+    
+    rag_info = rags[rag_name]
+    
+    # 初始化OpenAI客户端
+    host = rag_info.get("host", "localhost")
+    port = rag_info.get("port", 8000)
+    if host == "0.0.0.0":
+        host = "127.0.0.1"
+
+    base_url = f"http://{host}:{port}/v1"
+    client = AsyncOpenAI(base_url=base_url, api_key="xxxx")
+
+    try:
+        # 调用RAG服务生成批注
+        response = await client.chat.completions.create(
+            model=rag_info.get("model", "deepseek_chat"),
+            messages=[{"role": "user", "content": doc}],
+            stream=False,
+            max_tokens=4096
+        )
+        
+        # 处理响应
+        result = response.choices[0].message.content
+        annotations = extract_annotations(result)
+        return DocText(doc_name="", doc_text=doc, annotations=annotations)
+        
+    except Exception as e:
+        logger.error(f"Error generating annotations: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
