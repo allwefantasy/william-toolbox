@@ -38,6 +38,6 @@ src/williamtoolbox/web/static/css/main.abb440a0.css
 src/williamtoolbox/web/static/css/main.abb440a0.css.map
 src/williamtoolbox/web/static/js/453.abd36b29.chunk.js
 src/williamtoolbox/web/static/js/453.abd36b29.chunk.js.map
-src/williamtoolbox/web/static/js/main.35b35c81.js
-src/williamtoolbox/web/static/js/main.35b35c81.js.LICENSE.txt
-src/williamtoolbox/web/static/js/main.35b35c81.js.map
+src/williamtoolbox/web/static/js/main.4d80ad37.js
+src/williamtoolbox/web/static/js/main.4d80ad37.js.LICENSE.txt
+src/williamtoolbox/web/static/js/main.4d80ad37.js.map
