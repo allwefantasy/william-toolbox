@@ -216,7 +216,7 @@ async def chat_with_model(model_name: str, messages: List[Dict[str, str]]) -> st
             model=model_name,
             messages=messages,
             stream=False,
-            max_tokens=4096
+            max_tokens=64*1024
         )
         return response.choices[0].message.content
         
@@ -249,7 +249,7 @@ async def chat_with_rag(rag_name: str, messages: List[Dict[str, str]]) -> str:
             model=rag_info.get("model", "deepseek_chat"),
             messages=messages,
             stream=False,
-            max_tokens=4096
+            max_tokens=64*1024
         )
         return response.choices[0].message.content
         
