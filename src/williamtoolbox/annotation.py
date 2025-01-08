@@ -257,7 +257,7 @@ async def chat_with_rag(rag_name: str, messages: List[Dict[str, str]]) -> str:
         logger.error(f"Error in chat_with_rag: {str(e)}")
         raise
 
-async def auto_generate_annotations(llm: byzerllm.LLM, doc: str) -> List[DocText]:
+async def auto_generate_annotations(doc: str) -> List[DocText]:
     # 使用 chat_with_rag 替换 query_rag
     rag_response = await chat_with_rag("default_rag", [
         {"role": "user", "content": query_rag.prompt(text=doc)}

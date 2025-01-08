@@ -106,7 +106,7 @@ async def auto_generate_annotation(file_uuid: str):
         
         # 调用自动生成批注
         result = await loop.run_in_executor(
-            executor, auto_generate_annotations, llm, doc_text
+            executor, auto_generate_annotations, doc_text
         )
         
         return JSONResponse({
