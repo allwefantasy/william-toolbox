@@ -2,6 +2,7 @@
 import os
 import argparse
 from pathlib import Path
+import json
 from .annotation import process_docx_files
 
 def main():
