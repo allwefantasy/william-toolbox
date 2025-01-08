@@ -17,6 +17,26 @@ import '@react-pdf-viewer/core/lib/styles/index.css';
 import '@react-pdf-viewer/default-layout/lib/styles/index.css';
 import './styles.css';
 
+// 添加高亮文本的样式
+const highlightedTextStyle = `
+  .highlighted-text {
+    background-color: #fff3cd;
+    padding: 2px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  .highlighted-text:hover {
+    background-color: #ffe69c;
+  }
+`;
+
+// 动态插入样式
+const styleSheet = document.createElement("style");
+styleSheet.type = "text/css";
+styleSheet.innerText = highlightedTextStyle;
+document.head.appendChild(styleSheet);
+
 const { Sider, Content } = Layout;
 const { Title, Text } = Typography;
 
@@ -179,7 +199,11 @@ const Annotation: React.FC = () => {
             onMouseUp={handleTextSelection}
             style={{ whiteSpace: 'pre-wrap' }}
           >
-            {documentContent}
+            {annotations.reduce((content, annotation) => {
+              // 为每个注释的文本添加高亮标记
+              const highlightedText = `<span id="annotation-${annotation.id}" class="highlighted-text" style="background-color: #fff3cd; padding: 2px; border-radius: 4px;">${annotation.text}</span>`;
+              return content.replace(annotation.text, highlightedText);
+            }, documentContent)}
           </div>
         )}
       </Content>
@@ -206,6 +230,27 @@ const Annotation: React.FC = () => {
                     删除
                   </Button>
                 ]}
+                onMouseEnter={() => {
+                  // 鼠标悬停时高亮对应的文本
+                  const highlightedElement = document.getElementById(`annotation-${item.id}`);
+                  if (highlightedElement) {
+                    highlightedElement.style.backgroundColor = '#ffe69c';
+                  }
+                }}
+                onMouseLeave={() => {
+                  // 鼠标离开时恢复高亮颜色
+                  const highlightedElement = document.getElementById(`annotation-${item.id}`);
+                  if (highlightedElement) {
+                    highlightedElement.style.backgroundColor = '#fff3cd';
+                  }
+                }}
+                onClick={() => {
+                  // 点击时滚动到对应的文本位置
+                  const highlightedElement = document.getElementById(`annotation-${item.id}`);
+                  if (highlightedElement) {
+                    highlightedElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }
+                }}
               >
                 <List.Item.Meta
                   avatar={<Avatar icon={<MessageOutlined />} />}
