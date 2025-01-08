@@ -1,11 +1,14 @@
 import re
 import os
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Union
 import byzerllm
 from docx.oxml import parse_xml
 from docx import Document
 from pydantic import BaseModel
 import json
+from openai import AsyncOpenAI
+from loguru import logger
+from ..storage.json_file import load_config, load_models_from_json, load_rags_from_json
 
 
 class Annotation(BaseModel):
@@ -183,6 +186,76 @@ def query_rag(text: str):
     最多只返回一条记录。
     '''
 
+
+async def chat_with_model(model_name: str, messages: List[Dict[str, str]]) -> str:
+    """与指定模型进行聊天"""
+    try:
+        # 加载配置
+        config = await load_config()
+        models = await load_models_from_json()
+        
+        if model_name not in models:
+            raise ValueError(f"Model {model_name} not found")
+            
+        model_info = models[model_name]
+        if model_info["status"] != "running":
+            raise ValueError(f"Model {model_name} is not running")
+            
+        # 获取OpenAI服务配置
+        openai_server = config.get("openaiServerList", [{}])[0]
+        host = openai_server.get("host", "localhost")
+        port = openai_server.get("port", 8000)
+        if host == "0.0.0.0":
+            host = "127.0.0.1"
+
+        base_url = f"http://{host}:{port}/v1"
+        client = AsyncOpenAI(base_url=base_url, api_key="xxxx")
+
+        # 调用模型
+        response = await client.chat.completions.create(
+            model=model_name,
+            messages=messages,
+            stream=False,
+            max_tokens=4096
+        )
+        return response.choices[0].message.content
+        
+    except Exception as e:
+        logger.error(f"Error in chat_with_model: {str(e)}")
+        raise
+
+async def chat_with_rag(rag_name: str, messages: List[Dict[str, str]]) -> str:
+    """与指定RAG进行聊天"""
+    try:
+        rags = await load_rags_from_json()
+        
+        if rag_name not in rags:
+            raise ValueError(f"RAG {rag_name} not found")
+            
+        rag_info = rags[rag_name]
+        if rag_info["status"] != "running":
+            raise ValueError(f"RAG {rag_name} is not running")
+            
+        host = rag_info.get("host", "localhost")
+        port = rag_info.get("port", 8000)
+        if host == "0.0.0.0":
+            host = "127.0.0.1"
+
+        base_url = f"http://{host}:{port}/v1"
+        client = AsyncOpenAI(base_url=base_url, api_key="xxxx")
+
+        # 调用RAG
+        response = await client.chat.completions.create(
+            model=rag_info.get("model", "deepseek_chat"),
+            messages=messages,
+            stream=False,
+            max_tokens=4096
+        )
+        return response.choices[0].message.content
+        
+    except Exception as e:
+        logger.error(f"Error in chat_with_rag: {str(e)}")
+        raise
 
 def auto_generate_annotations(llm: byzerllm.LLM, doc: str) -> List[DocText]:
     docs = query_rag.with_llm(llm=llm).with_return_type(DocPath).run(text=doc)
