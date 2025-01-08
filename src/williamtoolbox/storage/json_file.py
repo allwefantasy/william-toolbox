@@ -216,5 +216,24 @@ async def save_byzer_sql_to_json(services) -> None:
             content = json.dumps(services, ensure_ascii=False)
             await f.write(content)
 
+# File resources related functions
+FILE_RESOURCES_JSON_PATH = "file_resources.json"
+
+async def load_file_resources() -> Dict[str, Any]:
+    """Load file resources from JSON file"""
+    async with with_file_lock(FILE_RESOURCES_JSON_PATH):
+        if os.path.exists(FILE_RESOURCES_JSON_PATH):
+            async with aiofiles.open(FILE_RESOURCES_JSON_PATH, "r") as f:
+                content = await f.read()
+                return json.loads(content)
+        return {}
+
+async def save_file_resources(resources: Dict[str, Any]) -> None:
+    """Save file resources to JSON file"""
+    async with with_file_lock(FILE_RESOURCES_JSON_PATH):
+        async with aiofiles.open(FILE_RESOURCES_JSON_PATH, "w") as f:
+            content = json.dumps(resources, ensure_ascii=False)
+            await f.write(content)
+
 
 
