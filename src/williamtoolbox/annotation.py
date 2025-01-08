@@ -88,6 +88,10 @@ def process_docx_files(directory: str) -> List[DocText]:
     
     for root, _, files in os.walk(directory):
         for file in files:
+            # 跳过隐藏文件和临时文件
+            if file.startswith(('.', '~$')) or file.endswith('.tmp'):
+                continue
+                
             if file.endswith('.docx'):
                 file_path = os.path.join(root, file)
                 try:
