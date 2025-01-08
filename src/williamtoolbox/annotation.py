@@ -5,24 +5,33 @@ import byzerllm
 from docx.oxml import parse_xml
 from docx import Document
 from pydantic import BaseModel
+import json
 
 
-class Annotation(BaseModel):    
+class Annotation(BaseModel):
     text: str
     comment: str
+
+
 class DocText(BaseModel):
     doc_name: str
     doc_text: str
     annotations: List[Annotation]
 
+
+class DocPath(BaseModel):
+    doc_path: str
+
+
 def extract_text_from_docx(file_path: str) -> str:
-    doc = Document(file_path)    
+    doc = Document(file_path)
     return '\n'.join([paragraph.text for paragraph in doc.paragraphs])
 
 
-def extract_annotations_from_docx(file_path: str) -> List[Dict[str, str]]:  
+def extract_annotations_from_docx(file_path: str) -> List[Dict[str, str]]:
     # Define namespace manually
-    NAMESPACE = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+    NAMESPACE = {
+        'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
     COMMENTS_REL_TYPE = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments"
 
     document = Document(file_path)
@@ -54,6 +63,7 @@ def extract_annotations_from_docx(file_path: str) -> List[Dict[str, str]]:
 
     return annotations
 
+
 def extract_annotations(text: str) -> List[Dict[str, str]]:
     '''
     Extract annotations from the text.
@@ -65,34 +75,34 @@ def extract_annotations(text: str) -> List[Dict[str, str]]:
     annotations = []
     pattern = r'\[\[\[(.*?)\]\]\]\s*<<<(.*?)>>>'
     matches = re.finditer(pattern, text)
-    
+
     for match in matches:
         annotations.append({
             'text': match.group(1).strip(),
             'comment': match.group(2).strip()
         })
-    
+
     return annotations
 
 
 def process_docx_files(directory: str) -> List[DocText]:
     """
     遍历指定目录中的所有 .docx 文件，提取文本和注释
-    
+
     Args:
         directory: 要遍历的目录路径
-        
+
     Returns:
         包含所有文档文本和注释的 DocText 对象列表
     """
     doc_texts = []
-    
+
     for root, _, files in os.walk(directory):
         for file in files:
             # 跳过隐藏文件
             if file.startswith(('.', '~$')):
                 continue
-                
+
             if file.endswith('.docx'):
                 file_path = os.path.join(root, file)
                 try:
@@ -106,15 +116,15 @@ def process_docx_files(directory: str) -> List[DocText]:
                 except Exception as e:
                     print(f"Error processing file {file_path}: {str(e)}")
                     continue
-                
+
     return doc_texts
 
 
 @byzerllm.prompt()
-def generate_annotations(text: str,examples: List[DocText]) -> str:
+def generate_annotations(text: str, examples: List[DocText]) -> str:
     '''
     给定一个文本，我们会对里面的特定内容做批注。
-    
+
     下面是历史批注内容：
 
     <history>
@@ -123,7 +133,7 @@ def generate_annotations(text: str,examples: List[DocText]) -> str:
     <text>
     {{ example.doc_text }}
     </text>
-    
+
     批注：
     {% for annotation in example.annotations %} 
     [[[{{ annotation.text }}]]]<<<{{ annotation.comment }}>>>
@@ -149,3 +159,40 @@ def generate_annotations(text: str,examples: List[DocText]) -> str:
     3. 批注要简明扼要，突出重点  
     '''
 
+
+@byzerllm.prompt()
+def query_rag(text: str):
+    '''
+    给定一个带标准的文档，返回和该文档最像的文档对应的路径。
+
+    下面是等待查询的文档：
+    <text>
+    {{ text }}
+    </text>
+
+    请返回和该文档最像的文档对应的路径，返回格式为：
+
+    ```json
+    [
+        {
+            "doc_path": "path/to/doc.docx"
+        }
+    ]
+    ```
+
+    最多只返回一条记录。
+    '''
+
+
+def auto_generate_annotations(llm: byzerllm.LLM, doc: str) -> List[DocText]:
+    docs = query_rag.with_llm(llm=llm).with_return_type(DocPath).run(text=doc)
+    examples = []
+    for doc in docs:
+        with open(doc.doc_path, 'r', encoding='utf-8') as f:
+            v = f.read()
+            doc_text = DocText.model_validate_json(v)
+            examples.append(doc_text)
+    result = generate_annotations.with_llm(
+        llm=llm).run(text=doc, examples=examples)
+    annotations = extract_annotations(result)
+    return DocText(doc_name="", doc_text=doc, annotations=annotations)
