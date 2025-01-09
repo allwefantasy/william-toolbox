@@ -8,6 +8,7 @@ from pydantic import BaseModel
 import json
 from openai import AsyncOpenAI
 from loguru import logger
+from byzerllm.utils.client import code_utils
 from williamtoolbox.storage.json_file import load_config, load_models_from_json, load_rags_from_json
 
 
@@ -265,9 +266,7 @@ async def auto_generate_annotations(doc: str) -> List[DocText]:
     
     # 解析 RAG 返回的文档路径
     docs = []
-    try:
-        # 先用 code_utils 抽取 JSON 内容
-        from byzerllm.utils.client import code_utils
+    try:                
         json_blocks = code_utils.extract_code(rag_response)
         if json_blocks:
             # 取第一个 json 代码块
