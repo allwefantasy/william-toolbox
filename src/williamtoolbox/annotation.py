@@ -167,24 +167,12 @@ def generate_annotations(text: str, examples: List[DocText]) -> str:
 @byzerllm.prompt()
 def query_rag(text: str):
     '''
-    给定一个带标准的文档，返回和该文档最像的文档对应的路径。
+    给定一个带标准的文档，返回和该文档最接近的文档对应的路径。
 
     下面是等待查询的文档：
     <text>
     {{ text }}
-    </text>
-
-    请返回和该文档最像的文档对应的路径，返回格式为：
-
-    ```json
-    [
-        {
-            "doc_path": "path/to/doc.docx"
-        }
-    ]
-    ```
-
-    最多只返回一条记录。
+    </text>    
     '''
 
 
@@ -263,43 +251,31 @@ async def auto_generate_annotations(rag_name: str, doc: str) -> DocText:
     logger.info(f"开始处理文档，文档长度: {len(doc)}")
     
     # 1. 调用 RAG 获取相似文档
-    prompt = query_rag.prompt(text=doc)
+    prompt = query_rag.prompt(text=doc[:10000])
     logger.info(f"RAG 查询 prompt:\n{prompt}")
+
+    final_query = json.dumps({
+        "query": prompt,
+        "only_contexts": True
+    })
     
     rag_response = await chat_with_rag(rag_name, [
-        {"role": "user", "content": prompt}
+        {"role": "user", "content": final_query}
     ])
     logger.info(f"RAG 返回结果:\n{rag_response}")
-    
-    # 解析 RAG 返回的文档路径
-    docs = []
-    try:                
-        json_blocks = code_utils.extract_code(rag_response)
-        if json_blocks:
-            # 取第一个 json 代码块
-            json_content = json_blocks[0][1]
-            logger.info(f"提取到的 JSON 内容:\n{json_content}")
-            docs = [DocPath(**doc) for doc in json.loads(json_content)]
-        else:
-            # 如果没有找到 json 代码块，尝试直接解析
-            logger.info("未找到 JSON 代码块，尝试直接解析完整响应")
-            docs = [DocPath(**doc) for doc in json.loads(rag_response)]
-        logger.info(f"成功解析文档路径: {[doc.doc_path for doc in docs]}")
-    except Exception as e:
-        logger.error(f"解析 RAG 响应失败: {str(e)}")
-        return DocText(doc_name="", doc_text=doc, annotations=[])
-    
+        
+    source_codes = json.loads(rag_response)    
     # 2. 加载示例文档
     examples = []
-    for doc in docs:
+    for doc in source_codes:
         try:
-            with open(doc.doc_path, 'r', encoding='utf-8') as f:
+            with open(doc.module_name, 'r', encoding='utf-8') as f:
                 v = f.read()
                 doc_text = DocText.model_validate_json(v)
                 examples.append(doc_text)
-                logger.info(f"成功加载示例文档 {doc.doc_path}, 包含 {len(doc_text.annotations)} 条注释")
+                logger.info(f"成功加载示例文档 {doc.doc.module_name}, 包含 {len(doc_text.annotations)} 条注释")
         except Exception as e:
-            logger.error(f"加载文档 {doc.doc_path} 失败: {str(e)}")
+            logger.error(f"加载文档 {doc.doc.module_name} 失败: {str(e)}")
             continue
     
     # 3. 生成注释

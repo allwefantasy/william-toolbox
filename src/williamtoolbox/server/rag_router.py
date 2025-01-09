@@ -221,6 +221,7 @@ async def manage_rag(rag_name: str, action: str):
 
         rag_doc_filter_relevance = int(rag_info["rag_doc_filter_relevance"])
         command = "auto-coder.rag serve"
+        command += f" --quick"
         command += f" --model {rag_info['model']}"
         command += f" --tokenizer_path {rag_info['tokenizer_path']}"
         command += f" --doc_dir {rag_info['doc_dir']}"
