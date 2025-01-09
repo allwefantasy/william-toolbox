@@ -260,9 +260,16 @@ async def chat_with_rag(rag_name: str, messages: List[Dict[str, str]]) -> str:
 
 async def auto_generate_annotations(doc: str) -> List[DocText]:
     # 使用 chat_with_rag 替换 query_rag
+    logger.info(f"开始处理文档，文档长度: {len(doc)}")
+    
+    # 1. 调用 RAG 获取相似文档
+    prompt = query_rag.prompt(text=doc)
+    logger.info(f"RAG 查询 prompt:\n{prompt}")
+    
     rag_response = await chat_with_rag("default_rag", [
-        {"role": "user", "content": query_rag.prompt(text=doc)}
+        {"role": "user", "content": prompt}
     ])
+    logger.info(f"RAG 返回结果:\n{rag_response}")
     
     # 解析 RAG 返回的文档路径
     docs = []
@@ -271,14 +278,18 @@ async def auto_generate_annotations(doc: str) -> List[DocText]:
         if json_blocks:
             # 取第一个 json 代码块
             json_content = json_blocks[0][1]
+            logger.info(f"提取到的 JSON 内容:\n{json_content}")
             docs = [DocPath(**doc) for doc in json.loads(json_content)]
         else:
             # 如果没有找到 json 代码块，尝试直接解析
+            logger.info("未找到 JSON 代码块，尝试直接解析完整响应")
             docs = [DocPath(**doc) for doc in json.loads(rag_response)]
+        logger.info(f"成功解析文档路径: {[doc.doc_path for doc in docs]}")
     except Exception as e:
-        logger.error(f"Failed to parse RAG response: {str(e)}")
+        logger.error(f"解析 RAG 响应失败: {str(e)}")
         return DocText(doc_name="", doc_text=doc, annotations=[])
     
+    # 2. 加载示例文档
     examples = []
     for doc in docs:
         try:
@@ -286,14 +297,26 @@ async def auto_generate_annotations(doc: str) -> List[DocText]:
                 v = f.read()
                 doc_text = DocText.model_validate_json(v)
                 examples.append(doc_text)
+                logger.info(f"成功加载示例文档 {doc.doc_path}, 包含 {len(doc_text.annotations)} 条注释")
         except Exception as e:
-            logger.error(f"Failed to load document {doc.doc_path}: {str(e)}")
+            logger.error(f"加载文档 {doc.doc_path} 失败: {str(e)}")
             continue
     
-    # 使用 chat_with_model 替换 generate_annotations
-    model_response = await chat_with_model("default_model", [
-        {"role": "user", "content": generate_annotations.prompt(text=doc, examples=examples)}
-    ])
+    # 3. 生成注释
+    annotation_prompt = generate_annotations.prompt(text=doc, examples=examples)
+    logger.info(f"生成注释 prompt:\n{annotation_prompt}")
     
+    model_response = await chat_with_model("default_model", [
+        {"role": "user", "content": annotation_prompt}
+    ])
+    logger.info(f"模型生成注释响应:\n{model_response}")
+    
+    # 4. 提取注释
     annotations = extract_annotations(model_response)
+    logger.info(f"提取到 {len(annotations)} 条注释")
+    for idx, anno in enumerate(annotations, 1):
+        logger.info(f"注释 {idx}:")
+        logger.info(f"  文本: {anno['text']}")
+        logger.info(f"  批注: {anno['comment']}")
+    
     return DocText(doc_name="", doc_text=doc, annotations=annotations)
