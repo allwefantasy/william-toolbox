@@ -2,13 +2,16 @@ from fastapi import APIRouter, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
 from pathlib import Path
 import uuid
-import os
+import traceback
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Any, List
 from williamtoolbox.storage.json_file import load_file_resources, save_file_resources
 from williamtoolbox.annotation import extract_text_from_docx, extract_annotations_from_docx, auto_generate_annotations
 from datetime import datetime
+from pydantic import BaseModel
+import json
+import aiofiles
 
 router = APIRouter()
 
@@ -162,5 +165,6 @@ async def auto_generate_annotation(request: AutoGenerateAnnotationRequest):
                 for annotation in result.annotations
             ]
         })
-    except Exception as e:
+    except Exception as e:        
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Failed to generate annotations: {str(e)}")
