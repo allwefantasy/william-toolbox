@@ -379,40 +379,52 @@ const Annotation: React.FC = () => {
                   title={<Text ellipsis>{item.text}</Text>}
                   description={new Date(item.timestamp).toLocaleString()}
                 />
-                  <div className="annotation-content">
-                    <ReactQuill
-                      value={item.comment}
-                      theme="snow"
-                      onChange={(value) => {
-                        const updatedAnnotations = annotations.map(anno => {
-                          if (anno.id === item.id) {
-                            return { ...anno, comment: value };
-                          }
-                          return anno;
-                        });
-                        setAnnotations(updatedAnnotations);
-
-                        // 保存所有批注
-                        if (fileUuid) {
-                          axios.post(`/api/annotations/save_all?file_uuid=${fileUuid}`, updatedAnnotations)
-                            .then(() => {
-                              message.success('批注已保存');
-                            })
-                            .catch((error) => {
-                              message.error('保存批注失败');
-                              console.error('Error saving annotations:', error);
-                            });
+                <div className="annotation-content">
+                  <ReactQuill
+                    value={item.comment}
+                    theme="snow"
+                    onChange={(value) => {
+                      const updatedAnnotations = annotations.map(anno => {
+                        if (anno.id === item.id) {
+                          return { ...anno, comment: value };
                         }
-                      }}
-                      modules={{
-                        toolbar: [
-                          ['bold', 'italic', 'underline'],
-                          ['link'],
-                          [{ list: 'ordered' }, { list: 'bullet' }],
-                        ],
-                      }}
-                    />
-                  </div>
+                        return anno;
+                      });
+                      setAnnotations(updatedAnnotations);
+                      
+                      // 使用防抖函数延迟保存，避免频繁请求
+                      if (fileUuid) {
+                        const saveAnnotations = _.debounce(async () => {
+                          try {
+                            await axios.post(
+                              `/api/annotations/save_all?file_uuid=${fileUuid}`, 
+                              updatedAnnotations
+                            );
+                            message.success('批注已保存', 0.5);
+                          } catch (error) {
+                            message.error('保存批注失败');
+                            console.error('Error saving annotations:', error);
+                          }
+                        }, 1000);
+                        
+                        saveAnnotations();
+                      }
+                    }}
+                    modules={{
+                      toolbar: [
+                        ['bold', 'italic', 'underline'],
+                        ['link'],
+                        [{ list: 'ordered' }, { list: 'bullet' }],
+                        ['clean'],  // 添加清除格式按钮
+                        [{ header: [1, 2, 3, false] }],  // 添加标题格式选项
+                        ['blockquote', 'code-block'],  // 添加引用和代码块
+                        [{ 'color': [] }, { 'background': [] }],  // 添加文字颜色和背景色
+                      ],
+                    }}
+                    placeholder="请输入批注内容..."
+                    style={{ minHeight: '100px' }}
+                  />
+                </div>
                 {item.aiAnalysis && (
                   <div className="ai-analysis">
                     <Avatar icon={<RobotOutlined />} />
