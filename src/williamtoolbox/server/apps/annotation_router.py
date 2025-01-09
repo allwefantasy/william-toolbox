@@ -88,6 +88,43 @@ async def get_document_info(file_uuid: str):
     
     return JSONResponse(file_resources[file_uuid])
 
+@router.post("/api/annotations/save_all")
+async def save_all_annotations(file_uuid: str, annotations: List[Dict[str, Any]]):
+    """保存文档的所有批注"""
+    try:
+        # 检查文件是否存在
+        file_resources = await load_file_resources()
+        if file_uuid not in file_resources:
+            raise HTTPException(status_code=404, detail="File not found")
+        
+        file_path = file_resources[file_uuid]["path"]
+        
+        # 读取文档内容
+        loop = asyncio.get_event_loop()
+        doc_text = await loop.run_in_executor(
+            executor, extract_text_from_docx, file_path
+        )
+        
+        # 确保保存目录存在
+        save_dir = Path("./data/annotations")
+        save_dir.mkdir(parents=True, exist_ok=True)
+        
+        # 构建保存数据
+        save_data = {
+            "doc_text": doc_text,
+            "annotations": annotations
+        }
+        
+        # 保存到文件
+        save_path = save_dir / f"{file_uuid}.json"
+        async with aiofiles.open(save_path, 'w', encoding='utf-8') as f:
+            await f.write(json.dumps(save_data, ensure_ascii=False, indent=2))
+            
+        return JSONResponse({"message": "Annotations saved successfully"})
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save annotations: {str(e)}")
+
 @router.post("/api/annotations/auto_generate")
 async def auto_generate_annotation(file_uuid: str):
     """自动生成文档批注"""

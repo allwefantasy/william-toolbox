@@ -379,13 +379,40 @@ const Annotation: React.FC = () => {
                   title={<Text ellipsis>{item.text}</Text>}
                   description={new Date(item.timestamp).toLocaleString()}
                 />
-                <div className="annotation-content">
-                  <ReactQuill
-                    value={item.comment}
-                    readOnly
-                    theme="bubble"
-                  />
-                </div>
+                  <div className="annotation-content">
+                    <ReactQuill
+                      value={item.comment}
+                      theme="snow"
+                      onChange={(value) => {
+                        const updatedAnnotations = annotations.map(anno => {
+                          if (anno.id === item.id) {
+                            return { ...anno, comment: value };
+                          }
+                          return anno;
+                        });
+                        setAnnotations(updatedAnnotations);
+
+                        // 保存所有批注
+                        if (fileUuid) {
+                          axios.post(`/api/annotations/save_all?file_uuid=${fileUuid}`, updatedAnnotations)
+                            .then(() => {
+                              message.success('批注已保存');
+                            })
+                            .catch((error) => {
+                              message.error('保存批注失败');
+                              console.error('Error saving annotations:', error);
+                            });
+                        }
+                      }}
+                      modules={{
+                        toolbar: [
+                          ['bold', 'italic', 'underline'],
+                          ['link'],
+                          [{ list: 'ordered' }, { list: 'bullet' }],
+                        ],
+                      }}
+                    />
+                  </div>
                 {item.aiAnalysis && (
                   <div className="ai-analysis">
                     <Avatar icon={<RobotOutlined />} />
