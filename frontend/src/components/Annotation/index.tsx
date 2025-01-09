@@ -91,6 +91,7 @@ const Annotation: React.FC = () => {
   }, []);
   const [documentType, setDocumentType] = useState<'docx' | 'pdf' | null>(null);
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
+const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [selectedText, setSelectedText] = useState('');
   const [loading, setLoading] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string>('');
@@ -311,8 +312,28 @@ const Annotation: React.FC = () => {
         )}
       </Content>
       <Sider width={400} className="annotation-sider">
-        <div className="annotation-header">
+        <div className="annotation-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Title level={4}>批注列表</Title>
+          {hasUnsavedChanges && fileUuid && (
+            <Button 
+              type="primary"
+              onClick={async () => {
+                try {
+                  await axios.post(
+                    `/api/annotations/save_all?file_uuid=${fileUuid}`, 
+                    annotations
+                  );
+                  message.success('批注已保存');
+                  setHasUnsavedChanges(false);
+                } catch (error) {
+                  message.error('保存批注失败');
+                  console.error('Error saving annotations:', error);
+                }
+              }}
+            >
+              保存评注
+            </Button>
+          )}
         </div>
         {annotations.length === 0 ? (
           <Empty description="暂无批注" />
@@ -392,23 +413,7 @@ const Annotation: React.FC = () => {
                       });
                       setAnnotations(updatedAnnotations);
                       
-                      // 使用防抖函数延迟保存，避免频繁请求
-                      if (fileUuid) {
-                        const saveAnnotations = _.debounce(async () => {
-                          try {
-                            await axios.post(
-                              `/api/annotations/save_all?file_uuid=${fileUuid}`, 
-                              updatedAnnotations
-                            );
-                            message.success('批注已保存', 0.5);
-                          } catch (error) {
-                            message.error('保存批注失败');
-                            console.error('Error saving annotations:', error);
-                          }
-                        }, 1000);
-                        
-                        saveAnnotations();
-                      }
+                      setHasUnsavedChanges(true);
                     }}
                     modules={{
                       toolbar: [
