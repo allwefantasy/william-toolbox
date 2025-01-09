@@ -92,6 +92,7 @@ const Annotation: React.FC = () => {
   const [documentType, setDocumentType] = useState<'docx' | 'pdf' | null>(null);
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
 const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [selectedText, setSelectedText] = useState('');
   const [loading, setLoading] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string>('');
@@ -400,35 +401,52 @@ const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
                   title={<Text ellipsis>{item.text}</Text>}
                   description={new Date(item.timestamp).toLocaleString()}
                 />
-                <div className="annotation-content">
-                  <ReactQuill
-                    value={item.comment}
-                    theme="snow"
-                    onChange={(value) => {
-                      const updatedAnnotations = annotations.map(anno => {
-                        if (anno.id === item.id) {
-                          return { ...anno, comment: value };
+                <div 
+                  className="annotation-content"
+                  onDoubleClick={() => setEditingCommentId(item.id)}
+                >
+                  {editingCommentId === item.id ? (
+                    <ReactQuill
+                      value={item.comment}
+                      theme="snow"
+                      onChange={(value) => {
+                        const updatedAnnotations = annotations.map(anno => {
+                          if (anno.id === item.id) {
+                            return { ...anno, comment: value };
+                          }
+                          return anno;
+                        });
+                        setAnnotations(updatedAnnotations);
+                        setHasUnsavedChanges(true);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') {
+                          setEditingCommentId(null);
                         }
-                        return anno;
-                      });
-                      setAnnotations(updatedAnnotations);
-                      
-                      setHasUnsavedChanges(true);
-                    }}
-                    modules={{
-                      toolbar: [
-                        ['bold', 'italic', 'underline'],
-                        ['link'],
-                        [{ list: 'ordered' }, { list: 'bullet' }],
-                        ['clean'],  // 添加清除格式按钮
-                        [{ header: [1, 2, 3, false] }],  // 添加标题格式选项
-                        ['blockquote', 'code-block'],  // 添加引用和代码块
-                        [{ 'color': [] }, { 'background': [] }],  // 添加文字颜色和背景色
-                      ],
-                    }}
-                    placeholder="请输入批注内容..."
-                    style={{ minHeight: '100px' }}
-                  />
+                      }}
+                      onBlur={() => {
+                        setEditingCommentId(null);
+                      }}
+                      modules={{
+                        toolbar: [
+                          ['bold', 'italic', 'underline'],
+                          ['link'],
+                          [{ list: 'ordered' }, { list: 'bullet' }],
+                          ['clean'],
+                          [{ header: [1, 2, 3, false] }],
+                          ['blockquote', 'code-block'],
+                          [{ 'color': [] }, { 'background': [] }],
+                        ],
+                      }}
+                      placeholder="请输入批注内容..."
+                      style={{ minHeight: '100px' }}
+                    />
+                  ) : (
+                    <div 
+                      dangerouslySetInnerHTML={{ __html: item.comment }}
+                      style={{ minHeight: '100px', padding: '12px' }}
+                    />
+                  )}
                 </div>
                 {item.aiAnalysis && (
                   <div className="ai-analysis">
