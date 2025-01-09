@@ -148,7 +148,7 @@ function App() {
       case '9':
         return <FileManagement />;
       case '10':
-        return <AppStore />;
+        return <AppStore onNavigate={setSelectedKey} />;
       case 'annotation':
         return <Annotation />;
       default:

@@ -15,7 +15,11 @@ const apps = [
   }
 ];
 
-const AppStore = () => {
+interface AppStoreProps {
+  onNavigate: (key: string) => void;
+}
+
+const AppStore: React.FC<AppStoreProps> = ({ onNavigate }) => {
   return (
     <div className="app-store-container">
       <div className="app-store-header">
@@ -43,7 +47,7 @@ const AppStore = () => {
                   <span>{app.icon}</span>
                 </div>
               }
-              onClick={() => setSelectedKey('annotation')}
+              onClick={() => onNavigate('annotation')}
             >
               <Meta
                 title={app.title}
