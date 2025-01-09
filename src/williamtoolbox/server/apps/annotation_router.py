@@ -125,14 +125,19 @@ async def save_all_annotations(file_uuid: str, annotations: List[Dict[str, Any]]
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to save annotations: {str(e)}")
 
+from pydantic import BaseModel
+
+class AutoGenerateAnnotationRequest(BaseModel):
+    file_uuid: str
+
 @router.post("/api/annotations/auto_generate")
-async def auto_generate_annotation(file_uuid: str):
+async def auto_generate_annotation(request: AutoGenerateAnnotationRequest):
     """自动生成文档批注"""
     file_resources = await load_file_resources()
-    if file_uuid not in file_resources:
+    if request.file_uuid not in file_resources:
         raise HTTPException(status_code=404, detail="File not found")
     
-    file_path = file_resources[file_uuid]["path"]
+    file_path = file_resources[request.file_uuid]["path"]
     
     try:
         # 读取文档内容
