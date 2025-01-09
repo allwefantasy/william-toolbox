@@ -132,6 +132,7 @@ from pydantic import BaseModel
 
 class AutoGenerateAnnotationRequest(BaseModel):
     file_uuid: str
+    rag_name: str
 
 @router.post("/api/annotations/auto_generate")
 async def auto_generate_annotation(request: AutoGenerateAnnotationRequest):
@@ -150,7 +151,7 @@ async def auto_generate_annotation(request: AutoGenerateAnnotationRequest):
         )
         
         # 调用自动生成批注
-        result = await auto_generate_annotations(doc_text)
+        result = await auto_generate_annotations(request.rag_name, doc_text)
         
         return JSONResponse({
             "doc_text": result.doc_text,

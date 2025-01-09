@@ -243,7 +243,8 @@ const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
                 try {
                   setLoading(true);
                   const response = await axios.post(`/api/annotations/auto_generate`, {
-                    file_uuid: fileUuid
+                    file_uuid: fileUuid,
+                    rag_name: selectedRAG
                   });
                   const newAnnotations = response.data.annotations.map((anno: any) => ({
                     ...anno,
