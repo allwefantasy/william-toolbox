@@ -53,6 +53,7 @@ const Annotation: React.FC = () => {
   const [documentContent, setDocumentContent] = useState<string>('');
   const [ragList, setRagList] = useState<string[]>([]);
   const [selectedRAG, setSelectedRAG] = useState<string>('');
+  const [fileUuid, setFileUuid] = useState<string>('');
 
   // 获取 RAG 列表
   const fetchRAGList = async () => {
@@ -114,6 +115,7 @@ const Annotation: React.FC = () => {
       });
       
       const fileUuid = uploadResponse.data.uuid;
+      setFileUuid(fileUuid);
       
       // 获取文档内容
       const [contentResponse, infoResponse] = await Promise.all([
@@ -233,6 +235,32 @@ const Annotation: React.FC = () => {
             >
               <Button icon={<UploadOutlined />}>上传文档</Button>
             </Upload>
+            <Button 
+              icon={<RobotOutlined />} 
+              onClick={async () => {
+                try {
+                  setLoading(true);
+                  const response = await axios.post(`/api/annotations/auto_generate`, {
+                    file_uuid: fileUuid
+                  });
+                  const newAnnotations = response.data.annotations.map((anno: any) => ({
+                    ...anno,
+                    id: Date.now().toString(),
+                    timestamp: new Date().toISOString()
+                  }));
+                  setAnnotations([...annotations, ...newAnnotations]);
+                  message.success('自动批注生成成功');
+                } catch (error) {
+                  console.error('生成批注失败:', error);
+                  message.error('生成批注失败');
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              disabled={!fileUuid || loading}
+            >
+              自动生成批注
+            </Button>
           </div>
         </div>
         {loading ? (
