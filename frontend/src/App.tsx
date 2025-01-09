@@ -247,8 +247,7 @@ function App() {
           {renderContent()}
         </Content>
         </Layout>
-      </Layout>
-    </Router>
+      </Layout>    
   );
 }
 
