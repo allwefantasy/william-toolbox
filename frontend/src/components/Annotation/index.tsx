@@ -279,25 +279,30 @@ const Annotation: React.FC = () => {
             className="document-content"
             onMouseUp={handleTextSelection}
             style={{ whiteSpace: 'pre-wrap' }}
+            onClick={(e) => {
+              const target = e.target as HTMLElement;
+              if (target.classList.contains('highlighted-text')) {
+                const annotationId = target.getAttribute('data-annotation-id');
+                if (annotationId) {
+                  const commentItem = document.getElementById(`comment-${annotationId}`);
+                  if (commentItem) {
+                    commentItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    commentItem.style.backgroundColor = '#f0f0f0';
+                    setTimeout(() => {
+                      commentItem.style.backgroundColor = 'transparent';
+                    }, 1000);
+                  }
+                }
+              }
+            }}
             dangerouslySetInnerHTML={{
               __html: annotations.reduce((content, annotation) => {
                 // 为每个注释的文本添加高亮标记
                 const highlightedText = `<span 
-                  id="annotation-${annotation.id}" 
+                  id="annotation-${annotation.id}"
+                  data-annotation-id="${annotation.id}" 
                   class="highlighted-text" 
-                  style="background-color: #fff3cd; padding: 2px; border-radius: 4px;"
-                  onDoubleClick={() => {
-                    // 找到对应的评论项并滚动到视图
-                    const commentItem = document.getElementById("comment-${annotation.id}");
-                    if (commentItem) {
-                      commentItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                      // 添加临时高亮效果
-                      commentItem.style.backgroundColor = '#f0f0f0';
-                      setTimeout(() => {
-                        commentItem.style.backgroundColor = 'transparent';
-                      }, 1000);
-                    }
-                  }}
+                  style="background-color: #fff3cd; padding: 2px; border-radius: 4px; cursor: pointer;"
                 >${annotation.text}</span>`;
                 return content.replace(annotation.text, highlightedText);
               }, documentContent)
@@ -329,26 +334,39 @@ const Annotation: React.FC = () => {
                     删除
                   </Button>
                 ]}
+                style={{ cursor: 'pointer' }}
                 onMouseEnter={() => {
-                  // 鼠标悬停时高亮对应的文本
                   const highlightedElement = document.getElementById(`annotation-${item.id}`);
                   if (highlightedElement) {
                     highlightedElement.style.backgroundColor = '#ffe69c';
                   }
                 }}
                 onMouseLeave={() => {
-                  // 鼠标离开时恢复高亮颜色
                   const highlightedElement = document.getElementById(`annotation-${item.id}`);
                   if (highlightedElement) {
                     highlightedElement.style.backgroundColor = '#fff3cd';
                   }
                 }}
-                onDoubleClick={() => {
-                  // 双击评论项时滚动到对应的文本位置
+                onClick={() => {
                   const highlightedElement = document.getElementById(`annotation-${item.id}`);
                   if (highlightedElement) {
-                    highlightedElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    // 添加临时高亮效果
+                    // 确保突出显示的元素在视口中可见
+                    const rect = highlightedElement.getBoundingClientRect();
+                    const isInViewport = (
+                      rect.top >= 0 &&
+                      rect.left >= 0 &&
+                      rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+                      rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+                    );
+
+                    if (!isInViewport) {
+                      highlightedElement.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'center' 
+                      });
+                    }
+                    
+                    // 添加突出显示效果
                     highlightedElement.style.backgroundColor = '#ffd700';
                     setTimeout(() => {
                       highlightedElement.style.backgroundColor = '#fff3cd';
