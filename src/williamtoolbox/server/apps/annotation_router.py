@@ -5,7 +5,7 @@ import uuid
 import os
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-from typing import Dict, Any
+from typing import Dict, Any, List
 from williamtoolbox.storage.json_file import load_file_resources, save_file_resources
 from williamtoolbox.annotation import extract_text_from_docx, extract_annotations_from_docx, auto_generate_annotations
 from datetime import datetime

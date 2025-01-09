@@ -417,7 +417,7 @@ const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
                               onChange={(value) => {
                                 const updatedAnnotations = annotations.map(anno => {
                                   if (anno.id === item.id) {
-                                    return { ...anno, comment: value };
+                                    return { ...anno, comment: anno.comment };
                                   }
                                   return anno;
                                 });
