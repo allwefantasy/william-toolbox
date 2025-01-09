@@ -43,7 +43,7 @@ const AppStore = () => {
                   <span>{app.icon}</span>
                 </div>
               }
-              onClick={() => window.open(app.url, '_blank')}
+              onClick={() => setSelectedKey('annotation')}
             >
               <Meta
                 title={app.title}

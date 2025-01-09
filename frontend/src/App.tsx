@@ -149,6 +149,8 @@ function App() {
         return <FileManagement />;
       case '10':
         return <AppStore />;
+      case 'annotation':
+        return <Annotation />;
       default:
         return (
           <>
@@ -164,8 +166,7 @@ function App() {
   }
 
   return (
-    <Router>
-      <Layout style={{ minHeight: '100vh' }}>
+      <Layout style={{ minHeight: '100vh' }} className="app-container">
       <Sider width={250} style={{ background: '#fff' }}>
         <div className="logo" style={{ height: 64, margin: 16, background: 'rgba(255, 255, 255, 0.2)' }}>
           <div style={{ padding: '20px', color: '#1890ff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -243,10 +244,7 @@ function App() {
       <Layout>
         <Header style={{ background: '#fff', padding: 0, boxShadow: '0 1px 4px rgba(0,21,41,.08)' }} />
         <Content style={{ margin: '24px 16px', padding: 24, background: '#fff', minHeight: 280 }}>
-          <Routes>
-            <Route path="/annotation" element={<Annotation />} />
-            <Route path="*" element={renderContent()} />
-          </Routes>
+          {renderContent()}
         </Content>
         </Layout>
       </Layout>
