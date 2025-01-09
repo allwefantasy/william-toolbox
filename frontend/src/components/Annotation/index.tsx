@@ -402,51 +402,52 @@ const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
                   description={new Date(item.timestamp).toLocaleString()}
                 />
                 <div 
-                  className="annotation-content"
-                  onDoubleClick={() => setEditingCommentId(item.id)}
+                  className="annotation-content"                  
                 >
-                  {editingCommentId === item.id ? (
-                    <ReactQuill
-                      value={item.comment}
-                      theme="snow"
-                      onChange={(value) => {
-                        const updatedAnnotations = annotations.map(anno => {
-                          if (anno.id === item.id) {
-                            return { ...anno, comment: value };
-                          }
-                          return anno;
-                        });
-                        setAnnotations(updatedAnnotations);
-                        setHasUnsavedChanges(true);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Escape') {
-                          setEditingCommentId(null);
-                        }
-                      }}
-                      onBlur={() => {
-                        setEditingCommentId(null);
-                      }}
-                      modules={{
-                        toolbar: [
-                          ['bold', 'italic', 'underline'],
-                          ['link'],
-                          [{ list: 'ordered' }, { list: 'bullet' }],
-                          ['clean'],
-                          [{ header: [1, 2, 3, false] }],
-                          ['blockquote', 'code-block'],
-                          [{ 'color': [] }, { 'background': [] }],
-                        ],
-                      }}
-                      placeholder="请输入批注内容..."
-                      style={{ minHeight: '100px' }}
-                    />
-                  ) : (
                     <div 
                       dangerouslySetInnerHTML={{ __html: item.comment }}
-                      style={{ minHeight: '100px', padding: '12px' }}
+                      style={{ minHeight: '100px', padding: '12px', cursor: 'pointer' }}
+                      onClick={() => {
+                        Modal.confirm({
+                          title: '编辑批注',
+                          content: (
+                            <ReactQuill
+                              value={item.comment}
+                              theme="snow"
+                              onChange={(value) => {
+                                const updatedAnnotations = annotations.map(anno => {
+                                  if (anno.id === item.id) {
+                                    return { ...anno, comment: value };
+                                  }
+                                  return anno;
+                                });
+                                setAnnotations(updatedAnnotations);
+                                setHasUnsavedChanges(true);
+                              }}
+                              modules={{
+                                toolbar: [
+                                  ['bold', 'italic', 'underline'],
+                                  ['link'],
+                                  [{ list: 'ordered' }, { list: 'bullet' }],
+                                  ['clean'],
+                                  [{ header: [1, 2, 3, false] }],
+                                  ['blockquote', 'code-block'],
+                                  [{ 'color': [] }, { 'background': [] }],
+                                ],
+                              }}
+                              placeholder="请输入批注内容..."
+                              style={{ minHeight: '200px' }}
+                            />
+                          ),
+                          width: 800,
+                          okText: '保存',
+                          cancelText: '取消',
+                          onOk: () => {
+                            message.success('批注已更新');
+                          }
+                        });
+                      }}
                     />
-                  )}
                 </div>
                 {item.aiAnalysis && (
                   <div className="ai-analysis">
