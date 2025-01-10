@@ -263,23 +263,25 @@ async def auto_generate_annotations(rag_name: str, doc: str) -> DocText:
         {"role": "user", "content": final_query}
     ])
     logger.info(f"RAG 返回结果:\n{rag_response}")
-        
-    source_codes = json.loads(rag_response)    
+    docs = []
+    for line in rag_response.split('\n'):
+        if line.strip():
+            docs.append(json.loads(line))
     # 2. 加载示例文档
     examples = []
-    for doc in source_codes:
-        try:
-            with open(doc.module_name, 'r', encoding='utf-8') as f:
-                v = f.read()
-                doc_text = DocText.model_validate_json(v)
-                examples.append(doc_text)
-                logger.info(f"成功加载示例文档 {doc.doc.module_name}, 包含 {len(doc_text.annotations)} 条注释")
+    for doc in docs:
+        try:            
+            v = json.loads(doc["source_code"])
+            doc_text = DocText(doc_name=doc["module_name"], doc_text=v["doc_text"], annotations=[Annotation(**a) for a in v["annotations"]])
+            examples.append(doc_text)
+            logger.info(f'成功加载示例文档 {doc["module_name"]}, 包含 {len(doc_text["annotations"])} 条注释')
+                
         except Exception as e:
-            logger.error(f"加载文档 {doc.doc.module_name} 失败: {str(e)}")
+            logger.error(f'加载文档 {doc["module_name"]} 失败: {str(e)}')
             continue
     
     # 3. 生成注释
-    annotation_prompt = generate_annotations.prompt(text=doc, examples=examples)
+    annotation_prompt = generate_annotations.prompt(text=doc, examples=[examples[0]])
     logger.info(f"生成注释 prompt:\n{annotation_prompt}")
     
     model_response = await chat_with_model("default_model", [
