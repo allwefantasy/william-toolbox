@@ -246,7 +246,7 @@ async def chat_with_rag(rag_name: str, messages: List[Dict[str, str]]) -> str:
         logger.error(f"Error in chat_with_rag: {str(e)}")
         raise
 
-async def auto_generate_annotations(rag_name: str, doc: str) -> DocText:
+async def auto_generate_annotations(rag_name: str, doc: str, model_name: str = "default_model") -> DocText:
     # 使用 chat_with_rag 替换 query_rag
     logger.info(f"开始处理文档，文档长度: {len(doc)}")
     
@@ -284,7 +284,7 @@ async def auto_generate_annotations(rag_name: str, doc: str) -> DocText:
     annotation_prompt = generate_annotations.prompt(text=doc, examples=[examples[0]])
     logger.info(f"生成注释 prompt:\n{annotation_prompt}")
     
-    model_response = await chat_with_model("default_model", [
+    model_response = await chat_with_model(model_name, [
         {"role": "user", "content": annotation_prompt}
     ])
     logger.info(f"模型生成注释响应:\n{model_response}")
