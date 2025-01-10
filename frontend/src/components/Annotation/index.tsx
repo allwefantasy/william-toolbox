@@ -53,21 +53,18 @@ const Annotation: React.FC = () => {
   const [documentContent, setDocumentContent] = useState<string>('');
   const [ragList, setRagList] = useState<string[]>([]);
   const [selectedRAG, setSelectedRAG] = useState<string>('');
-  const [modelList, setModelList] = useState<string[]>([]);
-  const [selectedModel, setSelectedModel] = useState<string>('');
+  const [fileUuid, setFileUuid] = useState<string>('');
 
-  // 获取 RAG 和模型列表
-  const fetchLists = async () => {
+  // 获取 RAG 列表
+  const fetchRAGList = async () => {
     try {
       const username = sessionStorage.getItem('username') || '';
-      // 获取用户 RAG 和模型权限
+      // 获取用户 RAG 权限
       const userResponse = await axios.get(`/api/users/${username}`);
       const ragPermissions = userResponse.data.rag_permissions || [];
-      const modelPermissions = userResponse.data.model_permissions || [];
       
-      // 获取 RAG 列表
-      const ragResponse = await axios.get('/rags');
-      const runningRags = ragResponse.data
+      const response = await axios.get('/rags');
+      const runningRags = response.data
         .filter((rag: any) => rag.status === 'running' && 
                 (ragPermissions.includes('*') || ragPermissions.includes(rag.name)))
         .map((rag: any) => rag.name);
@@ -75,25 +72,13 @@ const Annotation: React.FC = () => {
       if (runningRags.length > 0) {
         setSelectedRAG(runningRags[0]);
       }
-
-      // 获取模型列表
-      const modelResponse = await axios.get('/models');
-      const runningModels = modelResponse.data
-        .filter((model: any) => model.status === 'running' &&
-                (modelPermissions.includes('*') || modelPermissions.includes(model.name)))
-        .map((model: any) => model.name);
-      setModelList(runningModels);
-      if (runningModels.length > 0) {
-        setSelectedModel(runningModels[0]);
-      }
     } catch (error) {
-      console.error('Error fetching lists:', error);
+      console.error('Error fetching RAG list:', error);
     }
   };
 
   useEffect(() => {
-    fetchLists();
-  }, []);
+    fetchRAGList();
   }, []);
 
   // 用于安全渲染 HTML 的 sanitizer
@@ -234,30 +219,17 @@ const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
         <div className="document-header">
           <Title level={4}>文档查看器</Title>
           <div style={{ display: 'flex', gap: 8 }}>
-            <Space>
-              <Select
-                style={{ width: 200 }}
-                value={selectedModel}
-                onChange={(value: string) => setSelectedModel(value)}
-                options={modelList.map((model) => ({
-                  label: model,
-                  value: model
-                }))}
-                placeholder="选择模型"
-                suffixIcon={<RobotOutlined />}
-              />
-              <Select
-                style={{ width: 200 }}
-                value={selectedRAG}
-                onChange={(value: string) => setSelectedRAG(value)}
-                options={ragList.map((rag) => ({
-                  label: rag,
-                  value: rag
-                }))}
-                placeholder="选择 RAG"
-                suffixIcon={<DatabaseOutlined />}
-              />
-            </Space>
+            <Select
+              style={{ width: 200 }}
+              value={selectedRAG}
+              onChange={(value: string) => setSelectedRAG(value)}
+              options={ragList.map((rag) => ({
+                label: rag,
+                value: rag
+              }))}
+              placeholder="选择 RAG"
+              suffixIcon={<DatabaseOutlined />}
+            />
             <Upload
               accept=".docx,.pdf"
               showUploadList={false}
