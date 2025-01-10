@@ -53,18 +53,19 @@ const Annotation: React.FC = () => {
   const [documentContent, setDocumentContent] = useState<string>('');
   const [ragList, setRagList] = useState<string[]>([]);
   const [selectedRAG, setSelectedRAG] = useState<string>('');
-  const [fileUuid, setFileUuid] = useState<string>('');
+  const [modelList, setModelList] = useState<string[]>([]);
+  const [selectedModel, setSelectedModel] = useState<string>('');
 
-  // 获取 RAG 列表
-  const fetchRAGList = async () => {
+  const fetchLists = async () => {
     try {
       const username = sessionStorage.getItem('username') || '';
-      // 获取用户 RAG 权限
       const userResponse = await axios.get(`/api/users/${username}`);
       const ragPermissions = userResponse.data.rag_permissions || [];
+      const modelPermissions = userResponse.data.model_permissions || [];
       
-      const response = await axios.get('/rags');
-      const runningRags = response.data
+      // Fetch RAG list
+      const ragResponse = await axios.get('/rags');
+      const runningRags = ragResponse.data
         .filter((rag: any) => rag.status === 'running' && 
                 (ragPermissions.includes('*') || ragPermissions.includes(rag.name)))
         .map((rag: any) => rag.name);
@@ -72,13 +73,25 @@ const Annotation: React.FC = () => {
       if (runningRags.length > 0) {
         setSelectedRAG(runningRags[0]);
       }
+
+      // Fetch Model list
+      const modelResponse = await axios.get('/models');
+      const runningModels = modelResponse.data
+        .filter((model: any) => model.status === 'running' && 
+                (modelPermissions.includes('*') || modelPermissions.includes(model.name)))
+        .map((model: any) => model.name);
+      setModelList(runningModels);
+      if (runningModels.length > 0) {
+        setSelectedModel(runningModels[0]);
+      }
     } catch (error) {
-      console.error('Error fetching RAG list:', error);
+      console.error('Error fetching lists:', error);
     }
   };
 
   useEffect(() => {
-    fetchRAGList();
+    fetchLists();
+  }, []);
   }, []);
 
   // 用于安全渲染 HTML 的 sanitizer
@@ -219,17 +232,30 @@ const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
         <div className="document-header">
           <Title level={4}>文档查看器</Title>
           <div style={{ display: 'flex', gap: 8 }}>
-            <Select
-              style={{ width: 200 }}
-              value={selectedRAG}
-              onChange={(value: string) => setSelectedRAG(value)}
-              options={ragList.map((rag) => ({
-                label: rag,
-                value: rag
-              }))}
-              placeholder="选择 RAG"
-              suffixIcon={<DatabaseOutlined />}
-            />
+            <Space>
+              <Select
+                style={{ width: 200 }}
+                value={selectedModel}
+                onChange={(value: string) => setSelectedModel(value)}
+                options={modelList.map((model) => ({
+                  label: model,
+                  value: model
+                }))}
+                placeholder="选择模型"
+                suffixIcon={<RobotOutlined />}
+              />
+              <Select
+                style={{ width: 200 }}
+                value={selectedRAG}
+                onChange={(value: string) => setSelectedRAG(value)}
+                options={ragList.map((rag) => ({
+                  label: rag,
+                  value: rag
+                }))}
+                placeholder="选择 RAG"
+                suffixIcon={<DatabaseOutlined />}
+              />
+            </Space>
             <Upload
               accept=".docx,.pdf"
               showUploadList={false}
@@ -244,7 +270,8 @@ const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
                   setLoading(true);
                   const response = await axios.post(`/api/annotations/auto_generate`, {
                     file_uuid: fileUuid,
-                    rag_name: selectedRAG
+                    rag_name: selectedRAG,
+                    model_name: selectedModel
                   });
                   const newAnnotations = response.data.annotations.map((anno: any) => ({
                     ...anno,
