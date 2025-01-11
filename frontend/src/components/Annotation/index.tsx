@@ -8,6 +8,7 @@ import {
   RobotOutlined,
   DeleteOutlined,
   DatabaseOutlined,
+  RocketOutlined
 } from '@ant-design/icons';
 import mammoth from 'mammoth';
 import ReactQuill from 'react-quill';
@@ -17,6 +18,11 @@ import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
 import '@react-pdf-viewer/core/lib/styles/index.css';
 import '@react-pdf-viewer/default-layout/lib/styles/index.css';
 import './styles.css';
+
+interface Comment {  
+  text: string;
+  comment: string;  
+}
 
 // 添加高亮文本的样式
 const highlightedTextStyle = `
@@ -63,13 +69,13 @@ const Annotation: React.FC = () => {
       const username = sessionStorage.getItem('username') || '';
       // 获取用户权限
       const userResponse = await axios.get(`/api/users/${username}`);
-      
+
       // 获取 RAG 权限
       const ragPermissions = userResponse.data.rag_permissions || [];
       const ragResponse = await axios.get('/rags');
       const runningRags = ragResponse.data
-        .filter((rag: any) => rag.status === 'running' && 
-                (ragPermissions.includes('*') || ragPermissions.includes(rag.name)))
+        .filter((rag: any) => rag.status === 'running' &&
+          (ragPermissions.includes('*') || ragPermissions.includes(rag.name)))
         .map((rag: any) => rag.name);
       setRagList(runningRags);
       if (runningRags.length > 0) {
@@ -80,8 +86,8 @@ const Annotation: React.FC = () => {
       const modelPermissions = userResponse.data.model_permissions || [];
       const modelResponse = await axios.get('/models');
       const runningModels = modelResponse.data
-        .filter((model: any) => model.status === 'running' && 
-                (modelPermissions.includes('*') || modelPermissions.includes(model.name)))
+        .filter((model: any) => model.status === 'running' &&
+          (modelPermissions.includes('*') || modelPermissions.includes(model.name)))
         .map((model: any) => model.name);
       setModelList(runningModels);
       if (runningModels.length > 0) {
@@ -106,8 +112,8 @@ const Annotation: React.FC = () => {
   }, []);
   const [documentType, setDocumentType] = useState<'docx' | 'pdf' | null>(null);
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
-const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [selectedText, setSelectedText] = useState('');
   const [loading, setLoading] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string>('');
@@ -120,31 +126,31 @@ const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
       const username = sessionStorage.getItem('username') || '';
       const formData = new FormData();
       formData.append('file', file);
-      
+
       // 上传文件
       const uploadResponse = await axios.post('/api/annotations/upload', formData, {
         headers: {
-          'Content-Type': 'multipart/form-data'          
+          'Content-Type': 'multipart/form-data'
         },
         params: {
           username
         }
       });
-      
+
       const fileUuid = uploadResponse.data.uuid;
       setFileUuid(fileUuid);
-      
+
       // 获取文档内容
       const [contentResponse, infoResponse] = await Promise.all([
         axios.get(`/api/annotations/document/${fileUuid}`),
         axios.get(`/api/annotations/document/${fileUuid}/info`)
       ]);
-      
+
       // 对 HTML 内容进行安全处理
       const full_text = sanitizeHTML(contentResponse.data.full_text);
-      const comments = contentResponse.data.comments;
+      const comments: Comment[] = [] //contentResponse.data.comments;
       const fileInfo = infoResponse.data;
-      
+
       if (fileInfo.original_name.endsWith('.pdf')) {
         setDocumentType('pdf');
         setPdfUrl(`/data/upload/${fileUuid}`);
@@ -161,7 +167,7 @@ const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
         }));
         setAnnotations(formattedAnnotations);
       }
-      
+
       return false;
     } catch (error) {
       message.error('文件上传或处理失败');
@@ -177,7 +183,7 @@ const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
     if (selection && !selection.isCollapsed) {
       const selectedText = selection.toString();
       setSelectedText(selectedText);
-      
+
       Modal.confirm({
         title: '添加批注',
         content: (
@@ -200,7 +206,7 @@ const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
                 timestamp: new Date().toISOString(),
               };
               setAnnotations(prev => [...prev, newAnnotation]);
-              
+
               // 保存批注到后端
               const username = sessionStorage.getItem('username') || '';
               axios.post('/api/annotations/save', {
@@ -263,15 +269,15 @@ const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
             >
               <Button icon={<UploadOutlined />}>上传文档</Button>
             </Upload>
-            <Button 
-              icon={<RobotOutlined />} 
+            <Button
+              icon={<RobotOutlined />}
               onClick={async () => {
                 try {
                   setLoading(true);
                   const response = await axios.post(`/api/annotations/auto_generate`, {
                     file_uuid: fileUuid,
                     rag_name: selectedRAG,
-                  model_name: selectedModel
+                    model_name: selectedModel
                   });
                   const newAnnotations = response.data.annotations.map((anno: any) => ({
                     ...anno,
@@ -344,12 +350,12 @@ const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
         <div className="annotation-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Title level={4}>批注列表</Title>
           {hasUnsavedChanges && fileUuid && (
-            <Button 
+            <Button
               type="primary"
               onClick={async () => {
                 try {
                   await axios.post(
-                    `/api/annotations/save_all?file_uuid=${fileUuid}`, 
+                    `/api/annotations/save_all?file_uuid=${fileUuid}`,
                     annotations
                   );
                   message.success('批注已保存');
@@ -410,12 +416,12 @@ const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
                     );
 
                     if (!isInViewport) {
-                      highlightedElement.scrollIntoView({ 
-                        behavior: 'smooth', 
-                        block: 'center' 
+                      highlightedElement.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
                       });
                     }
-                    
+
                     // 添加突出显示效果
                     highlightedElement.style.backgroundColor = '#ffd700';
                     setTimeout(() => {
@@ -429,53 +435,53 @@ const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
                   title={<Text ellipsis>{item.text}</Text>}
                   description={new Date(item.timestamp).toLocaleString()}
                 />
-                <div 
-                  className="annotation-content"                  
+                <div
+                  className="annotation-content"
                 >
-                    <div 
-                      dangerouslySetInnerHTML={{ __html: item.comment }}
-                      style={{ minHeight: '100px', padding: '12px', cursor: 'pointer' }}
-                      onClick={() => {
-                        Modal.confirm({
-                          title: '编辑批注',
-                          content: (
-                            <ReactQuill
-                              value={item.comment}
-                              theme="snow"
-                              onChange={(value) => {
-                                const updatedAnnotations = annotations.map(anno => {
-                                  if (anno.id === item.id) {
-                                    return { ...anno, comment: anno.comment };
-                                  }
-                                  return anno;
-                                });
-                                setAnnotations(updatedAnnotations);
-                                setHasUnsavedChanges(true);
-                              }}
-                              modules={{
-                                toolbar: [
-                                  ['bold', 'italic', 'underline'],
-                                  ['link'],
-                                  [{ list: 'ordered' }, { list: 'bullet' }],
-                                  ['clean'],
-                                  [{ header: [1, 2, 3, false] }],
-                                  ['blockquote', 'code-block'],
-                                  [{ 'color': [] }, { 'background': [] }],
-                                ],
-                              }}
-                              placeholder="请输入批注内容..."
-                              style={{ minHeight: '200px' }}
-                            />
-                          ),
-                          width: 800,
-                          okText: '保存',
-                          cancelText: '取消',
-                          onOk: () => {
-                            message.success('批注已更新');
-                          }
-                        });
-                      }}
-                    />
+                  <div
+                    dangerouslySetInnerHTML={{ __html: item.comment }}
+                    style={{ minHeight: '100px', padding: '12px', cursor: 'pointer' }}
+                    onClick={() => {
+                      Modal.confirm({
+                        title: '编辑批注',
+                        content: (
+                          <ReactQuill
+                            value={item.comment}
+                            theme="snow"
+                            onChange={(value) => {
+                              const updatedAnnotations = annotations.map(anno => {
+                                if (anno.id === item.id) {
+                                  return { ...anno, comment: anno.comment };
+                                }
+                                return anno;
+                              });
+                              setAnnotations(updatedAnnotations);
+                              setHasUnsavedChanges(true);
+                            }}
+                            modules={{
+                              toolbar: [
+                                ['bold', 'italic', 'underline'],
+                                ['link'],
+                                [{ list: 'ordered' }, { list: 'bullet' }],
+                                ['clean'],
+                                [{ header: [1, 2, 3, false] }],
+                                ['blockquote', 'code-block'],
+                                [{ 'color': [] }, { 'background': [] }],
+                              ],
+                            }}
+                            placeholder="请输入批注内容..."
+                            style={{ minHeight: '200px' }}
+                          />
+                        ),
+                        width: 800,
+                        okText: '保存',
+                        cancelText: '取消',
+                        onOk: () => {
+                          message.success('批注已更新');
+                        }
+                      });
+                    }}
+                  />
                 </div>
                 {item.aiAnalysis && (
                   <div className="ai-analysis">

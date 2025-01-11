@@ -10,6 +10,7 @@ from openai import AsyncOpenAI
 from loguru import logger
 from byzerllm.utils.client import code_utils
 from williamtoolbox.storage.json_file import load_config, load_models_from_json, load_rags_from_json
+from autocoder.rag.relevant_utils import FilterDoc
 
 
 class Annotation(BaseModel):
@@ -166,13 +167,13 @@ def generate_annotations(text: str, examples: List[DocText]) -> str:
 
 @byzerllm.prompt()
 def query_rag(text: str):
-    '''
-    给定一个带标准的文档，返回和该文档最接近的文档对应的路径。
-
-    下面是等待查询的文档：
+    '''    
+    下面是等待批注的文档：
     <text>
     {{ text }}
     </text>    
+
+    判断上面的文档是否和等待批注的文档是同一类内容。
     '''
 
 
@@ -205,7 +206,7 @@ async def chat_with_model(model_name: str, messages: List[Dict[str, str]]) -> st
             model=model_name,
             messages=messages,
             stream=False,
-            max_tokens=64*1024
+            max_tokens=4*1024
         )
         return response.choices[0].message.content
         
@@ -238,7 +239,7 @@ async def chat_with_rag(rag_name: str, messages: List[Dict[str, str]]) -> str:
             model=rag_info.get("model", "deepseek_chat"),
             messages=messages,
             stream=False,
-            max_tokens=64*1024
+            max_tokens=4*1024
         )
         return response.choices[0].message.content
         
@@ -257,31 +258,38 @@ async def auto_generate_annotations(rag_name: str, doc: str, model_name: str = "
     final_query = json.dumps({
         "query": prompt,
         "only_contexts": True
-    })
+    },ensure_ascii=False)
     
     rag_response = await chat_with_rag(rag_name, [
         {"role": "user", "content": final_query}
     ])
     logger.info(f"RAG 返回结果:\n{rag_response}")
-    docs = []
-    for line in rag_response.split('\n'):
-        if line.strip():
-            docs.append(json.loads(line))
+    docs: List[FilterDoc] = [FilterDoc(**doc) for doc in json.loads(rag_response)]
+    docs.sort(key=lambda x: x.relevance.relevant_score, reverse=True)
+    
     # 2. 加载示例文档
     examples = []
-    for doc in docs:
-        try:            
-            v = json.loads(doc["source_code"])
-            doc_text = DocText(doc_name=doc["module_name"], doc_text=v["doc_text"], annotations=[Annotation(**a) for a in v["annotations"]])
+    for temp_doc in docs:
+        file_path = temp_doc.source_code.module_name  
+        try:                
+            # clean ##File: /Users/allwefantasy/Downloads/论文/陈梦初稿-已批注.docx.json#chunk1  
+            if file_path.startswith("##File: "):
+                file_path = file_path[len("##File: "):]
+            if "#chunk" in file_path:
+                file_path = file_path[:file_path.index("#chunk")]
+
+            with open(file_path, 'r', encoding='utf-8') as file:
+                v = json.loads(file.read())
+            doc_text = DocText(doc_name=file_path, doc_text=v["doc_text"], annotations=[Annotation(**a) for a in v["annotations"]])
             examples.append(doc_text)
-            logger.info(f'成功加载示例文档 {doc["module_name"]}, 包含 {len(doc_text["annotations"])} 条注释')
+            logger.info(f'成功加载示例文档 {file_path}, 包含 {len(doc_text["annotations"])} 条注释')
                 
         except Exception as e:
-            logger.error(f'加载文档 {doc["module_name"]} 失败: {str(e)}')
+            logger.error(f'加载文档 {file_path} 失败: {str(e)}')            
             continue
     
     # 3. 生成注释
-    annotation_prompt = generate_annotations.prompt(text=doc, examples=[examples[0]])
+    annotation_prompt = generate_annotations.prompt(text=doc, examples=[examples[0:1]])
     logger.info(f"生成注释 prompt:\n{annotation_prompt}")
     
     model_response = await chat_with_model(model_name, [

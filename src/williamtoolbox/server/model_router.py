@@ -115,7 +115,7 @@ async def add_model(model: AddModelRequest):
             model_path=model.model_path,
             infer_backend=model.infer_backend,
         ).model_dump(),
-        "undeploy_command": f"byzerllm undeploy --model {model.name}",
+        "undeploy_command": f"byzerllm undeploy --model {model.name} --force",
     }
 
     models[model.name] = new_model
