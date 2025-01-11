@@ -140,9 +140,11 @@ def generate_annotations(text: str, examples: List[DocText]) -> str:
     </text>
 
     批注：
+    <annotations>
     {% for annotation in example.annotations %} 
     [[[{{ annotation.text }}]]]<<<{{ annotation.comment }}>>>
     {% endfor %}
+    </annotations>
     {% endfor %}
     </history>
 
@@ -159,9 +161,8 @@ def generate_annotations(text: str, examples: List[DocText]) -> str:
 
     请你理解文本的含义，模仿上面示例生成对带批注的内容进行批注。
     规则：
-    1. 用 [[[]]] 括住需要批注的文本
-    2. 紧跟着用 <<<>>> 括住对该文本的批注内容
-    3. 批注要简明扼要，突出重点  
+    1. 用 [[[]]] 括住需要批注的文本,紧跟着用 <<<>>> 括住对该文本的批注内容，注意，两者中间不要有任何其他字符。
+    2. 确保 [[[]]] 括住的需要批注的文本必须完全匹配原文本，不能有任何字符差异。    
     '''
 
 
@@ -264,8 +265,7 @@ async def auto_generate_annotations(rag_name: str, doc: str, model_name: str = "
         {"role": "user", "content": final_query}
     ])
     logger.info(f"RAG 返回结果:\n{rag_response}")
-    docs: List[FilterDoc] = [FilterDoc(**doc) for doc in json.loads(rag_response)]
-    docs.sort(key=lambda x: x.relevance.relevant_score, reverse=True)
+    docs: List[FilterDoc] = [FilterDoc(**doc) for doc in json.loads(rag_response)]    
     
     # 2. 加载示例文档
     examples = []
@@ -282,14 +282,14 @@ async def auto_generate_annotations(rag_name: str, doc: str, model_name: str = "
                 v = json.loads(file.read())
             doc_text = DocText(doc_name=file_path, doc_text=v["doc_text"], annotations=[Annotation(**a) for a in v["annotations"]])
             examples.append(doc_text)
-            logger.info(f'成功加载示例文档 {file_path}, 包含 {len(doc_text["annotations"])} 条注释')
+            logger.info(f'成功加载示例文档 {file_path}, 包含 {len(doc_text.annotations)} 条注释')
                 
         except Exception as e:
             logger.error(f'加载文档 {file_path} 失败: {str(e)}')            
             continue
     
     # 3. 生成注释
-    annotation_prompt = generate_annotations.prompt(text=doc, examples=[examples[0:1]])
+    annotation_prompt = generate_annotations.prompt(text=doc, examples=examples[0:1])
     logger.info(f"生成注释 prompt:\n{annotation_prompt}")
     
     model_response = await chat_with_model(model_name, [

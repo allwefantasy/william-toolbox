@@ -110,6 +110,27 @@ const Annotation: React.FC = () => {
       return div.innerHTML;
     };
   }, []);
+
+  // 用于查找文本在文档中的第一次出现位置并高亮
+  const highlightText = (text: string, annotationId: string, content: string): string => {
+    // 转义特殊字符，避免正则表达式匹配出错
+    const escapedText = text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(escapedText, 'g');
+    let isFirstMatch = true;
+    
+    return content.replace(regex, (match) => {
+      if (isFirstMatch) {
+        isFirstMatch = false;
+        return `<span 
+          id="annotation-${annotationId}"
+          data-annotation-id="${annotationId}" 
+          class="highlighted-text"
+        >${match}</span>`;
+      }
+      return match;
+    });
+  };
+
   const [documentType, setDocumentType] = useState<'docx' | 'pdf' | null>(null);
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -234,6 +255,39 @@ const Annotation: React.FC = () => {
     setAnnotations(annotations.filter(anno => anno.id !== id));
   };
 
+  const handleAutoGenerateAnnotations = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.post(`/api/annotations/auto_generate`, {
+        file_uuid: fileUuid,
+        rag_name: selectedRAG,
+        model_name: selectedModel
+      });
+      
+      // 处理新的批注
+      let updatedContent = documentContent;
+      const newAnnotations = response.data.annotations.map((anno: any) => {
+        const newAnnotation = {
+          ...anno,
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+          timestamp: new Date().toISOString()
+        };
+        // 为每个新批注在文档中添加高亮
+        updatedContent = highlightText(newAnnotation.text, newAnnotation.id, updatedContent);
+        return newAnnotation;
+      });
+
+      setDocumentContent(updatedContent);
+      setAnnotations([...annotations, ...newAnnotations]);
+      message.success('自动批注生成成功');
+    } catch (error) {
+      console.error('生成批注失败:', error);
+      message.error('生成批注失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Layout className="annotation-container">
       <Content className="document-container">
@@ -271,28 +325,7 @@ const Annotation: React.FC = () => {
             </Upload>
             <Button
               icon={<RobotOutlined />}
-              onClick={async () => {
-                try {
-                  setLoading(true);
-                  const response = await axios.post(`/api/annotations/auto_generate`, {
-                    file_uuid: fileUuid,
-                    rag_name: selectedRAG,
-                    model_name: selectedModel
-                  });
-                  const newAnnotations = response.data.annotations.map((anno: any) => ({
-                    ...anno,
-                    id: Date.now().toString(),
-                    timestamp: new Date().toISOString()
-                  }));
-                  setAnnotations([...annotations, ...newAnnotations]);
-                  message.success('自动批注生成成功');
-                } catch (error) {
-                  console.error('生成批注失败:', error);
-                  message.error('生成批注失败');
-                } finally {
-                  setLoading(false);
-                }
-              }}
+              onClick={handleAutoGenerateAnnotations}
               disabled={!fileUuid || loading}
             >
               自动生成批注
@@ -332,16 +365,7 @@ const Annotation: React.FC = () => {
               }
             }}
             dangerouslySetInnerHTML={{
-              __html: annotations.reduce((content, annotation) => {
-                // 为每个注释的文本添加高亮标记
-                const highlightedText = `<span 
-                  id="annotation-${annotation.id}"
-                  data-annotation-id="${annotation.id}" 
-                  class="highlighted-text" 
-                  style="background-color: #fff3cd; padding: 2px; border-radius: 4px; cursor: pointer;"
-                >${annotation.text}</span>`;
-                return content.replace(annotation.text, highlightedText);
-              }, documentContent)
+              __html: documentContent
             }}
           />
         )}
