@@ -339,10 +339,11 @@ def add_annotations_to_docx(file_path: str, annotations: List[Annotation]) -> No
             break
             
     if comments_part is None:
-        # Create new comments part with proper namespace
-        comments_element = OxmlElement('w:comments')
-        # 设置必要的 xmlns:w 属性
-        comments_element.set(qn('xmlns:w'), 'http://schemas.openxmlformats.org/wordprocessingml/2006/main')
+        from docx.oxml import parse_xml
+
+        comments_element = parse_xml(
+            '<w:comments xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"/>'
+        )
         
         # Create the comments part
         partname = PackURI(comments_part_name)
@@ -396,7 +397,7 @@ def add_annotations_to_docx(file_path: str, annotations: List[Annotation]) -> No
             comment.append(p)
             
             # Add comment to comments part
-            comments_part.element.append(comment)
+            comments_part._element.append(comment)
             
             comment_id += 1
     
