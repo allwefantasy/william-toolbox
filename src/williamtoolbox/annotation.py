@@ -312,6 +312,7 @@ async def auto_generate_annotations(rag_name: str, doc: str, model_name: str = "
     return DocText(doc_name="", doc_text=doc, annotations=annotations)
 
 
+
 def add_annotations_to_docx(file_path: str, annotations: List[Annotation]) -> None:
     """
     Add annotations to a Word document using Spire.Doc.
@@ -344,8 +345,7 @@ def add_annotations_to_docx(file_path: str, annotations: List[Annotation]) -> No
                 text = paragraph.Text
                 if text_to_find in text:
                     # 创建批注对象
-                    comment = paragraph.AppendComment()
-                    comment.Body.AddParagraph().Text = comment_text
+                    comment = paragraph.AppendComment(comment_text)
                     comment.Format.Author = "Auto Annotation"
                     break
     
@@ -353,45 +353,3 @@ def add_annotations_to_docx(file_path: str, annotations: List[Annotation]) -> No
     output_path = file_path.replace(".docx", "_annotated.docx")
     doc.SaveToFile(output_path)
     doc.Close()
-
-
-def add_annotations_to_docx_v2(file_path: str, annotations: List[Annotation]) -> None:
-    """
-    Add annotations to a Word document using Aspose.Words.
-    
-    Args:
-        file_path: Path to the Word document
-        annotations: List of Annotation objects containing text and comment pairs
-    """
-    import aspose.words as aw
-    from datetime import datetime
-    
-    # 加载文档
-    doc = aw.Document(file_path)
-    
-    # 创建文档构建器
-    builder = aw.DocumentBuilder(doc)
-    
-    # 遍历所有批注
-    for annotation in annotations:
-        # 查找包含目标文本的节点
-        text_to_find = annotation.text
-        comment_text = annotation.comment
-        
-        # 查找文本范围
-        ranges = doc.get_child_nodes(aw.NodeType.RUN, True)
-        for run in ranges:
-            if text_to_find in run.get_text():
-                # 创建批注
-                comment = aw.Comment(doc, "Auto Annotation", "AA", datetime.now())
-                comment.paragraphs.add(aw.Paragraph(doc))
-                comment.first_paragraph.runs.add(aw.Run(doc, comment_text))
-                
-                # 将批注插入到找到的文本之后
-                run.parent_node.insert_after(comment, run)
-                break
-    
-    # 保存修改后的文档
-    output_path = file_path.replace(".docx", "_annotated_v2.docx")
-    doc.save(output_path)
-
