@@ -340,8 +340,9 @@ def add_annotations_to_docx(file_path: str, annotations: List[Annotation]) -> No
             
     if comments_part is None:
         # Create new comments part with proper namespace
-        nsmap = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
-        comments_element = OxmlElement('w:comments', nsmap=nsmap)
+        comments_element = OxmlElement('w:comments')
+        # 设置必要的 xmlns:w 属性
+        comments_element.set(qn('xmlns:w'), 'http://schemas.openxmlformats.org/wordprocessingml/2006/main')
         
         # Create the comments part
         partname = PackURI(comments_part_name)
