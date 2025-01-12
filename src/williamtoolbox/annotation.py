@@ -311,6 +311,12 @@ async def auto_generate_annotations(rag_name: str, doc: str, model_name: str = "
     
     return DocText(doc_name="", doc_text=doc, annotations=annotations)
 
+from spire.doc import Document
+from spire.doc import Comment
+from spire.doc import Paragraph
+from spire.doc import TextSelection
+import re
+
 def add_annotations_to_docx(file_path: str, annotations: List[Annotation]) -> None:
     """
     Add annotations to a Word document using Spire.Doc.
@@ -319,4 +325,39 @@ def add_annotations_to_docx(file_path: str, annotations: List[Annotation]) -> No
         file_path: Path to the Word document
         annotations: List of Annotation objects containing text and comment pairs
     """
-    pass
+    # 创建文档对象并加载文件
+    doc = Document()
+    doc.LoadFromFile(file_path)
+    
+    # 遍历所有批注
+    for annotation in annotations:
+        # 查找包含目标文本的段落
+        text_to_find = annotation.text
+        comment_text = annotation.comment
+        
+        # 遍历文档中的所有段落
+        for section in doc.Sections:
+            for paragraph in section.Paragraphs:
+                # 查找目标文本在段落中的位置
+                text = paragraph.Text
+                if text_to_find in text:
+                    # 创建批注对象
+                    comment = Comment(doc)
+                    comment.Body.AddParagraph().Text = comment_text
+                    comment.Format.Author = "Auto Annotation"
+                    
+                    # 找到目标文本的起始位置
+                    start_index = text.find(text_to_find)
+                    end_index = start_index + len(text_to_find)
+                    
+                    # 创建文本选择对象
+                    text_range = TextSelection(start_index, end_index)
+                    
+                    # 将批注添加到目标文本
+                    paragraph.AppendComment(comment, text_range)
+                    break
+    
+    # 保存修改后的文档
+    output_path = file_path.replace(".docx", "_annotated.docx")
+    doc.SaveToFile(output_path)
+    doc.Close()
