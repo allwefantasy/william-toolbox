@@ -382,7 +382,7 @@ def add_annotations_to_docx_v2(file_path: str, annotations: List[Annotation]) ->
         options.match_case = True
         
         # 查找并添加批注
-        nodes = doc.get_child_nodes(aw.NodeType.PARAGRAPH, True)
+        nodes = doc.get_child_nodes(aw.NodeType.RUN, True)
         for node in nodes:
             if text_to_find in node.get_text():
                 # 创建批注对象
@@ -390,8 +390,19 @@ def add_annotations_to_docx_v2(file_path: str, annotations: List[Annotation]) ->
                 comment.paragraphs.add(aw.Paragraph(doc))
                 comment.first_paragraph.runs.add(aw.Run(doc, comment_text))
                 
-                # 将批注插入到找到的文本后面
-                node.parent_node.insert_after(comment, node)
+                # 获取当前段落
+                current_paragraph = node.get_ancestor(aw.NodeType.PARAGRAPH)
+                if current_paragraph is not None:
+                    # 将批注添加到段落中
+                    comment_range_start = aw.CommentRangeStart(doc, comment.id)
+                    comment_range_end = aw.CommentRangeEnd(doc, comment.id)
+                    
+                    # 插入批注范围
+                    current_paragraph.insert_before(comment_range_start, node)
+                    current_paragraph.insert_after(comment_range_end, node)
+                    
+                    # 将批注添加到文档
+                    current_paragraph.append_child(comment)
                 break
     
     # 保存修改后的文档
