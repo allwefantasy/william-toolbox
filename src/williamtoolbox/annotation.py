@@ -2,7 +2,11 @@ import re
 import os
 from typing import List, Dict, Optional, Union
 import byzerllm
-from docx.oxml import parse_xml
+from docx.oxml import parse_xml, OxmlElement
+from docx.oxml.ns import qn, nsmap
+from docx.opc.constants import CONTENT_TYPE as CT, RELATIONSHIP_TYPE as RT
+from docx.opc.part import Part
+from docx.opc.packuri import PackURI
 from docx import Document
 from pydantic import BaseModel
 import json
@@ -315,7 +319,37 @@ def add_annotations_to_docx(file_path: str, annotations: List[Annotation]) -> No
         file_path: Path to the Word document
         annotations: List of Annotation objects containing text and comment pairs
     """
+    from docx.oxml.shared import OxmlElement
+    from docx.oxml.ns import qn, nsmap
+    from docx.opc.constants import CONTENT_TYPE as CT, RELATIONSHIP_TYPE as RT
+    from docx.opc.part import Part
+    from docx.opc.packuri import PackURI
+    from lxml import etree
+    
     doc = Document(file_path)
+    
+    # Create comments part if it doesn't exist
+    comments_part_name = '/word/comments.xml'
+    comments_part = None
+    
+    # Check if comments part already exists
+    for rel in doc.part.rels.values():
+        if hasattr(rel, 'target_part') and rel.target_part.partname == comments_part_name:
+            comments_part = rel.target_part
+            break
+            
+    if comments_part is None:
+        # Create new comments part with proper namespace
+        nsmap = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+        comments_element = OxmlElement('w:comments', nsmap=nsmap)
+        
+        # Create the comments part
+        partname = PackURI(comments_part_name)
+        content_type = CT.WML_COMMENTS
+        comments_part = Part(partname, content_type, comments_element, doc.part.package)
+        
+        # Add the comments part to the document
+        doc.part.relate_to(comments_part, RT.COMMENTS)
     
     # Create a dictionary to store paragraph indices for each text
     text_locations = {}
@@ -324,17 +358,46 @@ def add_annotations_to_docx(file_path: str, annotations: List[Annotation]) -> No
     for idx, paragraph in enumerate(doc.paragraphs):
         text_locations[paragraph.text] = idx
     
+    comment_id = 0
     # Add comments to the document
     for annotation in annotations:
         if annotation.text in text_locations:
             paragraph_idx = text_locations[annotation.text]
             paragraph = doc.paragraphs[paragraph_idx]
             
-            # Add a comment to the paragraph
-            run = paragraph.add_run()
-            comment = run._element.add_comment(annotation.comment)
-            comment.author = 'Annotation System'
-            comment.initials = 'AS'
+            # Create comment reference
+            comment_ref = OxmlElement('w:commentRangeStart')
+            comment_ref.set(qn('w:id'), str(comment_id))
+            paragraph._p.insert(0, comment_ref)
+            
+            comment_ref_end = OxmlElement('w:commentRangeEnd')
+            comment_ref_end.set(qn('w:id'), str(comment_id))
+            paragraph._p.append(comment_ref_end)
+            
+            comment_reference = OxmlElement('w:commentReference')
+            comment_reference.set(qn('w:id'), str(comment_id))
+            paragraph._p.append(comment_reference)
+            
+            # Create actual comment
+            comment = OxmlElement('w:comment')
+            comment.set(qn('w:id'), str(comment_id))
+            comment.set(qn('w:author'), 'Annotation System')
+            comment.set(qn('w:initials'), 'AS')
+            comment.set(qn('w:date'), '2024-01-01T00:00:00Z')
+            
+            # Add comment text
+            p = OxmlElement('w:p')
+            r = OxmlElement('w:r')
+            t = OxmlElement('w:t')
+            t.text = annotation.comment
+            r.append(t)
+            p.append(r)
+            comment.append(p)
+            
+            # Add comment to comments part
+            comments_part.element.append(comment)
+            
+            comment_id += 1
     
     # Save the document with a new name to preserve the original
     output_path = os.path.splitext(file_path)[0] + '_annotated.docx'
