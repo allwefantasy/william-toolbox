@@ -319,39 +319,4 @@ def add_annotations_to_docx(file_path: str, annotations: List[Annotation]) -> No
         file_path: Path to the Word document
         annotations: List of Annotation objects containing text and comment pairs
     """
-    from spire.doc import Document
-    from spire.doc import CommentMarkType
-
-    # Load the document
-    doc = Document()
-    doc.LoadFromFile(file_path)
-
-    # Create a dictionary to store paragraph indices for each text
-    text_locations = {}
-
-    # First, find all text locations
-    for section_idx, section in enumerate(doc.Sections):
-        for paragraph_idx, paragraph in enumerate(section.Paragraphs):
-            text_locations[paragraph.Text] = (section_idx, paragraph_idx)
-
-    # Add comments to the document
-    for annotation in annotations:
-        if annotation.text in text_locations:
-            section_idx, paragraph_idx = text_locations[annotation.text]
-            paragraph = doc.Sections[section_idx].Paragraphs[paragraph_idx]
-
-            # Add comment to the paragraph
-            comment = paragraph.AppendComment()
-            comment.Body.AddParagraph().Text = annotation.comment
-            comment.Format.Author = "Annotation System"
-            
-            # Add comment markers
-            start = CommentMarkType.COMMENT_MARK_START
-            end = CommentMarkType.COMMENT_MARK_END
-            paragraph.AppendCommentMark(start)
-            paragraph.AppendCommentMark(end)
-
-    # Save the document with a new name to preserve the original
-    output_path = os.path.splitext(file_path)[0] + '_annotated.docx'
-    doc.SaveToFile(output_path)
-    doc.Close()
+    pass
