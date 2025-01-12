@@ -306,3 +306,36 @@ async def auto_generate_annotations(rag_name: str, doc: str, model_name: str = "
         logger.info(f"  批注: {anno['comment']}")
     
     return DocText(doc_name="", doc_text=doc, annotations=annotations)
+
+def add_annotations_to_docx(file_path: str, annotations: List[Annotation]) -> None:
+    """
+    Add annotations to a Word document.
+    
+    Args:
+        file_path: Path to the Word document
+        annotations: List of Annotation objects containing text and comment pairs
+    """
+    doc = Document(file_path)
+    
+    # Create a dictionary to store paragraph indices for each text
+    text_locations = {}
+    
+    # First, find all text locations
+    for idx, paragraph in enumerate(doc.paragraphs):
+        text_locations[paragraph.text] = idx
+    
+    # Add comments to the document
+    for annotation in annotations:
+        if annotation.text in text_locations:
+            paragraph_idx = text_locations[annotation.text]
+            paragraph = doc.paragraphs[paragraph_idx]
+            
+            # Add a comment to the paragraph
+            run = paragraph.add_run()
+            comment = run._element.add_comment(annotation.comment)
+            comment.author = 'Annotation System'
+            comment.initials = 'AS'
+    
+    # Save the document with a new name to preserve the original
+    output_path = os.path.splitext(file_path)[0] + '_annotated.docx'
+    doc.save(output_path)
