@@ -26,6 +26,8 @@ src/williamtoolbox/server/request_types.py
 src/williamtoolbox/server/super_analysis_router.py
 src/williamtoolbox/server/user_manager.py
 src/williamtoolbox/server/user_router.py
+src/williamtoolbox/server/apps/__init__.py
+src/williamtoolbox/server/apps/annotation_router.py
 src/williamtoolbox/storage/__init__.py
 src/williamtoolbox/storage/json_file.py
 src/williamtoolbox/web/asset-manifest.json
