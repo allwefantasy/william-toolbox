@@ -100,3 +100,29 @@ async def revoke_api_key_endpoint(key: str, token_payload: dict = Depends(verify
 async def protected_endpoint(api_key: str = Depends(get_api_key)):
     """Example protected endpoint"""
     return {"message": "You have access to this protected endpoint"}
+
+@router.get("/api/available-rags")
+async def get_available_rags(api_key: str = Depends(get_api_key)):
+    """Get available RAGs list"""
+    try:
+        from .rag_router import list_rags
+        return await list_rags()
+    except Exception as e:
+        logger.error(f"Failed to get RAGs list: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to get RAGs list"
+        )
+
+@router.get("/api/available-models")
+async def get_available_models(api_key: str = Depends(get_api_key)):
+    """Get available models list"""
+    try:
+        from .model_router import list_models
+        return await list_models()
+    except Exception as e:
+        logger.error(f"Failed to get models list: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to get models list"
+        )
