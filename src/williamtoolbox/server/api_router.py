@@ -99,11 +99,6 @@ async def revoke_api_key_endpoint(key: str, token_payload: dict = Depends(verify
             detail="Failed to revoke API key"
         )
 
-@router.get("/protected-endpoint")
-async def protected_endpoint(api_key: str = Depends(get_api_key)):
-    """Example protected endpoint"""
-    return {"message": "You have access to this protected endpoint"}
-
 @router.get("/api/public/openai-compatible-service-info")
 async def get_openai_compatible_service_info():
     """Get OpenAI compatible service information"""
