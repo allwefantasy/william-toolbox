@@ -164,7 +164,23 @@ const APIKeyManagement: React.FC = () => {
             label="永不过期"
             valuePropName="checked"
           >
-            <Checkbox>永不过期</Checkbox>
+            <Checkbox
+              onChange={(e) => {
+                if (e.target.checked) {
+                  form.setFieldsValue({
+                    expires_in_days: -1,
+                    never_expires: true
+                  });
+                } else {
+                  form.setFieldsValue({
+                    expires_in_days: 30,
+                    never_expires: false
+                  });
+                }
+              }}
+            >
+              永不过期
+            </Checkbox>
           </Form.Item>
           <Form.Item
             name="expires_in_days"
