@@ -101,6 +101,35 @@ async def protected_endpoint(api_key: str = Depends(get_api_key)):
     """Example protected endpoint"""
     return {"message": "You have access to this protected endpoint"}
 
+@router.get("/api/public/openai-compatible-service-info")
+async def get_openai_compatible_service_info():
+    """Get OpenAI compatible service information"""
+    try:
+        from .openai_service_router import get_openai_compatible_service_status
+        from ..storage.json_file import load_config
+        
+        config = await load_config()
+        status = await get_openai_compatible_service_status()
+        
+        if "openaiServerList" in config and len(config["openaiServerList"]) > 0:
+            server = config["openaiServerList"][0]
+            return {
+                "host": server["host"],
+                "port": server["port"],
+                "isRunning": status["isRunning"]
+            }
+        return {
+            "host": None,
+            "port": None,
+            "isRunning": False
+        }
+    except Exception as e:
+        logger.error(f"Failed to get OpenAI compatible service info: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to get OpenAI compatible service info"
+        )
+
 @router.get("/api/public/available-rags")
 async def get_available_rags(api_key: str = Depends(get_api_key)):
     """Get available RAGs list"""
