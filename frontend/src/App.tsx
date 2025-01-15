@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Layout, Menu, Typography, Space, Button } from 'antd';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { RocketOutlined, AppstoreOutlined, DatabaseOutlined, FolderOutlined, SettingOutlined, MessageOutlined, CodeOutlined, ThunderboltOutlined, LogoutOutlined } from '@ant-design/icons';
+import { RocketOutlined, AppstoreOutlined, DatabaseOutlined, FolderOutlined, SettingOutlined, MessageOutlined, CodeOutlined, ThunderboltOutlined, LogoutOutlined, KeyOutlined } from '@ant-design/icons';
 import ModelList from './components/ModelList';
 import CreateModel from './components/CreateModel';
 import RAGList from './components/RAGList';
@@ -12,6 +12,7 @@ import ConfigEdit from './components/ConfigEdit';
 import OpenAICompatibleService from './components/OpenAICompatibleService';
 import Chat from './components/Chat';
 import AutoCoderChatViz from './components/AutoCoderChatViz';
+import APIKeyManagement from './components/APIKeyManagement';
 import SuperAnalysisList from './components/SuperAnalysisList';
 import ByzerSQLList from './components/ByzerSQLList';
 import UserManagement from './components/UserManagement';
@@ -39,7 +40,8 @@ const menuKeyToPermission: { [key: string]: string } = {
   '7': 'ByzerSQL',
   '8': '用户管理',
   '9': '文件管理',
-  '10': '应用广场'
+  '10': '应用广场',
+  '11': 'API Key管理'
 };
 
 function App() {
@@ -149,6 +151,8 @@ function App() {
         return <FileManagement />;
       case '10':
         return <AppStore onNavigate={setSelectedKey} />;
+      case '11':
+        return <APIKeyManagement />;
       case 'annotation':
         return <Annotation />;
       default:
@@ -237,6 +241,11 @@ function App() {
           {hasPermission('10') && (
             <Menu.Item key="10" icon={<AppstoreOutlined />}>
               应用广场
+            </Menu.Item>
+          )}
+          {hasPermission('11') && (
+            <Menu.Item key="11" icon={<KeyOutlined />}>
+              API Key管理
             </Menu.Item>
           )}
         </Menu>
