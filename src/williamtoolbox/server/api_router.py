@@ -8,6 +8,9 @@ from pydantic import BaseModel
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from .auth import verify_token
 from .user_manager import UserManager
+from .openai_service_router import get_openai_compatible_service_status
+from ..storage.json_file import load_config
+
 router = APIRouter()
 security = HTTPBearer()
 user_manager = UserManager()
@@ -104,10 +107,7 @@ async def protected_endpoint(api_key: str = Depends(get_api_key)):
 @router.get("/api/public/openai-compatible-service-info")
 async def get_openai_compatible_service_info():
     """Get OpenAI compatible service information"""
-    try:
-        from .openai_service_router import get_openai_compatible_service_status
-        from ..storage.json_file import load_config
-        
+    try:        
         config = await load_config()
         status = await get_openai_compatible_service_status()
         
