@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from typing import Optional
+from typing import Optional, List
 import uuid
 from datetime import datetime, timedelta
 from ..storage.json_file import load_api_keys, save_api_keys, create_api_key, revoke_api_key, verify_api_key
@@ -8,6 +8,8 @@ from pydantic import BaseModel
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from .auth import verify_token
 from .user_manager import UserManager
+from .rag_router import RagInfo
+from .model_router import ModelInfo
 router = APIRouter()
 security = HTTPBearer()
 user_manager = UserManager()
@@ -100,3 +102,29 @@ async def revoke_api_key_endpoint(key: str, token_payload: dict = Depends(verify
 async def protected_endpoint(api_key: str = Depends(get_api_key)):
     """Example protected endpoint"""
     return {"message": "You have access to this protected endpoint"}
+
+@router.get("/api/rags", response_model=List[RagInfo])
+async def get_rags(api_key: str = Depends(get_api_key)):
+    """Get available RAGs"""
+    try:
+        from .rag_router import get_rag_list
+        return await get_rag_list()
+    except Exception as e:
+        logger.error(f"Failed to get RAG list: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to get RAG list"
+        )
+
+@router.get("/api/models", response_model=List[ModelInfo])
+async def get_models(api_key: str = Depends(get_api_key)):
+    """Get available models"""
+    try:
+        from .model_router import get_model_list
+        return await get_model_list()
+    except Exception as e:
+        logger.error(f"Failed to get model list: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to get model list"
+        )
