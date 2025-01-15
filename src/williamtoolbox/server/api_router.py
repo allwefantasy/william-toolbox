@@ -101,7 +101,7 @@ async def protected_endpoint(api_key: str = Depends(get_api_key)):
     """Example protected endpoint"""
     return {"message": "You have access to this protected endpoint"}
 
-@router.get("/api/available-rags")
+@router.get("/api/public/available-rags")
 async def get_available_rags(api_key: str = Depends(get_api_key)):
     """Get available RAGs list"""
     try:
@@ -114,7 +114,7 @@ async def get_available_rags(api_key: str = Depends(get_api_key)):
             detail="Failed to get RAGs list"
         )
 
-@router.get("/api/available-models")
+@router.get("/api/public/available-models")
 async def get_available_models(api_key: str = Depends(get_api_key)):
     """Get available models list"""
     try:
