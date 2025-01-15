@@ -274,8 +274,7 @@ async def create_api_key(name: str, description: Optional[str] = None, expires_i
         "created_at": created_at,
         "expires_at": expires_at,
         "is_active": True
-    }
-    }
+    }    
     
     api_keys[api_key] = api_key_info
     await save_api_keys(api_keys)
