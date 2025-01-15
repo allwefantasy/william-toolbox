@@ -6,8 +6,24 @@ from ..storage.json_file import load_api_keys, save_api_keys, create_api_key, re
 from loguru import logger
 from pydantic import BaseModel
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from .auth import verify_token
+from .user_manager import UserManager
 router = APIRouter()
 security = HTTPBearer()
+user_manager = UserManager()
+
+async def verify_admin(token_payload: dict = Depends(verify_token)):
+    """Verify if user is admin"""
+    username = token_payload.get("username")
+    if not username:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    users = await user_manager.get_users()
+    user = users.get(username)
+    if not user or not user.get("is_admin", False):
+        raise HTTPException(status_code=403, detail="Admin privileges required")
+    
+    return token_payload
 
 async def get_api_key(credentials: HTTPAuthorizationCredentials = Depends(security)):    
     if credentials.scheme.lower() != "bearer":
@@ -38,7 +54,7 @@ class APIKeyInfo(BaseModel):
     is_active: bool
 
 @router.post("/api-keys")
-async def create_api_key_endpoint(request: CreateAPIKeyRequest):
+async def create_api_key_endpoint(request: CreateAPIKeyRequest, token_payload: dict = Depends(verify_admin)):
     """Create a new API key"""
     try:
         api_key_info = await create_api_key(
@@ -55,7 +71,7 @@ async def create_api_key_endpoint(request: CreateAPIKeyRequest):
         )
 
 @router.get("/api-keys")
-async def list_api_keys():
+async def list_api_keys(token_payload: dict = Depends(verify_admin)):
     """List all API keys"""
     try:
         api_keys = await load_api_keys()
@@ -68,7 +84,7 @@ async def list_api_keys():
         )
 
 @router.delete("/api-keys/{key}")
-async def revoke_api_key_endpoint(key: str):
+async def revoke_api_key_endpoint(key: str, token_payload: dict = Depends(verify_admin)):
     """Revoke an API key"""
     try:
         await revoke_api_key(key)
