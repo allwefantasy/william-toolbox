@@ -35,7 +35,7 @@ from .apps.annotation_router import router as annotation_router
 from .api_router import router as api_router
 
 app = FastAPI()
-app.include_router(api_router, prefix="/api/v1")
+app.include_router(api_router)
 app.include_router(chat_router)
 app.include_router(file_router)
 app.include_router(rag_router)

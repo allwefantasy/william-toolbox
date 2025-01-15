@@ -5,6 +5,7 @@ import uuid
 from datetime import datetime, timedelta
 from ..storage.json_file import load_api_keys, save_api_keys, create_api_key, revoke_api_key, verify_api_key
 from loguru import logger
+from pydantic import BaseModel
 
 router = APIRouter()
 
