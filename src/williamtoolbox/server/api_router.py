@@ -37,7 +37,7 @@ class APIKeyInfo(BaseModel):
     expires_at: str
     is_active: bool
 
-@router.post("/api-keys", response_model=APIKeyInfo)
+@router.post("/api-keys")
 async def create_api_key_endpoint(request: CreateAPIKeyRequest):
     """Create a new API key"""
     try:
@@ -54,7 +54,7 @@ async def create_api_key_endpoint(request: CreateAPIKeyRequest):
             detail="Failed to create API key"
         )
 
-@router.get("/api-keys", response_model=list[APIKeyInfo])
+@router.get("/api-keys")
 async def list_api_keys():
     """List all API keys"""
     try:
