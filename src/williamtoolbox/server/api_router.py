@@ -1,25 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, Security
-from fastapi.security import APIKeyHeader
+from fastapi import APIRouter, Depends, HTTPException
 from typing import Optional
 import uuid
 from datetime import datetime, timedelta
 from ..storage.json_file import load_api_keys, save_api_keys, create_api_key, revoke_api_key, verify_api_key
 from loguru import logger
 from pydantic import BaseModel
-
-router = APIRouter()
-
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-
+router = APIRouter()
 security = HTTPBearer()
 
-async def get_api_key(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    if not credentials:
-        raise HTTPException(
-            status_code=401, 
-            detail="Authorization header is required"
-        )
-    
+async def get_api_key(credentials: HTTPAuthorizationCredentials = Depends(security)):    
     if credentials.scheme.lower() != "bearer":
         raise HTTPException(
             status_code=401,

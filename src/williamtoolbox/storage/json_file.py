@@ -9,7 +9,7 @@ import aiofiles
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Dict, Any, Optional
-from uuid import uuid4
+import uuid
 from datetime import datetime, timedelta
 
 class AsyncFileLock:
@@ -268,10 +268,10 @@ async def create_api_key(name: str, description: Optional[str] = None, expires_i
     created_at = datetime.now().isoformat()
     expires_at = -1 if expires_in_days == -1 else (datetime.now() + timedelta(days=expires_in_days)).isoformat()
     api_key_info = {
-        "key": key,
+        "key": api_key,
         "name": name,
         "description": description,
-        "created_at": datetime.now().isoformat(),
+        "created_at": created_at,
         "expires_at": expires_at,
         "is_active": True
     }
