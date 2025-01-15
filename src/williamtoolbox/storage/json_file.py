@@ -266,15 +266,15 @@ async def create_api_key(name: str, description: Optional[str] = None, expires_i
     
     # Create key info
     created_at = datetime.now().isoformat()
-    expires_at = (datetime.now() + timedelta(days=expires_in_days)).isoformat()
-    
+    expires_at = -1 if expires_in_days == -1 else (datetime.now() + timedelta(days=expires_in_days)).isoformat()
     api_key_info = {
-        "key": api_key,
+        "key": key,
         "name": name,
         "description": description,
-        "created_at": created_at,
+        "created_at": datetime.now().isoformat(),
         "expires_at": expires_at,
         "is_active": True
+    }
     }
     
     api_keys[api_key] = api_key_info
@@ -288,18 +288,22 @@ async def revoke_api_key(key: str) -> None:
         api_keys[key]["is_active"] = False
         await save_api_keys(api_keys)
 
-async def verify_api_key(key: str) -> bool:
-    """Verify if an API key is valid"""
+async def verify_api_key(api_key: str) -> bool:
+    """Verify if an API key is valid and not expired"""
     api_keys = await load_api_keys()
-    if key not in api_keys:
+    if api_key not in api_keys:
         return False
     
-    key_info = api_keys[key]
+    key_info = api_keys[api_key]
     if not key_info["is_active"]:
         return False
     
+    # -1 means never expire
+    if key_info["expires_at"] == -1:
+        return True
+        
     expires_at = datetime.fromisoformat(key_info["expires_at"])
-    if datetime.now() > expires_at:
+    if expires_at < datetime.now():
         return False
     
     return True

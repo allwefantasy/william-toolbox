@@ -9,15 +9,24 @@ from pydantic import BaseModel
 
 router = APIRouter()
 
-api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-async def get_api_key(api_key: str = Security(api_key_header)):
-    if not api_key:
+security = HTTPBearer()
+
+async def get_api_key(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    if not credentials:
         raise HTTPException(
             status_code=401, 
-            detail="API key is required"
+            detail="Authorization header is required"
         )
     
+    if credentials.scheme.lower() != "bearer":
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid authentication scheme"
+        )
+    
+    api_key = credentials.credentials
     if not await verify_api_key(api_key):
         raise HTTPException(
             status_code=401,
