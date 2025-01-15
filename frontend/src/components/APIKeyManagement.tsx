@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Modal, Form, Input, Space, message, Spin } from 'antd';
+import { Table, Button, Modal, Form, Input, Space, message, Spin, Checkbox } from 'antd';
 import axios from 'axios';
 import { KeyOutlined } from '@ant-design/icons';
 
@@ -39,7 +39,7 @@ const APIKeyManagement: React.FC = () => {
       const response = await axios.post('/api-keys', {
         name: values.name,
         description: values.description,
-        expires_in_days: values.expires_in_days
+        expires_in_days: values.never_expires ? -1 : values.expires_in_days
       });
       setApiKeys([...apiKeys, response.data]);
       message.success('创建API Key成功');
@@ -160,12 +160,33 @@ const APIKeyManagement: React.FC = () => {
             <Input.TextArea />
           </Form.Item>
           <Form.Item
+            name="never_expires"
+            label="永不过期"
+            valuePropName="checked"
+          >
+            <Checkbox>永不过期</Checkbox>
+          </Form.Item>
+          <Form.Item
             name="expires_in_days"
             label="有效期（天）"
             initialValue={30}
-            rules={[{ required: true, message: '请输入有效期' }]}
+            rules={[
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (getFieldValue('never_expires') || (value >= 1 && value <= 365)) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error('有效期应在1-365天之间'));
+                },
+              }),
+            ]}
           >
-            <Input type="number" min={1} max={365} />
+            <Input 
+              type="number" 
+              min={1} 
+              max={365} 
+              disabled={form.getFieldValue('never_expires')}
+            />
           </Form.Item>
         </Form>
       </Modal>
