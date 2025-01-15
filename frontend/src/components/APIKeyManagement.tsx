@@ -200,8 +200,7 @@ const APIKeyManagement: React.FC = () => {
             <Input 
               type="number" 
               min={1} 
-              max={365} 
-              disabled={form.getFieldValue('never_expires')}
+              max={365}               
             />
           </Form.Item>
         </Form>
