@@ -309,10 +309,10 @@ async def download_byzer_sql(request: Dict[str, str]):
                 logger.error(traceback.format_exc()) 
                 raise Exception(f"Failed to extract archive: {str(e)}")
             # Download byzer-llm extension
-            byzer_llm_url = "https://download.byzer.org/byzer-extensions/nightly-build/byzer-llm-3.3_2.12-0.1.9.jar"
+            byzer_llm_url = "https://github.com/allwefantasy/infinity-sql/releases/download/1.0.0/byzer-llm-3.3_2.12-0.1.0.jar"
             libs_dir = os.path.join(install_dir, "plugin")
             os.makedirs(libs_dir, exist_ok=True)
-            byzer_llm_path = os.path.join(libs_dir, "byzer-llm-3.3_2.12-0.1.9.jar")
+            byzer_llm_path = os.path.join(libs_dir, "byzer-llm-3.3_2.12-0.1.0.jar")
 
             async with httpx.AsyncClient() as client:
                 download_progress_store[task_id] = {

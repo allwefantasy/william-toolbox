@@ -14,16 +14,20 @@ interface CreateByzerSQLProps {
 
 const DOWNLOAD_OPTIONS = [
   {
-    name: 'MacOS',
-    url: 'https://download.byzer.org/byzer-lang/2.3.9/byzer-lang-all-in-one-darwin-amd64-3.3.0-2.3.9.tar.gz'
+    name: 'MacOS Intel',
+    url: 'https://github.com/allwefantasy/infinity-sql/releases/download/1.0.0/infinity-sql-all-in-one-darwin-amd64-3.3.0-1.0.0.tar.gz'
+  },
+  {
+    name: 'MacOS ARM',
+    url: 'https://github.com/allwefantasy/infinity-sql/releases/download/1.0.0/infinity-sql-all-in-one-darwin-arm64-3.3.0-1.0.0.tar.gz'
   },
   {
     name: 'Linux',
-    url: 'https://download.byzer.org/byzer-lang/2.3.9/byzer-lang-all-in-one-linux-amd64-3.3.0-2.3.9.tar.gz'
+    url: 'https://github.com/allwefantasy/infinity-sql/releases/download/1.0.0/infinity-sql-all-in-one-linux-amd64-3.3.0-1.0.0.tar.gz'
   },
   {
     name: 'Windows',
-    url: 'https://download.byzer.org/byzer-lang/2.3.9/byzer-lang-all-in-one-win-amd64-3.3.0-2.3.9.tar.gz'
+    url: 'https://github.com/allwefantasy/infinity-sql/releases/download/1.0.0/infinity-sql-all-in-one-windows-amd64-3.3.0-1.0.0.tar.gz'
   }
 ];
 

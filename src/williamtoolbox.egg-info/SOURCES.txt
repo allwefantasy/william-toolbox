@@ -11,6 +11,7 @@ src/williamtoolbox.egg-info/entry_points.txt
 src/williamtoolbox.egg-info/requires.txt
 src/williamtoolbox.egg-info/top_level.txt
 src/williamtoolbox/server/__init__.py
+src/williamtoolbox/server/api_router.py
 src/williamtoolbox/server/auth.py
 src/williamtoolbox/server/auto_coder_chat_router.py
 src/williamtoolbox/server/backend_server.py
@@ -41,6 +42,6 @@ src/williamtoolbox/web/static/css/main.bdb81f44.css
 src/williamtoolbox/web/static/css/main.bdb81f44.css.map
 src/williamtoolbox/web/static/js/453.abd36b29.chunk.js
 src/williamtoolbox/web/static/js/453.abd36b29.chunk.js.map
-src/williamtoolbox/web/static/js/main.c025d49c.js
-src/williamtoolbox/web/static/js/main.c025d49c.js.LICENSE.txt
-src/williamtoolbox/web/static/js/main.c025d49c.js.map
+src/williamtoolbox/web/static/js/main.f2fea021.js
+src/williamtoolbox/web/static/js/main.f2fea021.js.LICENSE.txt
+src/williamtoolbox/web/static/js/main.f2fea021.js.map
