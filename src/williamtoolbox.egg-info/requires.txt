@@ -5,3 +5,4 @@ jproperties
 sse-starlette
 filelock
 PyJWT
+python-multipart

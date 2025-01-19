@@ -28,7 +28,9 @@ const UserManagement: React.FC = () => {
     'AutoCoder',
     '超级分析',
     'ByzerSQL',
-    '文件管理'
+    '文件管理',
+    '应用广场',
+    'API Key管理'
   ]);
 
   const fetchData = async () => {
@@ -105,7 +107,7 @@ const UserManagement: React.FC = () => {
   const handleUpdatePagePermissions = async (username: string, permissions: string[]) => {
     try {
       await axios.put(`/api/users/${username}/page_permissions`, {
-        permissions
+        page_permissions: permissions
       });
       message.success('更新页面权限成功');
       fetchData();

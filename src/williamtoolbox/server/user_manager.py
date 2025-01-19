@@ -4,6 +4,7 @@ import hashlib
 from typing import Dict, List, Optional
 import aiofiles
 from ..storage.json_file import with_file_lock
+from loguru import logger
 
 
 class UserManager:
@@ -103,6 +104,7 @@ class UserManager:
             raise ValueError("User not found")
 
         users[username]["permissions"] = page_permissions
+        logger.info(f"Updated page permissions for user: {username} with permissions: {page_permissions}")
         await self._save_users(users)
 
     async def update_model_permissions(self, username: str, model_permissions: List[str]):

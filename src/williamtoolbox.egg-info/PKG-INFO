@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: williamtoolbox
-Version: 0.0.37
+Version: 0.0.38
 Summary: williamtoolbox: William Toolbox
 Author: allwefantasy
 Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
@@ -15,6 +15,7 @@ Requires-Dist: jproperties
 Requires-Dist: sse-starlette
 Requires-Dist: filelock
 Requires-Dist: PyJWT
+Requires-Dist: python-multipart
 
 # William Toolbox 🧰
 
