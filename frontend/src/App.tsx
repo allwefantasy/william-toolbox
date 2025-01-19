@@ -103,14 +103,58 @@ function App() {
     delete axios.defaults.headers.common['Authorization'];
   };
 
-  const hasPermission = (key: string): boolean => {
-    if (permissions.includes('*')) return true;
-    const requiredPermission = menuKeyToPermission[key];
-    return permissions.includes(requiredPermission);
+  const [permissionsCache, setPermissionsCache] = useState<{[key: string]: boolean}>({});
+
+  const hasPermission = async (key: string): Promise<boolean> => {
+    // 检查缓存
+    if (permissionsCache[key] !== undefined) {
+      return permissionsCache[key];
+    }
+
+    // 如果拥有所有权限
+    if (permissions.includes('*')) {
+      setPermissionsCache(prev => ({...prev, [key]: true}));
+      return true;
+    }
+
+    try {
+      // 从后端获取最新权限
+      const response = await axios.get(`/api/users/${username}`);
+      const userPermissions = response.data.permissions || [];
+      
+      // 更新本地权限状态
+      setPermissions(userPermissions);
+      
+      // 检查具体权限
+      const requiredPermission = menuKeyToPermission[key];
+      const hasPerm = userPermissions.includes(requiredPermission);
+      
+      // 更新缓存
+      setPermissionsCache(prev => ({...prev, [key]: hasPerm}));
+      
+      return hasPerm;
+    } catch (error) {
+      console.error('获取用户权限失败:', error);
+      return false;
+    }
   };
 
   const renderContent = () => {
-    if (!hasPermission(selectedKey)) {
+    const [hasPerm, setHasPerm] = useState<boolean | null>(null);
+
+    useEffect(() => {
+      const checkPermission = async () => {
+        const result = await hasPermission(selectedKey);
+        setHasPerm(result);
+      };
+      checkPermission();
+    }, [selectedKey]);
+
+    if (hasPerm === null) {
+      return <div>检查权限中...</div>;
+    }
+
+    if (!hasPerm) {
       return <div>无权访问此页面</div>;
     }
 
