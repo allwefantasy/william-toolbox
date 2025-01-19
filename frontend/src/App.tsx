@@ -105,6 +105,7 @@ function App() {
 
   const hasPermission = (key: string): boolean => {
     if (permissions.includes('*')) return true;
+    if (["annotation"].includes(key)) return true;
     const requiredPermission = menuKeyToPermission[key];
     return permissions.includes(requiredPermission);
   };
@@ -151,10 +152,10 @@ function App() {
         return <FileManagement />;
       case '10':
         return <AppStore onNavigate={setSelectedKey} />;
-      case '11':
-        return <APIKeyManagement />;
       case 'annotation':
-        return <Annotation />;
+        return <Annotation />;  
+      case '11':
+        return <APIKeyManagement />;      
       default:
         return (
           <>
