@@ -53,36 +53,19 @@ function App() {
   const [username, setUsername] = useState('');
   const [permissions, setPermissions] = useState<string[]>([]);
 
-  const fetchUserPermissions = async () => {
-    try {
-      const response = await axios.get(`/api/users/${username}`);
-      const { permissions } = response.data;
-      setPermissions(permissions);
-    } catch (error) {
-      console.error('Failed to fetch user permissions:', error);
-    }
-  };
-
   useEffect(() => {
     // 从sessionStorage恢复登录状态
     const storedUsername = sessionStorage.getItem('username');
+    const storedPermissions = sessionStorage.getItem('permissions');
     const storedToken = sessionStorage.getItem('access_token');
-    if (storedUsername && storedToken) {
+    if (storedUsername && storedPermissions && storedToken) {
       setIsLoggedIn(true);
       setUsername(storedUsername);
+      setPermissions(JSON.parse(storedPermissions));
       // 设置axios默认headers
       axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
-      // 获取最新权限
-      fetchUserPermissions();
     }
   }, []);
-
-  useEffect(() => {
-    if (isLoggedIn) {
-      // 每次路由切换时获取最新权限
-      fetchUserPermissions();
-    }
-  }, [selectedKey]);
 
   const refreshModelList = useCallback(() => {
     setRefreshTrigger(prev => prev + 1);
@@ -96,16 +79,16 @@ function App() {
     setRefreshConfigTrigger(prev => prev + 1);
   }, []);
 
-  const handleLoginSuccess = async (username: string, permissions: string[], access_token: string) => {
+  const handleLoginSuccess = (username: string, permissions: string[], access_token: string) => {
     setIsLoggedIn(true);
     setUsername(username);
+    setPermissions(permissions);
     // 保存到sessionStorage
     sessionStorage.setItem('username', username);
+    sessionStorage.setItem('permissions', JSON.stringify(permissions));
     sessionStorage.setItem('access_token', access_token);
     // 设置axios默认headers
     axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
-    // 获取最新权限
-    await fetchUserPermissions();
   };
 
   const handleLogout = () => {
@@ -114,6 +97,7 @@ function App() {
     setPermissions([]);
     // 清除sessionStorage
     sessionStorage.removeItem('username');
+    sessionStorage.removeItem('permissions');
     sessionStorage.removeItem('access_token');
     // 清除axios默认headers
     delete axios.defaults.headers.common['Authorization'];
