@@ -30,7 +30,7 @@ if not supported_models:
                 },
                 model="deepseek_chat",
             ).model_dump(),
-            "undeploy_command": "byzerllm undeploy --model deepseek_chat",
+            "undeploy_command": "byzerllm undeploy --model deepseek_chat --force",
             "status_command": "byzerllm stat --model deepseek_chat",
         }
     }

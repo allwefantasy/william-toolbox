@@ -90,10 +90,12 @@ async def load_config():
             {"value": "https://api.siliconflow.cn/v1", "label": "硅基流动"},
             {"value": "https://api.deepseek.com/beta", "label": "DeepSeek"},
             {"value": "https://dashscope.aliyuncs.com/compatible-mode/v1", "label": "通义千问"},
-            {"value": "https://api.moonshot.cn/v1", "label": "Kimi"}
+            {"value": "https://api.moonshot.cn/v1", "label": "Kimi"},
+            {"value": "https://api.minimax.chat/v1", "label": "MiniMax"},
         ],
         "pretrainedModelTypes": [
             {"value": "saas/openai", "label": "OpenAI 兼容模型"},
+            {"value": "saas/reasoning_openai", "label": "OpenAI o系列兼容模型"},
             {"value": "saas/qianwen", "label": "通义千问"},
             {"value": "saas/qianwen_vl", "label": "通义千问视觉"},
             {"value": "saas/claude", "label": "Claude"}
