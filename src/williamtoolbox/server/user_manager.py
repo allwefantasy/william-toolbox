@@ -33,7 +33,12 @@ class UserManager:
             if os.path.exists(self.user_file):
                 async with aiofiles.open(self.user_file, "r") as f:
                     content = await f.read()
-                    return json.loads(content)
+                    users = json.loads(content)
+                    # Ensure admin always has full permissions
+                    if "admin" in users:
+                        users["admin"]["model_permissions"] = ["*"]
+                        users["admin"]["rag_permissions"] = ["*"]
+                    return users
             return {}
 
     async def _save_users(self, users: Dict):
@@ -93,9 +98,15 @@ class UserManager:
 
     async def get_users(self) -> Dict:
         users = await self._load_users()
-        # Don't return password hashes
-        return {username: {k: v for k, v in data.items() if k != "password"}
-                for username, data in users.items()}
+        # Don't return password hashes and ensure admin has full permissions
+        result = {}
+        for username, data in users.items():
+            user_data = {k: v for k, v in data.items() if k != "password"}
+            if username == "admin":
+                user_data["model_permissions"] = ["*"]
+                user_data["rag_permissions"] = ["*"]
+            result[username] = user_data
+        return result
 
     async def update_page_permissions(self, username: str, page_permissions: List[str]):
         users = await self._load_users()
