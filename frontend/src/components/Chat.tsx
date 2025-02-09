@@ -100,7 +100,6 @@ const [skipCSVCheck, setSkipCSVCheck] = useState(false);
   }, [currentConversationId]);
 
   const handleRegenerateResponse = async (message: Message) => {
-
     const canProceed = await checkOpenAIService();
     if (!canProceed) {
       return;
@@ -109,17 +108,23 @@ const [skipCSVCheck, setSkipCSVCheck] = useState(false);
     const messageIndex = messages.findIndex(msg => msg.id === message.id);
     if (messageIndex === -1) return;
 
+    // 获取从开始到当前消息的所有消息
     const messagesToSend = messages.slice(0, messageIndex + 1);
     setIsLoading(true);
 
     try {
       const username = sessionStorage.getItem('username') || '';
-      const streamResponse = await axios.post(`/chat/conversations/${currentConversationId}/messages/stream?username=${encodeURIComponent(username)}`, {
-        conversation_id: currentConversationId,
-        messages: messagesToSend,
-        list_type: listType,
-        selected_item: selectedItem
-      });
+      
+      // 使用 messages/stream 接口重新生成响应
+      const streamResponse = await axios.post(
+        `/chat/conversations/${currentConversationId}/messages/stream?username=${encodeURIComponent(username)}`,
+        {
+          conversation_id: currentConversationId,
+          messages: messagesToSend,
+          list_type: listType,
+          selected_item: selectedItem
+        }
+      );
 
       if (streamResponse.data && streamResponse.data.request_id) {
         const requestId = streamResponse.data.request_id;
