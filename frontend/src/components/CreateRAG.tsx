@@ -147,7 +147,7 @@ const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
               ))}
             </Select>
           </Form.Item>
-          <Form.Item name="tokenizer_path" label="Tokenizer路径" rules={[{ required: true }]}>
+          <Form.Item name="tokenizer_path" label="Tokenizer路径">
             {tokenizerPaths.length > 0 ? (
               <AutoComplete
                 options={tokenizerPaths}

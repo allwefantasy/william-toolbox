@@ -108,7 +108,7 @@ const EditRAG: React.FC<EditRAGProps> = ({ visible, ragData, onClose, onUpdate }
             ))}
           </Select>
         </Form.Item>
-        <Form.Item name="tokenizer_path" label="Tokenizer路径" rules={[{ required: true }]}>
+          <Form.Item name="tokenizer_path" label="Tokenizer路径">
           {tokenizerPaths.length > 0 ? (
             <AutoComplete
               options={tokenizerPaths}
