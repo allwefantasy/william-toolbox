@@ -223,7 +223,10 @@ async def manage_rag(rag_name: str, action: str):
         command = "auto-coder.rag serve"
         command += f" --quick"
         command += f" --model {rag_info['model']}"
-        command += f" --tokenizer_path {rag_info['tokenizer_path']}"
+
+        if rag_info["tokenizer_path"]:
+            command += f" --tokenizer_path {rag_info['tokenizer_path']}"
+
         command += f" --doc_dir {rag_info['doc_dir']}"
         command += f" --rag_doc_filter_relevance {rag_doc_filter_relevance}"
         command += f" --host {rag_info['host'] or '0.0.0.0'}"
