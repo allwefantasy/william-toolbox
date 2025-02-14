@@ -23,3 +23,4 @@ file_resources.json
 config.json
 **/__pycache__/
 **/*.egg-info
+**/frontend.log
