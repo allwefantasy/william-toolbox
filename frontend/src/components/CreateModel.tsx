@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Button, Modal, Form, Input, InputNumber, Select, message, AutoComplete, Tooltip } from 'antd';
+import { Button, Modal, Form, Input, InputNumber, Checkbox, Select, message, AutoComplete, Tooltip } from 'antd';
 import { PlusOutlined, MinusCircleOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 
 const { Option } = Select;

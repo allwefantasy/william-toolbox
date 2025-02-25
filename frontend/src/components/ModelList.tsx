@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Table, Button, message, Card, Typography, Space, Tag, Modal } from 'antd';
+import { Table, Button, message, Card, Typography, Space, Tag, Modal} from 'antd';
 import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, RocketOutlined, RedoOutlined, EditOutlined } from '@ant-design/icons';
 import EditModel from './EditModel';
 
