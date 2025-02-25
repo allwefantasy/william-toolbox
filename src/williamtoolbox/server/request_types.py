@@ -58,6 +58,9 @@ class AddModelRequest(BaseModel):
     model_path: Optional[str] = Field(default=None)
     infer_backend: Optional[str] = Field(default=None)
     product_type: ProductType = Field(default=ProductType.lite)
+    is_reasoning: Optional[bool] = Field(default=None)
+    input_price: Optional[float] = Field(default=None)
+    output_price: Optional[float] = Field(default=None)
 
 
 class AddRAGRequest(BaseModel):

@@ -104,9 +104,9 @@ async def add_model(model: AddModelRequest):
                 "model_type": model.pretrained_model_type,
                 "base_url": model.infer_params.get("saas.base_url", ""),
                 "api_key": model.infer_params.get("saas.api_key", ""),
-                "is_reasoning": False,
-                "input_price": 0.0,
-                "output_price": 0.0,
+                "is_reasoning": model.is_reasoning or False,
+                "input_price": model.input_price or 0.0,
+                "output_price": model.output_price or 0.0,
                 "average_speed": 0.0
             }])
             return {"message": f"Model {model.name} added successfully in Lite mode"}

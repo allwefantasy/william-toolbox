@@ -37,6 +37,9 @@ interface FormValues {
   'saas.api_key'?: string;
   'saas.model'?: string;
   product_type: ProductType;
+  is_reasoning?: boolean;
+  input_price?: number;
+  output_price?: number;
 }
 
 interface CreateModelProps {
@@ -218,6 +221,15 @@ const CreateModel: React.FC<CreateModelProps> = ({ onModelAdded }) => {
               <Input />
             </Form.Item>
           )}
+          <Form.Item name="is_reasoning" label="是否为推理模型" valuePropName="checked">
+            <Checkbox />
+          </Form.Item>
+          <Form.Item name="input_price" label="输入价格 (元/百万token)">
+            <InputNumber min={0} precision={4} />
+          </Form.Item>
+          <Form.Item name="output_price" label="输出价格 (元/百万token)">
+            <InputNumber min={0} precision={4} />
+          </Form.Item>
           <Form.List name="infer_params">
             {(fields, { add, remove }) => (
               <>
