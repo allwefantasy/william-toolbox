@@ -78,6 +78,8 @@ const Chat: React.FC = () => {
   const [pendingMessage, setPendingMessage] = useState('');
 const [skipCSVCheck, setSkipCSVCheck] = useState(false);
 
+  const [searchQuery, setSearchQuery] = useState('');
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -840,7 +842,7 @@ const [skipCSVCheck, setSkipCSVCheck] = useState(false);
         <Button
           type="primary"
           icon={<PlusCircleOutlined />}
-          style={{ marginBottom: 20, width: '100%' }}
+          style={{ marginBottom: 16, width: '100%' }}
           onClick={async () => {
             try {
               const username = sessionStorage.getItem('username') || '';
@@ -865,35 +867,50 @@ const [skipCSVCheck, setSkipCSVCheck] = useState(false);
         >
           新的聊天
         </Button>
-        {conversations.map((conv) => (
-          <Dropdown overlay={menu(conv)} trigger={['contextMenu']} key={conv.id}>
-            <div
-              className={`conversation-item ${currentConversationId === conv.id ? 'active' : ''}`}
-              onClick={() => {
-                setCurrentConversationId(conv.id);
-                setCurrentConversationTitle(conv.title);
-              }}
-              onDoubleClick={() => handleTitleDoubleClick(conv)}
-            >
-              {editingTitleId === conv.id ? (
-                <Input
-                  value={editingTitle}
-                  onChange={handleTitleChange}
-                  onPressEnter={() => handleTitleUpdate(conv)}
-                  onBlur={() => handleTitleUpdate(conv)}
-                  autoFocus
-                />
-              ) : (
-                <>
-                  <Typography.Text strong>{conv.title}</Typography.Text>
-                  <br />
-                  <Typography.Text type="secondary">{conv.messages}条对话</Typography.Text>
-                  <Typography.Text type="secondary" style={{ float: 'right' }}>{conv.time}</Typography.Text>
-                </>
-              )}
-            </div>
-          </Dropdown>
-        ))}
+        
+        <Input.Search
+          placeholder="搜索会话"
+          allowClear
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{ 
+            marginBottom: 16, 
+            borderRadius: '8px',
+          }}
+          size="middle"
+        />
+        
+        {conversations
+          .filter(conv => conv.title.toLowerCase().includes(searchQuery.toLowerCase()))
+          .map((conv) => (
+            <Dropdown overlay={menu(conv)} trigger={['contextMenu']} key={conv.id}>
+              <div
+                className={`conversation-item ${currentConversationId === conv.id ? 'active' : ''}`}
+                onClick={() => {
+                  setCurrentConversationId(conv.id);
+                  setCurrentConversationTitle(conv.title);
+                }}
+                onDoubleClick={() => handleTitleDoubleClick(conv)}
+              >
+                {editingTitleId === conv.id ? (
+                  <Input
+                    value={editingTitle}
+                    onChange={handleTitleChange}
+                    onPressEnter={() => handleTitleUpdate(conv)}
+                    onBlur={() => handleTitleUpdate(conv)}
+                    autoFocus
+                  />
+                ) : (
+                  <>
+                    <Typography.Text strong style={{ fontSize: '14px' }}>{conv.title}</Typography.Text>
+                    <br />
+                    <Typography.Text type="secondary" style={{ fontSize: '12px' }}>{conv.messages}条对话</Typography.Text>
+                    <Typography.Text type="secondary" style={{ fontSize: '12px', float: 'right' }}>{conv.time}</Typography.Text>
+                  </>
+                )}
+              </div>
+            </Dropdown>
+          ))
+        }
       </div>
       <div className="chat-area">
         <Title level={4} style={{ padding: '16px', borderBottom: '1px solid #e8e8e8' }}>

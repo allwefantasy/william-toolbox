@@ -68,16 +68,31 @@ async def ask(request: AskRequest):
 @router.get("/chat/conversations")
 async def get_conversation_list(username: str):
     chat_data = await load_chat_data(username)
-    conversation_list = [
-        {
+    conversation_list = []
+    
+    for conv in chat_data["conversations"]:
+        title = conv["title"]
+        
+        # If title is empty or default, use first user message as title
+        if not title or title == "新的聊天":
+            # Find the first user message
+            for msg in conv["messages"]:
+                if msg["role"] == "user" and msg["content"]:
+                    # Truncate message if too long (30 characters max)
+                    title = msg["content"][:30] + ("..." if len(msg["content"]) > 30 else "")
+                    break
+        
+        conversation_list.append({
             "id": conv["id"],
-            "title": conv["title"],
+            "title": title,
+            "time": conv["updated_at"].split("T")[0],  # Format date to YYYY-MM-DD
+            "messages": len(conv["messages"]),
             "created_at": conv["created_at"],
             "updated_at": conv["updated_at"],
-            "message_count": len(conv["messages"]),
-        }
-        for conv in chat_data["conversations"]
-    ]
+        })
+    
+    # Sort conversations by updated_at in descending order (newest first)
+    conversation_list.sort(key=lambda x: x["updated_at"], reverse=True)
     return conversation_list
 
 @router.post("/chat/conversations", response_model=Conversation)
