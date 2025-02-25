@@ -69,8 +69,7 @@ async def list_models():
     return [
         ModelInfo(
             name=name, 
-            status=info["status"],
-            product_type=info.get("product_type", ProductType.pro)  # 默认为 pro 模式
+            status=info["status"]            
         )
         for name, info in models.items()
     ]
