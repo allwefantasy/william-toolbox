@@ -173,23 +173,55 @@ async def update_model(model_name: str, request: AddModelRequest):
             detail="Cannot update a running model. Please stop it first."
         )
 
-    # Update the model's deploy command
-    model_info['deploy_command'] = DeployCommand(
-        pretrained_model_type=request.pretrained_model_type,
-        cpus_per_worker=request.cpus_per_worker,
-        gpus_per_worker=request.gpus_per_worker,
-        num_workers=request.num_workers,
-        worker_concurrency=request.worker_concurrency,
-        infer_params=request.infer_params,
-        model=model_name,
-        model_path=request.model_path,
-        infer_backend=request.infer_backend,
-    ).model_dump()
+    if request.product_type == ProductType.lite:
+        # Lite mode: use auto-coder's model management
+        try:
+            autocoder_models.update_model(model_name, {
+                "name": model_name,
+                "description": f"Updated by William Toolbox",
+                "model_name": model_name,
+                "model_type": request.pretrained_model_type,
+                "base_url": request.infer_params.get("saas.base_url", ""),
+                "api_key": request.infer_params.get("saas.api_key", ""),
+                "is_reasoning": request.is_reasoning or False,
+                "input_price": request.input_price or 0.0,
+                "output_price": request.output_price or 0.0
+            })
+            
+            # Update product_type in model_info
+            model_info['product_type'] = ProductType.lite
+            models[model_name] = model_info
+            await save_models_to_json(models)
+            
+            return {"message": f"Model {model_name} updated successfully in Lite mode"}
+        except Exception as e:
+            logger.error(f"Failed to update model in Lite mode: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Failed to update model in Lite mode: {str(e)}")
+    else:
+        # Pro mode: original logic
+        # Update the model's deploy command
+        model_info['deploy_command'] = DeployCommand(
+            pretrained_model_type=request.pretrained_model_type,
+            cpus_per_worker=request.cpus_per_worker,
+            gpus_per_worker=request.gpus_per_worker,
+            num_workers=request.num_workers,
+            worker_concurrency=request.worker_concurrency,
+            infer_params=request.infer_params,
+            model=model_name,
+            model_path=request.model_path,
+            infer_backend=request.infer_backend,
+        ).model_dump()
+        
+        # Update product_type in model_info
+        model_info['product_type'] = ProductType.pro
+        model_info['is_reasoning'] = request.is_reasoning
+        model_info['input_price'] = request.input_price
+        model_info['output_price'] = request.output_price
 
-    models[model_name] = model_info
-    await save_models_to_json(models)
+        models[model_name] = model_info
+        await save_models_to_json(models)
 
-    return {"message": f"Model {model_name} updated successfully"}
+        return {"message": f"Model {model_name} updated successfully in Pro mode"}
 
 
 @router.post("/models/{model_name}/{action}")
