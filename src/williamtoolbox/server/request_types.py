@@ -43,6 +43,10 @@ class AddMessageRequest(BaseModel):
     list_type: str
     selected_item: str
 
+class ProductType(str, Enum):
+    pro = "pro"
+    lite = "lite"
+
 class AddModelRequest(BaseModel):
     name: str
     pretrained_model_type: str
@@ -53,6 +57,7 @@ class AddModelRequest(BaseModel):
     infer_params: dict = Field(default_factory=dict)
     model_path: Optional[str] = Field(default=None)
     infer_backend: Optional[str] = Field(default=None)
+    product_type: ProductType = Field(default=ProductType.lite)
 
 
 class AddRAGRequest(BaseModel):

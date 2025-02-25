@@ -93,34 +93,56 @@ async def delete_model(model_name: str):
 @router.post("/models/add")
 async def add_model(model: AddModelRequest):
     """Add a new model to the supported models list."""
-    models = await load_models_from_json() or supported_models
-    if model.name in models:
-        raise HTTPException(
-            status_code=400, detail=f"Model {model.name} already exists"
-        )
+    if model.product_type == ProductType.lite:
+        # Lite mode: use auto-coder's model management
+        from autocoder.models import add_and_activate_models
+        try:
+            add_and_activate_models([{
+                "name": model.name,
+                "description": f"Auto created by William Toolbox",
+                "model_name": model.name,
+                "model_type": model.pretrained_model_type,
+                "base_url": model.infer_params.get("saas.base_url", ""),
+                "api_key_path": process_api_key_path(model.infer_params.get("saas.base_url", "")),
+                "is_reasoning": False,
+                "input_price": 0.0,
+                "output_price": 0.0,
+                "average_speed": 0.0
+            }])
+            return {"message": f"Model {model.name} added successfully in Lite mode"}
+        except Exception as e:
+            logger.error(f"Failed to add model in Lite mode: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Failed to add model in Lite mode: {str(e)}")
+    else:
+        # Pro mode: original logic
+        models = await load_models_from_json() or supported_models
+        if model.name in models:
+            raise HTTPException(
+                status_code=400, detail=f"Model {model.name} already exists"
+            )
 
-    if model.infer_backend == "saas":
-        model.infer_backend = None
+        if model.infer_backend == "saas":
+            model.infer_backend = None
 
-    new_model = {
-        "status": "stopped",
-        "deploy_command": DeployCommand(
-            pretrained_model_type=model.pretrained_model_type,
-            cpus_per_worker=model.cpus_per_worker,
-            gpus_per_worker=model.gpus_per_worker,
-            num_workers=model.num_workers,
-            worker_concurrency=model.worker_concurrency,
-            infer_params=model.infer_params,
-            model=model.name,
-            model_path=model.model_path,
-            infer_backend=model.infer_backend,
-        ).model_dump(),
-        "undeploy_command": f"byzerllm undeploy --model {model.name} --force",
-    }
+        new_model = {
+            "status": "stopped",
+            "deploy_command": DeployCommand(
+                pretrained_model_type=model.pretrained_model_type,
+                cpus_per_worker=model.cpus_per_worker,
+                gpus_per_worker=model.gpus_per_worker,
+                num_workers=model.num_workers,
+                worker_concurrency=model.worker_concurrency,
+                infer_params=model.infer_params,
+                model=model.name,
+                model_path=model.model_path,
+                infer_backend=model.infer_backend,
+            ).model_dump(),
+            "undeploy_command": f"byzerllm undeploy --model {model.name} --force",
+        }
 
-    models[model.name] = new_model
-    await save_models_to_json(models)
-    return {"message": f"Model {model.name} added successfully"}
+        models[model.name] = new_model
+        await save_models_to_json(models)
+        return {"message": f"Model {model.name} added successfully in Pro mode"}
 
 
 @router.get("/models/{model_name}")

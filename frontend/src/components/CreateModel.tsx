@@ -18,6 +18,11 @@ interface InferParam {
   value: string;
 }
 
+enum ProductType {
+  Pro = "pro",
+  Lite = "lite"
+}
+
 interface FormValues {
   name: string;
   pretrained_model_type: string;
@@ -31,6 +36,7 @@ interface FormValues {
   'saas.base_url'?: string;
   'saas.api_key'?: string;
   'saas.model'?: string;
+  product_type: ProductType;
 }
 
 interface CreateModelProps {
@@ -174,6 +180,12 @@ const CreateModel: React.FC<CreateModelProps> = ({ onModelAdded }) => {
           </Form.Item>
           <Form.Item name="worker_concurrency" label="Worker 并发数" initialValue={1000}>
             <InputNumber min={1} />
+          </Form.Item>
+          <Form.Item name="product_type" label="产品模式" initialValue={ProductType.Lite}>
+            <Select>
+              <Option value={ProductType.Pro}>专业版 (Pro)</Option>
+              <Option value={ProductType.Lite}>轻量版 (Lite)</Option>
+            </Select>
           </Form.Item>
           <Form.Item name="infer_backend" label="推理后端" initialValue={InferBackend.SaaS} rules={[{ required: true }]}>
             <Select onChange={handleInferBackendChange}>
