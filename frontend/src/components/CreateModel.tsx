@@ -153,54 +153,50 @@ const CreateModel: React.FC<CreateModelProps> = ({ onModelAdded }) => {
           </Form.Item>
           <Form.Item
             name="pretrained_model_type"
+            label={
+              <span>
+                预训练模型类型&nbsp;
+                <Tooltip title="如果你需要部署私有模型，可以选择 custom/模型名称 并且合理配置推理后端以及 GPU 数">
+                  <QuestionCircleOutlined />
+                </Tooltip>
+              </span>
+            }
+            initialValue="saas/openai"
+            rules={[{ required: true }]}
+          >
+            <AutoComplete
+              options={pretrainedModelTypes}
+              onChange={handlePretrainedModelTypeChange}
+              placeholder="选择或输入预训练模型类型"
+            >
+              <Input />
+            </AutoComplete>
+          </Form.Item>
+          <Form.Item name="cpus_per_worker" label="每个 Worker CPU" initialValue={0.001}>
+            <InputNumber min={0} step={0.001} />
+          </Form.Item>
+          <Form.Item name="gpus_per_worker" label="每个 Worker GPU" initialValue={0}>
+            <InputNumber min={0} />
+          </Form.Item>
+          <Form.Item name="num_workers" label="Worker 数量" initialValue={1}>
+            <InputNumber min={1} />
+          </Form.Item>
+          <Form.Item name="worker_concurrency" label="Worker 并发数" initialValue={1000}>
+            <InputNumber min={1} />
+          </Form.Item>
           <Form.Item name="product_type" label="产品模式" initialValue={ProductType.Lite}>
             <Select>
               <Option value={ProductType.Pro}>专业版 (Pro)</Option>
               <Option value={ProductType.Lite}>轻量版 (Lite)</Option>
             </Select>
           </Form.Item>
-          {form.getFieldValue('product_type') === ProductType.Pro && (
-            <>
-              <Form.Item name="pretrained_model_type" label={
-                  <span>
-                    预训练模型类型&nbsp;
-                    <Tooltip title="如果你需要部署私有模型，可以选择 custom/模型名称 并且合理配置推理后端以及 GPU 数">
-                      <QuestionCircleOutlined />
-                    </Tooltip>
-                  </span>
-                }
-                initialValue="saas/openai"
-                rules={[{ required: true }]}
-              >
-                <AutoComplete
-                  options={pretrainedModelTypes}
-                  onChange={handlePretrainedModelTypeChange}
-                  placeholder="选择或输入预训练模型类型"
-                >
-                  <Input />
-                </AutoComplete>
-              </Form.Item>
-              <Form.Item name="cpus_per_worker" label="每个 Worker CPU" initialValue={0.001}>
-                <InputNumber min={0} step={0.001} />
-              </Form.Item>
-              <Form.Item name="gpus_per_worker" label="每个 Worker GPU" initialValue={0}>
-                <InputNumber min={0} />
-              </Form.Item>
-              <Form.Item name="num_workers" label="Worker 数量" initialValue={1}>
-                <InputNumber min={1} />
-              </Form.Item>
-              <Form.Item name="worker_concurrency" label="Worker 并发数" initialValue={1000}>
-                <InputNumber min={1} />
-              </Form.Item>
-              <Form.Item name="infer_backend" label="推理后端" initialValue={InferBackend.SaaS} rules={[{ required: true }]}>
-                <Select onChange={handleInferBackendChange}>
-                  {Object.values(InferBackend).map((backend) => (
-                    <Option key={backend} value={backend}>{backend}</Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </>
-          )}
+          <Form.Item name="infer_backend" label="推理后端" initialValue={InferBackend.SaaS} rules={[{ required: true }]}>
+            <Select onChange={handleInferBackendChange}>
+              {Object.values(InferBackend).map((backend) => (
+                <Option key={backend} value={backend}>{backend}</Option>
+              ))}
+            </Select>
+          </Form.Item>
           {selectedBackend === InferBackend.SaaS && (
             <>
               <Form.Item name="saas.base_url" label="SaaS Base URL">
