@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import EditRAG from './EditRAG';
 import axios from 'axios';
-import { Table, Button, message, Card, Typography, Space, Tag, Tooltip, Modal, Select } from 'antd';
-import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, DatabaseOutlined, FileOutlined, EditOutlined, ExclamationCircleOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Table, Button, message, Card, Typography, Space, Tag, Tooltip, Modal, Select, Input, Empty } from 'antd';
+import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, DatabaseOutlined, FileOutlined, EditOutlined, ExclamationCircleOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
 
 const { Title, Paragraph } = Typography;
+const { Search } = Input;
+const { Option } = Select;
 
 interface RAG {
   name: string;
@@ -17,6 +19,7 @@ interface RAG {
   is_alive?: boolean;
   host: string;
   port: number;
+  product_type: string;
 }
 
 interface RAGListProps {
@@ -41,6 +44,8 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
   const [logPolling, setLogPolling] = useState<NodeJS.Timeout | null>(null);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [currentRAG, setCurrentRAG] = useState<RAG | null>(null);
+  const [searchText, setSearchText] = useState('');
+  const [productTypeFilter, setProductTypeFilter] = useState<string>('all');
 
   const showLogModal = async (ragName: string, logType: string) => {
     setLogModal({
@@ -221,6 +226,16 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
       render: (text: string) => <Typography.Text strong>{text}</Typography.Text>,
     },
     {
+      title: '配置类型',
+      dataIndex: 'product_type',
+      key: 'product_type',
+      render: (type: string) => (
+        <Tag color={type === 'lite' ? 'orange' : 'blue'}>
+          {type === 'lite' ? 'Lite' : 'Pro'}
+        </Tag>
+      ),
+    },
+    {
       title: '模型',
       dataIndex: 'model',
       key: 'model',
@@ -339,6 +354,14 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
     },
   ];
 
+  // 过滤RAG列表 (名称和配置类型)
+  const filteredRAGs = rags.filter(rag => {
+    const nameMatches = rag.name.toLowerCase().includes(searchText.toLowerCase());
+    const typeMatches = productTypeFilter === 'all' || 
+                       rag.product_type === productTypeFilter;
+    return nameMatches && typeMatches;
+  });
+
   return (
     <>
       <EditRAG
@@ -357,13 +380,41 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
             RAG列表
           </Space>
         </Title>
+        
+        <div style={{ display: 'flex', marginBottom: 16, gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+          <Search
+            placeholder="按RAG名称搜索"
+            allowClear
+            enterButton={<SearchOutlined />}
+            size="middle"
+            onSearch={value => setSearchText(value)}
+            onChange={e => setSearchText(e.target.value)}
+            style={{ maxWidth: 300 }}
+          />
+          <Space>
+            <span>配置类型：</span>
+            <Select 
+              defaultValue="all" 
+              style={{ width: 130 }} 
+              onChange={value => setProductTypeFilter(value)}
+            >
+              <Option value="all">全部</Option>
+              <Option value="lite">轻量版 (Lite)</Option>
+              <Option value="pro">专业版 (Pro)</Option>
+            </Select>
+          </Space>
+        </div>
+        
         <Table
           columns={columns}
-          dataSource={rags}
+          dataSource={filteredRAGs}
           rowKey="name"
           loading={loading}
           pagination={false}
           bordered
+          locale={{
+            emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="没有找到匹配的RAG服务" />
+          }}
         />
         <Modal
           title={logModal.title}

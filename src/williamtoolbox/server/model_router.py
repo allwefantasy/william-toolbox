@@ -69,7 +69,8 @@ async def list_models():
     return [
         ModelInfo(
             name=name, 
-            status=info["status"]            
+            status=info["status"],
+            product_type=info.get("product_type", ProductType.pro)
         )
         for name, info in models.items()
     ]
@@ -115,7 +116,7 @@ async def add_model(model: AddModelRequest):
             autocoder_models.add_and_activate_models([{
                 "name": model.name,
                 "description": f"Auto created by William Toolbox",
-                "model_name": model.name,
+                "model_name": model.infer_params.get("saas.model", ""),
                 "model_type": model.pretrained_model_type,
                 "base_url": model.infer_params.get("saas.base_url", ""),
                 "api_key": model.infer_params.get("saas.api_key", ""),

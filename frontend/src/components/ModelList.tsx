@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Table, Button, message, Card, Typography, Space, Tag, Modal} from 'antd';
-import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, RocketOutlined, RedoOutlined, EditOutlined } from '@ant-design/icons';
+import { Table, Button, message, Card, Typography, Space, Tag, Modal, Input, Empty, Select } from 'antd';
+import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, RocketOutlined, RedoOutlined, EditOutlined, SearchOutlined } from '@ant-design/icons';
 import EditModel from './EditModel';
 
 const { Title } = Typography;
+const { Search } = Input;
+const { Option } = Select;
 
 interface Model {
   name: string;
@@ -44,6 +46,8 @@ const ModelList: React.FC<ModelListProps> = ({ refreshTrigger }) => {
   const [countdowns, setCountdowns] = useState<{ [key: string]: number | undefined }>({});
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [currentModel, setCurrentModel] = useState<Model | null>(null);
+  const [searchText, setSearchText] = useState('');
+  const [productTypeFilter, setProductTypeFilter] = useState<string>('all');
 
   useEffect(() => {
     fetchModels();
@@ -120,12 +124,30 @@ const ModelList: React.FC<ModelListProps> = ({ refreshTrigger }) => {
     setEditModalVisible(true);
   };
 
+  // 过滤模型列表 (名称和配置类型)
+  const filteredModels = models.filter(model => {
+    const nameMatches = model.name.toLowerCase().includes(searchText.toLowerCase());
+    const typeMatches = productTypeFilter === 'all' || 
+                       model.product_type === productTypeFilter;
+    return nameMatches && typeMatches;
+  });
+
   const columns = [
     {
       title: '模型名称',
       dataIndex: 'name',
       key: 'name',
       render: (text: string) => <Typography.Text strong>{text}</Typography.Text>,
+    },
+    {
+      title: '配置类型',
+      dataIndex: 'product_type',
+      key: 'product_type',
+      render: (type: string) => (
+        <Tag color={type === 'pro' ? 'blue' : 'orange'}>
+          {type === 'pro' ? 'Pro' : 'Lite'}
+        </Tag>
+      ),
     },
     {
       title: '当前状态',
@@ -226,21 +248,49 @@ const ModelList: React.FC<ModelListProps> = ({ refreshTrigger }) => {
         }}
       />
       <Card>
-      <Title level={2}>
-        <Space>
-          <RocketOutlined />
-          模型列表
-        </Space>
-      </Title>
-      <Table 
-        columns={columns} 
-        dataSource={models} 
-        rowKey="name" 
-        loading={loading}
-        pagination={false}
-        bordered
-      />
-    </Card>
+        <Title level={2}>
+          <Space>
+            <RocketOutlined />
+            模型列表
+          </Space>
+        </Title>
+        
+        <div style={{ display: 'flex', marginBottom: 16, gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+          <Search
+            placeholder="按模型名称搜索"
+            allowClear
+            enterButton={<SearchOutlined />}
+            size="middle"
+            onSearch={value => setSearchText(value)}
+            onChange={e => setSearchText(e.target.value)}
+            style={{ maxWidth: 300 }}
+          />
+          <Space>
+            <span>配置类型：</span>
+            <Select 
+              defaultValue="all" 
+              style={{ width: 130 }} 
+              onChange={value => setProductTypeFilter(value)}
+            >
+              <Option value="all">全部</Option>
+              <Option value="lite">轻量版 (Lite)</Option>
+              <Option value="pro">专业版 (Pro)</Option>
+            </Select>
+          </Space>
+        </div>
+        
+        <Table 
+          columns={columns} 
+          dataSource={filteredModels} 
+          rowKey="name" 
+          loading={loading}
+          pagination={false}
+          bordered
+          locale={{
+            emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="没有找到匹配的模型" />
+          }}
+        />
+      </Card>
     </>
   );
 };

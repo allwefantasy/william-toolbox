@@ -68,7 +68,7 @@ class AddModelRequest(BaseModel):
 class AddRAGRequest(BaseModel):
     name: str
     model: str
-    tokenizer_path: str
+    tokenizer_path: str = Field(default="")
     doc_dir: str
     rag_doc_filter_relevance: float = Field(default=2.0)
     host: str = Field(default="0.0.0.0")

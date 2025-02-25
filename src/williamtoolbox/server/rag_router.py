@@ -48,6 +48,8 @@ async def delete_rag(rag_name: str):
             status_code=404, detail=f"RAG {rag_name} not found")
 
     rag_info = rags[rag_name]
+    
+    # 检查RAG状态 - 对所有类型都相同
     if rag_info['status'] == 'running':
         raise HTTPException(
             status_code=400,
@@ -188,7 +190,13 @@ async def add_rag(rag: AddRAGRequest):
                 status_code=400,
                 detail=f"Port {rag.port} is already in use by RAG {other_rag['name']}",
             )
-    new_rag = {"status": "stopped", **rag.model_dump()}
+            
+    # 确保设置默认的product_type
+    rag_data = rag.model_dump()
+    if "product_type" not in rag_data or not rag_data["product_type"]:
+        rag_data["product_type"] = "lite"
+        
+    new_rag = {"status": "stopped", **rag_data}
     rags[rag.name] = new_rag
     await save_rags_to_json(rags)
     return {"message": f"RAG {rag.name} added successfully"}
@@ -208,6 +216,12 @@ async def manage_rag(rag_name: str, action: str):
         )
 
     rag_info = rags[rag_name]
+    
+    # 默认设置product_type为lite，如果未指定
+    product_type = rag_info.get("product_type", "lite")
+    
+    # 可以在这里添加基于product_type的特定限制
+    # 例如，如果有某些操作只允许Pro版本执行
 
     if action == "start":
         # Check if the port is already in use by another RAG
@@ -223,11 +237,21 @@ async def manage_rag(rag_name: str, action: str):
         command = "auto-coder.rag serve"
         command += f" --quick"
         command += f" --model {rag_info['model']}"
-        command += f" --tokenizer_path {rag_info['tokenizer_path']}"
+        
+        # 只在tokenizer_path有值时添加该参数
+        if rag_info.get("tokenizer_path"):
+            command += f" --tokenizer_path {rag_info['tokenizer_path']}"
+            
         command += f" --doc_dir {rag_info['doc_dir']}"
         command += f" --rag_doc_filter_relevance {rag_doc_filter_relevance}"
         command += f" --host {rag_info['host'] or '0.0.0.0'}"
         command += f" --port {port}"
+
+        # 根据产品类型添加相应的参数
+        if product_type == "lite":
+            command += f" --lite"
+        else:
+            command += f" --pro"
 
         if rag_info["required_exts"]:
             command += f" --required_exts {rag_info['required_exts']}"
@@ -239,9 +263,6 @@ async def manage_rag(rag_name: str, action: str):
         if rag_info["without_contexts"]:
             command += f" --without_contexts"
             
-        if "product_type" in rag_info:
-            command += f" --product_type {rag_info['product_type']}"
-
         if "enable_hybrid_index" in rag_info and rag_info["enable_hybrid_index"]:
             command += f" --enable_hybrid_index"
             if "hybrid_index_max_output_tokens" in rag_info:
@@ -304,6 +325,10 @@ async def manage_rag(rag_name: str, action: str):
         else:
             rag_info["status"] = "stopped"
 
+    # 确保保存product_type
+    if "product_type" not in rag_info:
+        rag_info["product_type"] = product_type
+        
     rags[rag_name] = rag_info
     await save_rags_to_json(rags)
 

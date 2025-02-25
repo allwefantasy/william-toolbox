@@ -102,6 +102,17 @@ const EditRAG: React.FC<EditRAGProps> = ({ visible, ragData, onClose, onUpdate }
       onCancel={onClose}
     >
       <Form form={form} layout="vertical">
+        <Form.Item 
+          name="product_type" 
+          label="配置类型" 
+          initialValue="lite"
+        >
+          <Select>
+            <Option value="lite">轻量版 (Lite)</Option>
+            <Option value="pro">专业版 (Pro)</Option>
+          </Select>
+        </Form.Item>
+        
         <Form.Item name="model" label="模型" rules={[{ required: true }]}>
           <Select>
             {models.map(model => (
@@ -109,16 +120,16 @@ const EditRAG: React.FC<EditRAGProps> = ({ visible, ragData, onClose, onUpdate }
             ))}
           </Select>
         </Form.Item>
-        <Form.Item name="tokenizer_path" label="Tokenizer路径" rules={[{ required: true }]}>
+        <Form.Item name="tokenizer_path" label="Tokenizer路径">
           {tokenizerPaths.length > 0 ? (
             <AutoComplete
               options={tokenizerPaths}
-              placeholder="选择或输入 Tokenizer 路径"
+              placeholder="选择或输入 Tokenizer 路径（可选）"
             >
               <Input />
             </AutoComplete>
           ) : (
-            <Input placeholder="输入 Tokenizer 路径" />
+            <Input placeholder="输入 Tokenizer 路径（可选）" />
           )}
         </Form.Item>
         <Form.Item name="doc_dir" label="文档目录" rules={[{ required: true }]}>
@@ -197,17 +208,6 @@ const EditRAG: React.FC<EditRAGProps> = ({ visible, ragData, onClose, onUpdate }
           initialValue={false}
         >
           <Switch />
-        </Form.Item>
-
-        <Form.Item 
-          name="product_type" 
-          label="产品类型" 
-          initialValue="lite"
-        >
-          <Select>
-            <Option value="lite">Lite</Option>
-            <Option value="pro">Pro</Option>
-          </Select>
         </Form.Item>
 
         <Form.List name="infer_params">
