@@ -1,1 +1,325 @@
-{"deepseek_chat": {"status": "running", "deploy_command": {"pretrained_model_type": "saas/openai", "cpus_per_worker": 0.001, "gpus_per_worker": 0, "num_workers": 1, "worker_concurrency": 1000, "infer_params": {"saas.base_url": "https://ark.cn-beijing.volces.com/api/v3", "saas.api_key": "$MODEL_DOUBAO_TOKEN", "saas.model": "deepseek-v3-241226"}, "model": "deepseek_chat", "model_path": null, "infer_backend": "saas"}, "undeploy_command": "byzerllm undeploy --model deepseek_chat"}, "sonnet_3_5_chat": {"status": "stopped", "deploy_command": {"pretrained_model_type": "saas/openai", "cpus_per_worker": 0.001, "gpus_per_worker": 0, "num_workers": 1, "worker_concurrency": 1000, "infer_params": {"saas.base_url": "https://openrouter.ai/api/v1", "saas.api_key": "${MODEL_OPEN_ROUTER}", "saas.model": "anthropic/claude-3.5-sonnet"}, "model": "sonnet_3_5_chat", "model_path": null, "infer_backend": "saas"}, "undeploy_command": "byzerllm undeploy --model sonnet_3_5_chat"}, "qwen_vl": {"status": "running", "deploy_command": {"pretrained_model_type": "saas/openai", "cpus_per_worker": 0.001, "gpus_per_worker": 0, "num_workers": 1, "worker_concurrency": 1000, "infer_params": {"saas.base_url": "https://api.siliconflow.cn/v1", "saas.api_key": "$MODEL_silcon_flow_TOKEN", "saas.model": "Qwen/Qwen2-VL-72B-Instruct"}, "model": "qwen_vl", "model_path": null, "infer_backend": null}, "undeploy_command": "byzerllm undeploy --model qwen_vl"}, "emb": {"status": "stopped", "deploy_command": {"pretrained_model_type": "saas/openai", "cpus_per_worker": 0.001, "gpus_per_worker": 0, "num_workers": 1, "worker_concurrency": 1000, "infer_params": {"saas.base_url": "https://api.siliconflow.cn/v1", "saas.api_key": "$MODEL_silcon_flow_TOKEN", "saas.model": "BAAI/bge-m3"}, "model": "emb", "model_path": null, "infer_backend": null}, "undeploy_command": "byzerllm undeploy --model emb"}, "example_rag_chat": {"status": "running", "deploy_command": {"pretrained_model_type": "saas/openai", "cpus_per_worker": 0.001, "gpus_per_worker": 0, "num_workers": 1, "worker_concurrency": 1000, "infer_params": {"saas.base_url": "http://127.0.0.1:8018/v1", "saas.api_key": "xxxxx", "saas.model": "deepseek_chat"}, "model": "example_rag_chat", "model_path": null, "infer_backend": "saas"}, "undeploy_command": "byzerllm undeploy --model example_rag_chat"}, "qwen2_72b_chat": {"status": "stopped", "deploy_command": {"pretrained_model_type": "saas/openai", "cpus_per_worker": 0.001, "gpus_per_worker": 0, "num_workers": 1, "worker_concurrency": 1000, "infer_params": {"saas.base_url": "https://api.siliconflow.cn/v1", "saas.api_key": "${MODEL_silcon_flow_TOKEN}", "saas.model": "alibaba/Qwen2-72B-Instruct"}, "model": "qwen2_72b_chat", "model_path": null, "infer_backend": null}, "undeploy_command": "byzerllm undeploy --model qwen2_72b_chat"}, "stable_deepseek_chat": {"status": "running", "deploy_command": {"pretrained_model_type": "saas/openai", "cpus_per_worker": 0.001, "gpus_per_worker": 0, "num_workers": 1, "worker_concurrency": 1000, "infer_params": {"saas.base_url": "https://api.deepseek.com/v1", "saas.api_key": "${MODEL_DEEPSEEK_TOKEN}", "saas.model": "deepseek-chat"}, "model": "stable_deepseek_chat", "model_path": null, "infer_backend": null}, "undeploy_command": "byzerllm undeploy --model stable_deepseek_chat"}, "kyligence_ai": {"status": "stopped", "deploy_command": {"pretrained_model_type": "saas/openai", "cpus_per_worker": 0.001, "gpus_per_worker": 0, "num_workers": 1, "worker_concurrency": 1000, "infer_params": {"saas.base_url": "http://127.0.0.1:8017/v1", "saas.api_key": "xxx", "saas.model": "deepseek_chat"}, "model": "kyligence_ai", "model_path": null, "infer_backend": null}, "undeploy_command": "byzerllm undeploy --model kyligence_ai"}, "qwen2_5_128k_chat": {"status": "stopped", "deploy_command": {"pretrained_model_type": "saas/openai", "cpus_per_worker": 0.001, "gpus_per_worker": 0, "num_workers": 1, "worker_concurrency": 1000, "infer_params": {"saas.base_url": "https://api.siliconflow.cn/v1", "saas.api_key": "${MODEL_silcon_flow_TOKEN}", "saas.model": "Qwen/Qwen2.5-72B-Instruct-128K"}, "model": "qwen2_5_128k_chat", "model_path": null, "infer_backend": null}, "undeploy_command": "byzerllm undeploy --model qwen2_5_128k_chat"}, "qwen110b_chat": {"status": "stopped", "deploy_command": {"pretrained_model_type": "saas/openai", "cpus_per_worker": 0.001, "gpus_per_worker": 0, "num_workers": 1, "worker_concurrency": 1000, "infer_params": {"saas.base_url": "https://api.siliconflow.cn/v1", "saas.api_key": "${MODEL_silcon_flow_TOKEN}", "saas.model": "alibaba/Qwen1.5-110B-Chat"}, "model": "qwen110b_chat", "model_path": null, "infer_backend": null}, "undeploy_command": "byzerllm undeploy --model qwen110b_chat"}, "flux_chat": {"status": "stopped", "deploy_command": {"pretrained_model_type": "saas/openai", "cpus_per_worker": 0.001, "gpus_per_worker": 0, "num_workers": 1, "worker_concurrency": 1000, "infer_params": {"saas.base_url": "https://api.siliconflow.cn/v1", "saas.api_key": "${MODEL_silcon_flow_TOKEN}", "saas.model": "black-forest-labs/FLUX.1-dev"}, "model": "flux_chat", "model_path": null, "infer_backend": null}, "undeploy_command": "byzerllm undeploy --model flux_chat"}, "kyligence_enhance_model": {"status": "stopped", "deploy_command": {"pretrained_model_type": "saas/openai", "cpus_per_worker": 0.001, "gpus_per_worker": 0, "num_workers": 1, "worker_concurrency": 1000, "infer_params": {"saas.base_url": "http://127.0.0.1:8017/v1", "saas.api_key": "xxxx", "saas.model": "deepseek_chat"}, "model": "kyligence_enhance_model", "model_path": null, "infer_backend": "saas"}, "undeploy_command": "byzerllm undeploy --model kyligence_enhance_model"}, "power_kyligence_enhance_model": {"status": "stopped", "deploy_command": {"pretrained_model_type": "saas/openai", "cpus_per_worker": 0.001, "gpus_per_worker": 0, "num_workers": 1, "worker_concurrency": 1000, "infer_params": {"saas.base_url": "http://127.0.0.1:8027/v1", "saas.api_key": "xxxx", "saas.model": "sonnet_3_5_chat"}, "model": "power_kyligence_enhance_model", "model_path": null, "infer_backend": null}, "undeploy_command": "byzerllm undeploy --model power_kyligence_enhance_model"}, "doubao_128k_chat": {"status": "running", "deploy_command": {"pretrained_model_type": "saas/openai", "cpus_per_worker": 0.001, "gpus_per_worker": 0, "num_workers": 1, "worker_concurrency": 1000, "infer_params": {"saas.base_url": "https://ark.cn-beijing.volces.com/api/v3", "saas.api_key": "a2dae9c5-6ad4-4253-95e9-108e32f2f5f0", "saas.model": "ep-20241220114919-bl86z"}, "model": "doubao_128k_chat", "model_path": null, "infer_backend": "saas"}, "undeploy_command": "byzerllm undeploy --model doubao_128k_chat"}, "deepseek_vl": {"status": "stopped", "deploy_command": {"pretrained_model_type": "saas/openai", "cpus_per_worker": 0.001, "gpus_per_worker": 0, "num_workers": 1, "worker_concurrency": 1000, "infer_params": {"saas.base_url": "https://api.siliconflow.cn/v1", "saas.api_key": "${MODEL_silcon_flow_TOKEN}", "saas.model": "deepseek-ai/deepseek-vl2"}, "model": "deepseek_vl", "model_path": null, "infer_backend": "saas"}, "undeploy_command": "byzerllm undeploy --model deepseek_vl"}, "qvq_vl": {"status": "stopped", "deploy_command": {"pretrained_model_type": "saas/openai", "cpus_per_worker": 0.001, "gpus_per_worker": 0, "num_workers": 1, "worker_concurrency": 1000, "infer_params": {"saas.base_url": "https://api.siliconflow.cn/v1", "saas.api_key": "${MODEL_silcon_flow_TOKEN}", "saas.model": "Qwen/QVQ-72B-Preview"}, "model": "qvq_vl", "model_path": null, "infer_backend": null}, "undeploy_command": "byzerllm undeploy --model qvq_vl"}, "doubao_r1_chat": {"status": "running", "deploy_command": {"pretrained_model_type": "saas/reasoning_openai", "cpus_per_worker": 0.001, "gpus_per_worker": 0, "num_workers": 1, "worker_concurrency": 1000, "infer_params": {"saas.base_url": "https://ark.cn-beijing.volces.com/api/v3", "saas.api_key": "${MODEL_DOUBAO_TOKEN}", "saas.model": "ep-20250204214947-fsj2w"}, "model": "doubao_r1_chat", "model_path": null, "infer_backend": "saas"}, "undeploy_command": "byzerllm undeploy --model doubao_r1_chat --force"}}
+{
+    "deepseek_chat": {
+        "status": "running",
+        "deploy_command": {
+            "pretrained_model_type": "saas/openai",
+            "cpus_per_worker": 0.001,
+            "gpus_per_worker": 0,
+            "num_workers": 1,
+            "worker_concurrency": 1000,
+            "infer_params": {
+                "saas.base_url": "https://ark.cn-beijing.volces.com/api/v3",
+                "saas.api_key": "$MODEL_DOUBAO_TOKEN",
+                "saas.model": "deepseek-v3-241226"
+            },
+            "model": "deepseek_chat",
+            "model_path": null,
+            "infer_backend": "saas"
+        },
+        "undeploy_command": "byzerllm undeploy --model deepseek_chat"
+    },
+    "sonnet_3_5_chat": {
+        "status": "stopped",
+        "deploy_command": {
+            "pretrained_model_type": "saas/openai",
+            "cpus_per_worker": 0.001,
+            "gpus_per_worker": 0,
+            "num_workers": 1,
+            "worker_concurrency": 1000,
+            "infer_params": {
+                "saas.base_url": "https://openrouter.ai/api/v1",
+                "saas.api_key": "${MODEL_OPEN_ROUTER}",
+                "saas.model": "anthropic/claude-3.5-sonnet"
+            },
+            "model": "sonnet_3_5_chat",
+            "model_path": null,
+            "infer_backend": "saas"
+        },
+        "undeploy_command": "byzerllm undeploy --model sonnet_3_5_chat"
+    },
+    "qwen_vl": {
+        "status": "running",
+        "deploy_command": {
+            "pretrained_model_type": "saas/openai",
+            "cpus_per_worker": 0.001,
+            "gpus_per_worker": 0,
+            "num_workers": 1,
+            "worker_concurrency": 1000,
+            "infer_params": {
+                "saas.base_url": "https://api.siliconflow.cn/v1",
+                "saas.api_key": "$MODEL_silcon_flow_TOKEN",
+                "saas.model": "Qwen/Qwen2-VL-72B-Instruct"
+            },
+            "model": "qwen_vl",
+            "model_path": null,
+            "infer_backend": null
+        },
+        "undeploy_command": "byzerllm undeploy --model qwen_vl"
+    },
+    "emb": {
+        "status": "stopped",
+        "deploy_command": {
+            "pretrained_model_type": "saas/openai",
+            "cpus_per_worker": 0.001,
+            "gpus_per_worker": 0,
+            "num_workers": 1,
+            "worker_concurrency": 1000,
+            "infer_params": {
+                "saas.base_url": "https://api.siliconflow.cn/v1",
+                "saas.api_key": "$MODEL_silcon_flow_TOKEN",
+                "saas.model": "BAAI/bge-m3"
+            },
+            "model": "emb",
+            "model_path": null,
+            "infer_backend": null
+        },
+        "undeploy_command": "byzerllm undeploy --model emb"
+    },
+    "example_rag_chat": {
+        "status": "running",
+        "deploy_command": {
+            "pretrained_model_type": "saas/openai",
+            "cpus_per_worker": 0.001,
+            "gpus_per_worker": 0,
+            "num_workers": 1,
+            "worker_concurrency": 1000,
+            "infer_params": {
+                "saas.base_url": "http://127.0.0.1:8018/v1",
+                "saas.api_key": "xxxxx",
+                "saas.model": "deepseek_chat"
+            },
+            "model": "example_rag_chat",
+            "model_path": null,
+            "infer_backend": "saas"
+        },
+        "undeploy_command": "byzerllm undeploy --model example_rag_chat"
+    },
+    "qwen2_72b_chat": {
+        "status": "stopped",
+        "deploy_command": {
+            "pretrained_model_type": "saas/openai",
+            "cpus_per_worker": 0.001,
+            "gpus_per_worker": 0,
+            "num_workers": 1,
+            "worker_concurrency": 1000,
+            "infer_params": {
+                "saas.base_url": "https://api.siliconflow.cn/v1",
+                "saas.api_key": "${MODEL_silcon_flow_TOKEN}",
+                "saas.model": "alibaba/Qwen2-72B-Instruct"
+            },
+            "model": "qwen2_72b_chat",
+            "model_path": null,
+            "infer_backend": null
+        },
+        "undeploy_command": "byzerllm undeploy --model qwen2_72b_chat"
+    },
+    "stable_deepseek_chat": {
+        "status": "running",
+        "deploy_command": {
+            "pretrained_model_type": "saas/openai",
+            "cpus_per_worker": 0.001,
+            "gpus_per_worker": 0,
+            "num_workers": 1,
+            "worker_concurrency": 1000,
+            "infer_params": {
+                "saas.base_url": "https://api.deepseek.com/v1",
+                "saas.api_key": "${MODEL_DEEPSEEK_TOKEN}",
+                "saas.model": "deepseek-chat"
+            },
+            "model": "stable_deepseek_chat",
+            "model_path": null,
+            "infer_backend": null
+        },
+        "undeploy_command": "byzerllm undeploy --model stable_deepseek_chat"
+    },
+    "kyligence_ai": {
+        "status": "stopped",
+        "deploy_command": {
+            "pretrained_model_type": "saas/openai",
+            "cpus_per_worker": 0.001,
+            "gpus_per_worker": 0,
+            "num_workers": 1,
+            "worker_concurrency": 1000,
+            "infer_params": {
+                "saas.base_url": "http://127.0.0.1:8017/v1",
+                "saas.api_key": "xxx",
+                "saas.model": "deepseek_chat"
+            },
+            "model": "kyligence_ai",
+            "model_path": null,
+            "infer_backend": null
+        },
+        "undeploy_command": "byzerllm undeploy --model kyligence_ai"
+    },
+    "qwen2_5_128k_chat": {
+        "status": "stopped",
+        "deploy_command": {
+            "pretrained_model_type": "saas/openai",
+            "cpus_per_worker": 0.001,
+            "gpus_per_worker": 0,
+            "num_workers": 1,
+            "worker_concurrency": 1000,
+            "infer_params": {
+                "saas.base_url": "https://api.siliconflow.cn/v1",
+                "saas.api_key": "${MODEL_silcon_flow_TOKEN}",
+                "saas.model": "Qwen/Qwen2.5-72B-Instruct-128K"
+            },
+            "model": "qwen2_5_128k_chat",
+            "model_path": null,
+            "infer_backend": null
+        },
+        "undeploy_command": "byzerllm undeploy --model qwen2_5_128k_chat"
+    },
+    "qwen110b_chat": {
+        "status": "stopped",
+        "deploy_command": {
+            "pretrained_model_type": "saas/openai",
+            "cpus_per_worker": 0.001,
+            "gpus_per_worker": 0,
+            "num_workers": 1,
+            "worker_concurrency": 1000,
+            "infer_params": {
+                "saas.base_url": "https://api.siliconflow.cn/v1",
+                "saas.api_key": "${MODEL_silcon_flow_TOKEN}",
+                "saas.model": "alibaba/Qwen1.5-110B-Chat"
+            },
+            "model": "qwen110b_chat",
+            "model_path": null,
+            "infer_backend": null
+        },
+        "undeploy_command": "byzerllm undeploy --model qwen110b_chat"
+    },
+    "flux_chat": {
+        "status": "stopped",
+        "deploy_command": {
+            "pretrained_model_type": "saas/openai",
+            "cpus_per_worker": 0.001,
+            "gpus_per_worker": 0,
+            "num_workers": 1,
+            "worker_concurrency": 1000,
+            "infer_params": {
+                "saas.base_url": "https://api.siliconflow.cn/v1",
+                "saas.api_key": "${MODEL_silcon_flow_TOKEN}",
+                "saas.model": "black-forest-labs/FLUX.1-dev"
+            },
+            "model": "flux_chat",
+            "model_path": null,
+            "infer_backend": null
+        },
+        "undeploy_command": "byzerllm undeploy --model flux_chat"
+    },
+    "kyligence_enhance_model": {
+        "status": "stopped",
+        "deploy_command": {
+            "pretrained_model_type": "saas/openai",
+            "cpus_per_worker": 0.001,
+            "gpus_per_worker": 0,
+            "num_workers": 1,
+            "worker_concurrency": 1000,
+            "infer_params": {
+                "saas.base_url": "http://127.0.0.1:8017/v1",
+                "saas.api_key": "xxxx",
+                "saas.model": "deepseek_chat"
+            },
+            "model": "kyligence_enhance_model",
+            "model_path": null,
+            "infer_backend": "saas"
+        },
+        "undeploy_command": "byzerllm undeploy --model kyligence_enhance_model"
+    },
+    "power_kyligence_enhance_model": {
+        "status": "stopped",
+        "deploy_command": {
+            "pretrained_model_type": "saas/openai",
+            "cpus_per_worker": 0.001,
+            "gpus_per_worker": 0,
+            "num_workers": 1,
+            "worker_concurrency": 1000,
+            "infer_params": {
+                "saas.base_url": "http://127.0.0.1:8027/v1",
+                "saas.api_key": "xxxx",
+                "saas.model": "sonnet_3_5_chat"
+            },
+            "model": "power_kyligence_enhance_model",
+            "model_path": null,
+            "infer_backend": null
+        },
+        "undeploy_command": "byzerllm undeploy --model power_kyligence_enhance_model"
+    },
+    "doubao_128k_chat": {
+        "status": "running",
+        "deploy_command": {
+            "pretrained_model_type": "saas/openai",
+            "cpus_per_worker": 0.001,
+            "gpus_per_worker": 0,
+            "num_workers": 1,
+            "worker_concurrency": 1000,
+            "infer_params": {
+                "saas.base_url": "https://ark.cn-beijing.volces.com/api/v3",
+                "saas.api_key": "a2dae9c5-6ad4-4253-95e9-108e32f2f5f0",
+                "saas.model": "ep-20241220114919-bl86z"
+            },
+            "model": "doubao_128k_chat",
+            "model_path": null,
+            "infer_backend": "saas"
+        },
+        "undeploy_command": "byzerllm undeploy --model doubao_128k_chat"
+    },
+    "deepseek_vl": {
+        "status": "stopped",
+        "deploy_command": {
+            "pretrained_model_type": "saas/openai",
+            "cpus_per_worker": 0.001,
+            "gpus_per_worker": 0,
+            "num_workers": 1,
+            "worker_concurrency": 1000,
+            "infer_params": {
+                "saas.base_url": "https://api.siliconflow.cn/v1",
+                "saas.api_key": "${MODEL_silcon_flow_TOKEN}",
+                "saas.model": "deepseek-ai/deepseek-vl2"
+            },
+            "model": "deepseek_vl",
+            "model_path": null,
+            "infer_backend": "saas"
+        },
+        "undeploy_command": "byzerllm undeploy --model deepseek_vl"
+    },
+    "qvq_vl": {
+        "status": "stopped",
+        "deploy_command": {
+            "pretrained_model_type": "saas/openai",
+            "cpus_per_worker": 0.001,
+            "gpus_per_worker": 0,
+            "num_workers": 1,
+            "worker_concurrency": 1000,
+            "infer_params": {
+                "saas.base_url": "https://api.siliconflow.cn/v1",
+                "saas.api_key": "${MODEL_silcon_flow_TOKEN}",
+                "saas.model": "Qwen/QVQ-72B-Preview"
+            },
+            "model": "qvq_vl",
+            "model_path": null,
+            "infer_backend": null
+        },
+        "undeploy_command": "byzerllm undeploy --model qvq_vl"
+    },
+    "doubao_r1_chat": {
+        "status": "running",
+        "deploy_command": {
+            "pretrained_model_type": "saas/reasoning_openai",
+            "cpus_per_worker": 0.001,
+            "gpus_per_worker": 0,
+            "num_workers": 1,
+            "worker_concurrency": 1000,
+            "infer_params": {
+                "saas.base_url": "https://ark.cn-beijing.volces.com/api/v3",
+                "saas.api_key": "${MODEL_DOUBAO_TOKEN}",
+                "saas.model": "ep-20250204214947-fsj2w"
+            },
+            "model": "doubao_r1_chat",
+            "model_path": null,
+            "infer_backend": "saas"
+        },
+        "undeploy_command": "byzerllm undeploy --model doubao_r1_chat --force"
+    }
+}
