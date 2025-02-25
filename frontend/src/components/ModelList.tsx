@@ -10,6 +10,7 @@ interface Model {
   name: string;
   status: 'stopped' | 'running';
   deploy_command?: any;
+  product_type?: 'lite' | 'pro';
 }
 
 interface ModelListProps {
@@ -139,51 +140,75 @@ const ModelList: React.FC<ModelListProps> = ({ refreshTrigger }) => {
     {
       title: '操作',
       key: 'action',
-      render: (_: any, record: Model) => (
-        <Space size="middle">
-          <Button
-            type={record.status === 'stopped' ? 'primary' : 'default'}
-            icon={record.status === 'stopped' ? <RocketOutlined /> : <PauseCircleOutlined />}
-            onClick={() => handleAction(record.name, record.status === 'stopped' ? 'start' : 'stop')}
-            loading={actionLoading[record.name]}
-            disabled={countdowns[record.name] !== undefined}
-          >
-            {record.status === 'stopped' ? '启动' : '停止'}
-            {countdowns[record.name] !== undefined && ` (${countdowns[record.name]}s)`}
-          </Button>
-          <Button
-            icon={<RedoOutlined />}
-            onClick={() => handleAction(record.name, 'restart')}
-            loading={actionLoading[record.name]}
-            disabled={countdowns[record.name] !== undefined}
-          >
-            重启
-            {countdowns[record.name] !== undefined && ` (${countdowns[record.name]}s)`}
-          </Button>
-          <Button
-            icon={<SyncOutlined spin={refreshing[record.name]} />}
-            onClick={() => refreshStatus(record.name)}
-            disabled={refreshing[record.name]}
-          >
-            刷新状态
-          </Button>
-          <Button
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-            disabled={record.status === 'running'}
-          >
-            编辑
-          </Button>
-          <Button
-            type="primary"
-            danger
-            onClick={() => handleDelete(record.name)}
-            disabled={record.status === 'running'}
-          >
-            删除
-          </Button>
-        </Space>
-      ),
+      render: (_: any, record: Model) => {
+        // 如果是 lite 模式，只显示编辑和删除按钮
+        if (record.product_type === 'lite') {
+          return (
+            <Space size="middle">
+              <Button
+                icon={<EditOutlined />}
+                onClick={() => handleEdit(record)}
+              >
+                编辑
+              </Button>
+              <Button
+                type="primary"
+                danger
+                onClick={() => handleDelete(record.name)}
+              >
+                删除
+              </Button>
+            </Space>
+          );
+        }
+        
+        // 如果是 pro 模式或未指定，显示完整的操作区
+        return (
+          <Space size="middle">
+            <Button
+              type={record.status === 'stopped' ? 'primary' : 'default'}
+              icon={record.status === 'stopped' ? <RocketOutlined /> : <PauseCircleOutlined />}
+              onClick={() => handleAction(record.name, record.status === 'stopped' ? 'start' : 'stop')}
+              loading={actionLoading[record.name]}
+              disabled={countdowns[record.name] !== undefined}
+            >
+              {record.status === 'stopped' ? '启动' : '停止'}
+              {countdowns[record.name] !== undefined && ` (${countdowns[record.name]}s)`}
+            </Button>
+            <Button
+              icon={<RedoOutlined />}
+              onClick={() => handleAction(record.name, 'restart')}
+              loading={actionLoading[record.name]}
+              disabled={countdowns[record.name] !== undefined}
+            >
+              重启
+              {countdowns[record.name] !== undefined && ` (${countdowns[record.name]}s)`}
+            </Button>
+            <Button
+              icon={<SyncOutlined spin={refreshing[record.name]} />}
+              onClick={() => refreshStatus(record.name)}
+              disabled={refreshing[record.name]}
+            >
+              刷新状态
+            </Button>
+            <Button
+              icon={<EditOutlined />}
+              onClick={() => handleEdit(record)}
+              disabled={record.status === 'running'}
+            >
+              编辑
+            </Button>
+            <Button
+              type="primary"
+              danger
+              onClick={() => handleDelete(record.name)}
+              disabled={record.status === 'running'}
+            >
+              删除
+            </Button>
+          </Space>
+        );
+      },
     },
   ];
 

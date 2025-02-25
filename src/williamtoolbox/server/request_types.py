@@ -107,6 +107,7 @@ class EventResponse(BaseModel):
 class ModelInfo(BaseModel):
     name: str
     status: str
+    product_type: ProductType = Field(default=ProductType.pro)
 
 class CreateConversationRequest(BaseModel):
     title: str

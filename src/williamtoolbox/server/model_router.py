@@ -67,7 +67,11 @@ async def list_models():
     """List all supported models and their current status."""
     models = await load_models_from_json() or supported_models
     return [
-        ModelInfo(name=name, status=info["status"])
+        ModelInfo(
+            name=name, 
+            status=info["status"],
+            product_type=info.get("product_type", ProductType.pro)  # 默认为 pro 模式
+        )
         for name, info in models.items()
     ]
 
@@ -80,12 +84,24 @@ async def delete_model(model_name: str):
         raise HTTPException(
             status_code=404, detail=f"Model {model_name} not found")
 
-    # Check if the model is running
-    if models[model_name]["status"] == "running":
+    # 获取模型信息
+    model_info = models[model_name]
+    product_type = model_info.get("product_type", ProductType.pro)
+    
+    # 如果是 pro 模式，检查模型是否在运行
+    if product_type == ProductType.pro and model_info["status"] == "running":
         raise HTTPException(
             status_code=400, detail="Cannot delete a running model")
+    
+    # 如果是 lite 模式，尝试从 autocoder 中删除
+    if product_type == ProductType.lite:
+        try:
+            autocoder_models.delete_model(model_name)
+        except Exception as e:
+            logger.error(f"Failed to delete model from autocoder: {str(e)}")
+            # 继续删除本地记录，即使 autocoder 删除失败
 
-    # Delete the model from supported_models
+    # 删除模型记录
     del models[model_name]
     await save_models_to_json(models)
     return {"message": f"Model {model_name} deleted successfully"}
@@ -109,6 +125,18 @@ async def add_model(model: AddModelRequest):
                 "output_price": model.output_price or 0.0,
                 "average_speed": 0.0
             }])
+            
+            # 创建一个简化的模型记录，标记为 lite 模式
+            models = await load_models_from_json() or supported_models
+            models[model.name] = {
+                "status": "running",  # lite 模式下默认为运行状态
+                "product_type": ProductType.lite,
+                "is_reasoning": model.is_reasoning or False,
+                "input_price": model.input_price or 0.0,
+                "output_price": model.output_price or 0.0
+            }
+            await save_models_to_json(models)
+            
             return {"message": f"Model {model.name} added successfully in Lite mode"}
         except Exception as e:
             logger.error(f"Failed to add model in Lite mode: {str(e)}")
@@ -235,6 +263,14 @@ async def manage_model(model_name: str, action: str):
     if action not in ["start", "stop"]:
         raise HTTPException(
             status_code=400, detail="Invalid action. Use 'start' or 'stop'"
+        )
+        
+    # 检查是否是 lite 模式，lite 模式下不允许启动/停止
+    model_info = models[model_name]
+    if model_info.get("product_type") == ProductType.lite:
+        raise HTTPException(
+            status_code=400, 
+            detail="Lite mode models cannot be started or stopped manually"
         )
 
     model_info = models[model_name]
