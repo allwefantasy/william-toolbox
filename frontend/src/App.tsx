@@ -19,6 +19,7 @@ import Login from './components/Login';
 import FileManagement from './components/FileManagement';
 import AppStore from './components/AppStore';
 import Annotation from './components/Annotation';
+import AutoCoderJsonChatViz from './components/AutoCoderJsonChatViz';
 import './App.css';
 import axios from 'axios';
 
@@ -35,6 +36,8 @@ const menuKeyToPermission: { [key: string]: string } = {
   '3.3': '编辑配置',
   '4': '聊天',
   '5': 'AutoCoder',
+  '5.1': 'AutoCoder开发历史',
+  '5.2': 'AutoCoder对话历史',
   '6': '超级分析',
   '7': 'ByzerSQL',
   '8': '用户管理',
@@ -137,8 +140,10 @@ function App() {
         return <ConfigEdit onConfigUpdated={refreshConfigList} />;
       case '4':
         return <Chat />;
-      case '5':
+      case '5.1':
         return <AutoCoderChatViz />;
+      case '5.2':
+        return <AutoCoderJsonChatViz />;
       case '6':
         return <SuperAnalysisList refreshTrigger={refreshTrigger} />;
       case '7':
@@ -210,9 +215,10 @@ function App() {
             </Menu.Item>
           )}
           {hasPermission('5') && (
-            <Menu.Item key="5" icon={<CodeOutlined />}>
-              AutoCoder
-            </Menu.Item>
+            <SubMenu key="5" icon={<CodeOutlined />} title="AutoCoder">
+              <Menu.Item key="5.1">开发历史</Menu.Item>
+              <Menu.Item key="5.2">对话历史</Menu.Item>
+            </SubMenu>
           )}
           {hasPermission('6') && (
             <Menu.Item key="6" icon={<ThunderboltOutlined />}>

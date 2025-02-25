@@ -14,6 +14,7 @@ from pydantic import BaseModel
 
 import hashlib
 import traceback
+import json
 
 router = APIRouter()
 
@@ -260,3 +261,26 @@ async def get_file_content(path: str, file_number: int):
             success=False, 
             message=f"读取文件出错: {str(e)}"
         )
+
+@router.get("/auto-coder-chat/json-history")
+async def get_json_chat_history(path: str):
+    """
+    Retrieve and return the chat history JSON from an auto-coder project
+    """
+    try:
+        # Validate the path
+        if not os.path.isdir(path):
+            return {"success": False, "message": "无效的目录路径"}
+        
+        # Check for .auto-coder directory
+        history_path = os.path.join(path, ".auto-coder", "memory", "chat_history.json")
+        if not os.path.isfile(history_path):
+            return {"success": False, "message": "未找到聊天历史文件"}
+        
+        # Read and parse the JSON file
+        with open(history_path, 'r', encoding='utf-8') as f:
+            chat_history = json.load(f)
+        
+        return {"success": True, "chatHistory": chat_history}
+    except Exception as e:
+        return {"success": False, "message": str(e)}
