@@ -9,6 +9,7 @@ from ..storage.json_file import *
 import asyncio
 import subprocess
 import traceback
+from autocoder import models as autocoder_models
 
 router = APIRouter()
 
@@ -94,16 +95,15 @@ async def delete_model(model_name: str):
 async def add_model(model: AddModelRequest):
     """Add a new model to the supported models list."""
     if model.product_type == ProductType.lite:
-        # Lite mode: use auto-coder's model management
-        from autocoder.models import add_and_activate_models
+        # Lite mode: use auto-coder's model management        
         try:
-            add_and_activate_models([{
+            autocoder_models.add_and_activate_models([{
                 "name": model.name,
                 "description": f"Auto created by William Toolbox",
                 "model_name": model.name,
                 "model_type": model.pretrained_model_type,
                 "base_url": model.infer_params.get("saas.base_url", ""),
-                "api_key_path": process_api_key_path(model.infer_params.get("saas.base_url", "")),
+                "api_key": model.infer_params.get("saas.api_key", ""),
                 "is_reasoning": False,
                 "input_price": 0.0,
                 "output_price": 0.0,
