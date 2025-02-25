@@ -51,7 +51,7 @@ class ProductType(str, Enum):
 
 class AddModelRequest(BaseModel):
     name: str
-    pretrained_model_type: str
+    pretrained_model_type: str = Field(default="saas/openai")
     cpus_per_worker: float = Field(default=0.001)
     gpus_per_worker: int = Field(default=0)
     num_workers: int = Field(default=1)
