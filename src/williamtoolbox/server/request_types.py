@@ -43,6 +43,8 @@ class AddMessageRequest(BaseModel):
     list_type: str
     selected_item: str
 
+from enum import Enum
+
 class ProductType(str, Enum):
     pro = "pro"
     lite = "lite"
