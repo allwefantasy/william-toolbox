@@ -125,14 +125,26 @@ async def add_model(model: AddModelRequest):
                 "average_speed": 0.0
             }])
             
-            # 创建一个简化的模型记录，标记为 lite 模式
+            # 创建一个与 pro 模式结构一致的模型记录，标记为 lite 模式
             models = await load_models_from_json() or supported_models
             models[model.name] = {
                 "status": "running",  # lite 模式下默认为运行状态
                 "product_type": ProductType.lite,
                 "is_reasoning": model.is_reasoning or False,
                 "input_price": model.input_price or 0.0,
-                "output_price": model.output_price or 0.0
+                "output_price": model.output_price or 0.0,
+                "deploy_command": DeployCommand(
+                    pretrained_model_type=model.pretrained_model_type,
+                    cpus_per_worker=model.cpus_per_worker,
+                    gpus_per_worker=model.gpus_per_worker,
+                    num_workers=model.num_workers,
+                    worker_concurrency=model.worker_concurrency,
+                    infer_params=model.infer_params,
+                    model=model.name,
+                    model_path=model.model_path,
+                    infer_backend=model.infer_backend,
+                ).model_dump(),
+                "undeploy_command": f"byzerllm undeploy --model {model.name} --force",
             }
             await save_models_to_json(models)
             
