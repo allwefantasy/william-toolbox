@@ -37,6 +37,7 @@ const EditRAG: React.FC<EditRAGProps> = ({ visible, ragData, onClose, onUpdate }
         enable_hybrid_index: ragData.enable_hybrid_index,
         hybrid_index_max_output_tokens: ragData.hybrid_index_max_output_tokens,
         without_contexts: ragData.without_contexts,
+        product_type: ragData.product_type || 'lite',
         infer_params: ragData.infer_params ? Object.entries(ragData.infer_params).map(([key, value]) => ({
           key,
           value
@@ -196,6 +197,17 @@ const EditRAG: React.FC<EditRAGProps> = ({ visible, ragData, onClose, onUpdate }
           initialValue={false}
         >
           <Switch />
+        </Form.Item>
+
+        <Form.Item 
+          name="product_type" 
+          label="产品类型" 
+          initialValue="lite"
+        >
+          <Select>
+            <Option value="lite">Lite</Option>
+            <Option value="pro">Pro</Option>
+          </Select>
         </Form.Item>
 
         <Form.List name="infer_params">

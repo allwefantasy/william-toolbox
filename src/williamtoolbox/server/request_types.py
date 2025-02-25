@@ -79,6 +79,7 @@ class AddRAGRequest(BaseModel):
     enable_hybrid_index: bool = Field(default=False)
     hybrid_index_max_output_tokens: int = Field(default=1000000)
     without_contexts: bool = Field(default=False)
+    product_type: ProductType = Field(default=ProductType.lite)
     infer_params: Optional[Dict[str, Any]] = Field(default_factory=dict)
     model_config = {"protected_namespaces": ()}  
 

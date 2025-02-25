@@ -238,6 +238,9 @@ async def manage_rag(rag_name: str, action: str):
 
         if rag_info["without_contexts"]:
             command += f" --without_contexts"
+            
+        if "product_type" in rag_info:
+            command += f" --product_type {rag_info['product_type']}"
 
         if "enable_hybrid_index" in rag_info and rag_info["enable_hybrid_index"]:
             command += f" --enable_hybrid_index"

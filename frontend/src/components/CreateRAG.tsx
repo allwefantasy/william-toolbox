@@ -19,6 +19,7 @@ interface FormValues {
   enable_hybrid_index: boolean;  
   hybrid_index_max_output_tokens: number;
   without_contexts: boolean;
+  product_type: string;
   infer_params?: { key: string; value: string }[] | { [key: string]: string };
 }
 
@@ -89,7 +90,8 @@ const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
       inference_deep_thought: false,
       enable_hybrid_index: false,
       hybrid_index_max_output_tokens: 1000000,
-      without_contexts: false
+      without_contexts: false,
+      product_type: 'lite'
     });
   };
 
@@ -235,6 +237,17 @@ const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
             initialValue={false}
           >
             <Switch />
+          </Form.Item>
+
+          <Form.Item 
+            name="product_type" 
+            label="产品类型" 
+            initialValue="lite"
+          >
+            <Select>
+              <Option value="lite">Lite</Option>
+              <Option value="pro">Pro</Option>
+            </Select>
           </Form.Item>
 
           <Form.List name="infer_params">
