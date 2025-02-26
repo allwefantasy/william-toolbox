@@ -189,18 +189,32 @@ async def process_message_stream(
         try:
             config = await load_config()
             if request.list_type == "models":
-                openai_server = config.get("openaiServerList", [{}])[0]
-                
-                host = openai_server.get("host", "localhost")
-                port = openai_server.get("port", 8000)
-                if host == "0.0.0.0":
-                    host = "127.0.0.1"
+                model_name = request.selected_item
+                models = await load_models_from_json()                
+                # 获取模型信息
+                model_info = models[model_name]
+                product_type = model_info.get("product_type", "pro")
 
-                base_url = f"http://{host}:{port}/v1"
-                client = AsyncOpenAI(base_url=base_url, api_key="xxxx")
+                if product_type == "pro":
+                    openai_server = config.get("openaiServerList", [{}])[0]
+                    
+                    host = openai_server.get("host", "localhost")
+                    port = openai_server.get("port", 8000)
+                    if host == "0.0.0.0":
+                        host = "127.0.0.1"
+
+                    base_url = f"http://{host}:{port}/v1"
+                    api_key = "xxxx"
+                    real_model_name = model_name
+                elif product_type == "lite":
+                    base_url = model_info["deploy_command"]["infer_params"].get("saas.base_url", "")
+                    api_key = model_info["deploy_command"]["infer_params"].get("saas.api_key", "")
+                    real_model_name = model_info["deploy_command"]["infer_params"].get("saas.model", "")
+
+                client = AsyncOpenAI(base_url=base_url, api_key=api_key)
 
                 response = await client.chat.completions.create(
-                    model=request.selected_item,
+                    model=real_model_name,
                     messages=[
                         {"role": msg["role"], "content": msg["content"]}
                         for msg in conversation["messages"]

@@ -18,23 +18,7 @@ supported_models = b_load_models_from_json()
 
 # If the JSON file is empty or doesn't exist, use the default models
 if not supported_models:
-    supported_models = {
-        "deepseek_chat": {
-            "status": "stopped",
-            "deploy_command": DeployCommand(
-                pretrained_model_type="saas/openai",
-                worker_concurrency=1000,
-                infer_params={
-                    "saas.base_url": "https://api.deepseek.com/beta",
-                    "saas.api_key": "${MODEL_DEEPSEEK_TOKEN}",
-                    "saas.model": "deepseek-chat",
-                },
-                model="deepseek_chat",
-            ).model_dump(),
-            "undeploy_command": "byzerllm undeploy --model deepseek_chat",
-            "status_command": "byzerllm stat --model deepseek_chat",
-        }
-    }
+    supported_models = {}
     b_save_models_to_json(supported_models)
 
 

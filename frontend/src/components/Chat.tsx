@@ -447,10 +447,10 @@ const [skipCSVCheck, setSkipCSVCheck] = useState(false);
     if (message.trim() && currentConversationId) {
       setIsLoading(true);
       // 检查 OpenAI 兼容服务状态
-      const canProceed = await checkOpenAIService();
-      if (!canProceed) {
-        return;
-      }
+      // const canProceed = await checkOpenAIService();
+      // if (!canProceed) {
+      //   return;
+      // }
 
       // 检查是否包含 CSV 内容
       // try {
