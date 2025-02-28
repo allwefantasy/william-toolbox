@@ -126,6 +126,16 @@ async def test_rag_management():
             process_id = rag_info["process_id"]
             # Get process object
             p = psutil.Process(process_id)
+
+            # Kill any child processes
+            try:
+                children = p.children(recursive=True)
+                if children:
+                    logger.info(f"Killing {len(children)} child processes")
+                    for child in children:
+                        child.kill()
+            except:
+                pass
             
             # First try graceful termination
             logger.info(f"Sending SIGTERM to process {process_id}")
@@ -141,17 +151,7 @@ async def test_rag_management():
                 logger.warning("Process didn't terminate gracefully, force killing")
                 p.kill()
                 logger.info("Process killed forcefully")
-                
-            # Kill any child processes
-            try:
-                children = p.children(recursive=True)
-                if children:
-                    logger.info(f"Killing {len(children)} child processes")
-                    for child in children:
-                        child.kill()
-            except:
-                pass
-                
+                                            
             # Close file descriptors
             if 'stdout_fd' in rag_info:
                 try:
