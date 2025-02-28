@@ -316,7 +316,15 @@ async def manage_rag(rag_name: str, action: str):
                 # Get the process object
                 process = psutil.Process(process_id)
                 
-                # First try to terminate gracefully (SIGTERM)
+                # Kill any child processes first
+                try:
+                    children = process.children(recursive=True)
+                    for child in children:
+                        child.kill()
+                except:
+                    pass
+                
+                # Then try to terminate gracefully (SIGTERM)
                 process.terminate()
                 
                 # Wait up to 5 seconds for graceful termination
@@ -326,15 +334,7 @@ async def manage_rag(rag_name: str, action: str):
                     # If process doesn't terminate in time, force kill it
                     logger.warning(f"Process {process_id} didn't terminate gracefully, force killing")
                     process.kill()
-                
-                # Also kill any child processes if they exist
-                try:
-                    children = process.children(recursive=True)
-                    for child in children:
-                        child.kill()
-                except:
-                    pass
-                    
+                                                    
                 logger.info(f"Successfully stopped RAG process {process_id}")
                 
                 # Close any open file descriptors
