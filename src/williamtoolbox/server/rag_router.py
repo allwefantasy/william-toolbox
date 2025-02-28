@@ -294,40 +294,74 @@ async def manage_rag(rag_name: str, action: str):
     else:  # action == "stop"
         if "process_id" in rag_info:
             try:
-                # Get the parent process
-                parent = psutil.Process(rag_info["process_id"])
-                
-                # Get all child processes and terminate them
-                children = parent.children(recursive=True)
-                for child in children:
-                    try:
-                        child.terminate()
-                    except Exception as child_e:
-                        logger.warning(f"Error terminating child process {child.pid}: {str(child_e)}")
-                
-                # Give the processes some time to terminate
-                gone, still_alive = psutil.wait_procs(children, timeout=3)
-                
-                # If any processes are still alive, kill them forcefully
-                for process in still_alive:
-                    try:
-                        process.kill()
-                    except Exception as kill_e:
-                        logger.warning(f"Error killing child process {process.pid}: {str(kill_e)}")
-                
-                # Now terminate the parent process
-                parent.terminate()
+                # 方法1: 使用psutil递归终止进程树
                 try:
-                    parent.wait(timeout=3)
-                except psutil.TimeoutExpired:
-                    parent.kill()  # Force kill if it doesn't terminate gracefully
+                    parent_pid = rag_info["process_id"]
+                    parent = psutil.Process(parent_pid)
+                    
+                    # 获取所有子进程并终止
+                    children = parent.children(recursive=True)
+                    for child in children:
+                        try:
+                            logger.info(f"Terminating child process: {child.pid}")
+                            child.terminate()
+                        except Exception as e:
+                            logger.warning(f"Failed to terminate child {child.pid}: {str(e)}")
+                    
+                    # 给进程一些时间来终止
+                    gone, still_alive = psutil.wait_procs(children, timeout=3)
+                    
+                    # 对于仍然存活的进程，强制终止
+                    for process in still_alive:
+                        try:
+                            logger.info(f"Killing child process: {process.pid}")
+                            process.kill()
+                        except Exception as e:
+                            logger.warning(f"Failed to kill child {process.pid}: {str(e)}")
+                    
+                    # 终止父进程
+                    logger.info(f"Terminating parent process: {parent_pid}")
+                    parent.terminate()
+                    try:
+                        parent.wait(timeout=3)
+                    except psutil.TimeoutExpired:
+                        logger.info(f"Killing parent process: {parent_pid}")
+                        parent.kill()
+                except psutil.NoSuchProcess:
+                    logger.info(f"Parent process {rag_info.get('process_id')} already terminated")
+                
+                # 方法2: 使用进程名称和命令行查找所有相关进程
+                if "port" not in rag_info:
+                    raise HTTPException(
+                        status_code=500, detail=f"RAG {rag_name} has no port")
+                
+                port = rag_info["port"]
+                for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+                    try:
+                        cmdline = proc.info['cmdline']
+                        if cmdline and len(cmdline) > 1:
+                            cmd_str = " ".join([str(item) for item in cmdline if item])
+                            # 检查cmdline是否包含auto-coder.rag和特定端口号
+                            if 'auto-coder.rag' in cmd_str and f"--port {port}" in cmd_str:
+                                logger.info(f"Found related process by command: {proc.info['pid']}")
+                                try:
+                                    p = psutil.Process(proc.info['pid'])
+                                    p.terminate()
+                                    try:
+                                        p.wait(timeout=3)
+                                    except psutil.TimeoutExpired:
+                                        p.kill()
+                                except Exception as e:
+                                    logger.warning(f"Failed to terminate process {proc.info['pid']}: {str(e)}")
+                    except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                        pass
+                    except Exception as e:
+                        logger.warning(f"Error checking process: {str(e)}")
                 
                 rag_info["status"] = "stopped"
-                del rag_info["process_id"]
-            except psutil.NoSuchProcess:
-                # Process already terminated
-                rag_info["status"] = "stopped"
-                del rag_info["process_id"]
+                if "process_id" in rag_info:
+                    del rag_info["process_id"]
+                
             except Exception as e:
                 logger.error(f"Failed to stop RAG: {str(e)}")
                 traceback.print_exc()
