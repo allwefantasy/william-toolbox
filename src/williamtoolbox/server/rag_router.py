@@ -283,24 +283,42 @@ async def manage_rag(rag_name: str, action: str):
             os.makedirs("logs", exist_ok=True)
 
             # Open log files for stdout and stderr
-            stdout_log = open(os.path.join(
-                "logs", f"{rag_info['name']}.out"), "w")
-            stderr_log = open(os.path.join(
-                "logs", f"{rag_info['name']}.err"), "w")
-
-            # Use asyncio.create_subprocess_shell to start the process asynchronously
+            stdout_log_path = os.path.join("logs", f"{rag_info['name']}.out")
+            stderr_log_path = os.path.join("logs", f"{rag_info['name']}.err")
+            
+            stdout_log = open(stdout_log_path, "w")
+            stderr_log = open(stderr_log_path, "w")
+            
+            # Store file descriptors in rag_info for later cleanup
+            rag_info["stdout_fd"] = stdout_log.fileno()
+            rag_info["stderr_fd"] = stderr_log.fileno() 
+            
+            # 使用修改后的环境变量启动进程
             process = await asyncio.create_subprocess_shell(
                 command,
                 stdout=stdout_log,
-                stderr=stderr_log
+                stderr=stderr_log                
             )
+            
+            # 保存更多信息以便后续终止
             rag_info["status"] = "running"
-            rag_info["process_id"] = process.pid
-
-            # Close the file handles
-            stdout_log.close()
-            stderr_log.close()
+            rag_info["process_id"] = process.pid                                
         except Exception as e:
+            # Clean up file handles in case of error
+            if 'stdout_fd' in rag_info:
+                try:
+                    os.close(rag_info['stdout_fd'])
+                    del rag_info['stdout_fd']
+                except:
+                    pass
+                    
+            if 'stderr_fd' in rag_info:
+                try:
+                    os.close(rag_info['stderr_fd'])
+                    del rag_info['stderr_fd']
+                except:
+                    pass
+                    
             logger.error(f"Failed to start RAG: {str(e)}")
             traceback.print_exc()
             raise HTTPException(
@@ -309,13 +327,74 @@ async def manage_rag(rag_name: str, action: str):
     else:  # action == "stop"
         if "process_id" in rag_info:
             try:
-                os.kill(rag_info["process_id"], signal.SIGTERM)
+                process_id = rag_info["process_id"]
+                # Get the process object
+                process = psutil.Process(process_id)
+                
+                # Kill any child processes first
+                try:
+                    children = process.children(recursive=True)
+                    for child in children:
+                        child.kill()
+                except:
+                    pass
+                
+                # Then try to terminate gracefully (SIGTERM)
+                process.terminate()
+                
+                # Wait up to 5 seconds for graceful termination
+                try:
+                    process.wait(timeout=5)
+                except psutil.TimeoutExpired:
+                    # If process doesn't terminate in time, force kill it
+                    logger.warning(f"Process {process_id} didn't terminate gracefully, force killing")
+                    process.kill()
+                                                    
+                logger.info(f"Successfully stopped RAG process {process_id}")
+                
+                # Close any open file descriptors
+                if 'stdout_fd' in rag_info:
+                    try:
+                        os.close(rag_info['stdout_fd'])
+                    except OSError:
+                        pass  # Already closed
+                    del rag_info['stdout_fd']
+                
+                if 'stderr_fd' in rag_info:
+                    try:
+                        os.close(rag_info['stderr_fd'])
+                    except OSError:
+                        pass  # Already closed
+                    del rag_info['stderr_fd']
+                                
                 rag_info["status"] = "stopped"
-                del rag_info["process_id"]
-            except ProcessLookupError:
-                # Process already terminated
+                for key in ["process_id", "pgid", "service_id"]:
+                    if key in rag_info:
+                        del rag_info[key]
+                
+            except psutil.NoSuchProcess:
+                # Process already not running, just update status and clean up file handles
+                logger.info(f"Process {rag_info.get('process_id')} already not running")
+                
+                # Close any open file descriptors
+                if 'stdout_fd' in rag_info:
+                    try:
+                        os.close(rag_info['stdout_fd'])
+                    except OSError:
+                        pass  # Already closed
+                    del rag_info['stdout_fd']
+                
+                if 'stderr_fd' in rag_info:
+                    try:
+                        os.close(rag_info['stderr_fd'])
+                    except OSError:
+                        pass  # Already closed
+                    del rag_info['stderr_fd']
+                    
                 rag_info["status"] = "stopped"
-                del rag_info["process_id"]
+                for key in ["process_id", "pgid", "service_id"]:
+                    if key in rag_info:
+                        del rag_info[key]
             except Exception as e:
                 logger.error(f"Failed to stop RAG: {str(e)}")
                 traceback.print_exc()
@@ -324,6 +403,21 @@ async def manage_rag(rag_name: str, action: str):
                 )
         else:
             rag_info["status"] = "stopped"
+            
+            # Clean up any lingering file descriptors
+            if 'stdout_fd' in rag_info:
+                try:
+                    os.close(rag_info['stdout_fd'])
+                except OSError:
+                    pass  # Already closed
+                del rag_info['stdout_fd']
+            
+            if 'stderr_fd' in rag_info:
+                try:
+                    os.close(rag_info['stderr_fd'])
+                except OSError:
+                    pass  # Already closed
+                del rag_info['stderr_fd']
 
     # 确保保存product_type
     if "product_type" not in rag_info:

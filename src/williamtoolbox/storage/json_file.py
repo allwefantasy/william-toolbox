@@ -85,6 +85,7 @@ async def load_config():
     config_path = "config.json"
     default_config = {
         "saasBaseUrls": [
+            {"value": "https://ark.cn-beijing.volces.com/api/v3", "label": "火山方舟"},
             {"value": "https://api.siliconflow.cn/v1", "label": "硅基流动"},
             {"value": "https://api.deepseek.com/beta", "label": "DeepSeek"},
             {"value": "https://dashscope.aliyuncs.com/compatible-mode/v1", "label": "通义千问"},
