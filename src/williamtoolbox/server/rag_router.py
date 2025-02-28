@@ -273,15 +273,30 @@ async def manage_rag(rag_name: str, action: str):
             stderr_log = open(os.path.join(
                 "logs", f"{rag_info['name']}.err"), "w")
 
-            # Use asyncio.create_subprocess_shell to start the process asynchronously
+            # 在启动命令前添加一个唯一标识，方便后续查找和终止
+            unique_tag = f"rag_service_{rag_name}_{port}"
+            # 设置环境变量，使子进程能够继承这个标识
+            env = os.environ.copy()
+            env["RAG_SERVICE_ID"] = unique_tag
+            
+            # 使用修改后的环境变量启动进程
             process = await asyncio.create_subprocess_shell(
                 command,
                 stdout=stdout_log,
-                stderr=stderr_log
+                stderr=stderr_log,
+                env=env,
+                # 在Unix系统上创建新进程组
+                preexec_fn=os.setsid if hasattr(os, 'setsid') else None
             )
+            
+            # 保存更多信息以便后续终止
             rag_info["status"] = "running"
             rag_info["process_id"] = process.pid
-
+            rag_info["service_id"] = unique_tag
+            # 如果是Unix系统，保存进程组ID
+            if hasattr(os, 'setsid'):
+                rag_info["pgid"] = os.getpgid(process.pid) if process.pid else None
+            
             # Close the file handles
             stdout_log.close()
             stderr_log.close()
@@ -294,6 +309,22 @@ async def manage_rag(rag_name: str, action: str):
     else:  # action == "stop"
         if "process_id" in rag_info:
             try:
+                # 先尝试使用进程组ID终止所有相关进程（Unix系统）
+                if "pgid" in rag_info and rag_info["pgid"] and hasattr(os, 'killpg'):
+                    try:
+                        logger.info(f"Terminating process group: {rag_info['pgid']}")
+                        os.killpg(rag_info['pgid'], signal.SIGTERM)
+                        # 等待一段时间让进程正常退出
+                        await asyncio.sleep(3)
+                        # 强制终止仍然存在的进程
+                        try:
+                            os.killpg(rag_info['pgid'], signal.SIGKILL)
+                        except ProcessLookupError:
+                            # 进程组已不存在，说明已成功终止
+                            pass
+                    except Exception as e:
+                        logger.warning(f"Error killing process group: {str(e)}")
+                
                 # 方法1: 使用psutil递归终止进程树
                 try:
                     parent_pid = rag_info["process_id"]
@@ -330,20 +361,37 @@ async def manage_rag(rag_name: str, action: str):
                 except psutil.NoSuchProcess:
                     logger.info(f"Parent process {rag_info.get('process_id')} already terminated")
                 
-                # 方法2: 使用进程名称和命令行查找所有相关进程
+                # 方法2: 使用进程名称、命令行和环境变量查找所有相关进程
                 if "port" not in rag_info:
                     raise HTTPException(
                         status_code=500, detail=f"RAG {rag_name} has no port")
                 
                 port = rag_info["port"]
-                for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+                service_id = rag_info.get("service_id", f"rag_service_{rag_name}_{port}")
+                
+                for proc in psutil.process_iter(['pid', 'name', 'cmdline', 'environ']):
                     try:
-                        cmdline = proc.info['cmdline']
+                        # 1. 检查命令行
+                        cmdline = proc.info.get('cmdline', [])
                         if cmdline and len(cmdline) > 1:
                             cmd_str = " ".join([str(item) for item in cmdline if item])
-                            # 检查cmdline是否包含auto-coder.rag和特定端口号
+                            # 检查是否包含相关标识
+                            is_target = False
+                            
+                            # 通过命令行参数匹配
                             if 'auto-coder.rag' in cmd_str and f"--port {port}" in cmd_str:
-                                logger.info(f"Found related process by command: {proc.info['pid']}")
+                                is_target = True
+                            
+                            # 通过环境变量匹配
+                            try:
+                                environ = proc.environ()
+                                if environ.get("RAG_SERVICE_ID") == service_id:
+                                    is_target = True
+                            except (psutil.AccessDenied, psutil.NoSuchProcess):
+                                pass
+                            
+                            if is_target:
+                                logger.info(f"Found related process: {proc.info['pid']}")
                                 try:
                                     p = psutil.Process(proc.info['pid'])
                                     p.terminate()
@@ -358,9 +406,20 @@ async def manage_rag(rag_name: str, action: str):
                     except Exception as e:
                         logger.warning(f"Error checking process: {str(e)}")
                 
+                # 方法3: 使用系统命令查找和终止进程（作为最后的备选方案）
+                try:
+                    if hasattr(os, 'popen'):  # Unix系统
+                        # 使用pgrep/pkill查找和终止进程
+                        os.popen(f"pkill -f 'auto-coder.rag.*--port {port}'").read()
+                        await asyncio.sleep(1)
+                        os.popen(f"pkill -9 -f 'auto-coder.rag.*--port {port}'").read()
+                except Exception as e:
+                    logger.warning(f"Error using system commands to kill processes: {str(e)}")
+                
                 rag_info["status"] = "stopped"
-                if "process_id" in rag_info:
-                    del rag_info["process_id"]
+                for key in ["process_id", "pgid", "service_id"]:
+                    if key in rag_info:
+                        del rag_info[key]
                 
             except Exception as e:
                 logger.error(f"Failed to stop RAG: {str(e)}")
