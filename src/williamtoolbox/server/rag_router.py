@@ -208,6 +208,12 @@ async def manage_rag(rag_name: str, action: str):
         )
 
     rag_info = rags[rag_name]
+    
+    # 默认设置product_type为lite，如果未指定
+    product_type = rag_info.get("product_type", "lite")
+    
+    # 可以在这里添加基于product_type的特定限制
+    # 例如，如果有某些操作只允许Pro版本执行
 
     if action == "start":
         # Check if the port is already in use by another RAG
@@ -288,10 +294,37 @@ async def manage_rag(rag_name: str, action: str):
     else:  # action == "stop"
         if "process_id" in rag_info:
             try:
-                os.kill(rag_info["process_id"], signal.SIGTERM)
+                # Get the parent process
+                parent = psutil.Process(rag_info["process_id"])
+                
+                # Get all child processes and terminate them
+                children = parent.children(recursive=True)
+                for child in children:
+                    try:
+                        child.terminate()
+                    except Exception as child_e:
+                        logger.warning(f"Error terminating child process {child.pid}: {str(child_e)}")
+                
+                # Give the processes some time to terminate
+                gone, still_alive = psutil.wait_procs(children, timeout=3)
+                
+                # If any processes are still alive, kill them forcefully
+                for process in still_alive:
+                    try:
+                        process.kill()
+                    except Exception as kill_e:
+                        logger.warning(f"Error killing child process {process.pid}: {str(kill_e)}")
+                
+                # Now terminate the parent process
+                parent.terminate()
+                try:
+                    parent.wait(timeout=3)
+                except psutil.TimeoutExpired:
+                    parent.kill()  # Force kill if it doesn't terminate gracefully
+                
                 rag_info["status"] = "stopped"
                 del rag_info["process_id"]
-            except ProcessLookupError:
+            except psutil.NoSuchProcess:
                 # Process already terminated
                 rag_info["status"] = "stopped"
                 del rag_info["process_id"]
@@ -304,6 +337,10 @@ async def manage_rag(rag_name: str, action: str):
         else:
             rag_info["status"] = "stopped"
 
+    # 确保保存product_type
+    if "product_type" not in rag_info:
+        rag_info["product_type"] = product_type
+        
     rags[rag_name] = rag_info
     await save_rags_to_json(rags)
 
