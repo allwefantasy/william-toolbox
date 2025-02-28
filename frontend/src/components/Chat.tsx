@@ -102,10 +102,10 @@ const [skipCSVCheck, setSkipCSVCheck] = useState(false);
   }, [currentConversationId]);
 
   const handleRegenerateResponse = async (message: Message) => {
-    const canProceed = await checkOpenAIService();
-    if (!canProceed) {
-      return;
-    }
+    // const canProceed = await checkOpenAIService();
+    // if (!canProceed) {
+    //   return;
+    // }
 
     const messageIndex = messages.findIndex(msg => msg.id === message.id);
     if (messageIndex === -1) return;
