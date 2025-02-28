@@ -21,3 +21,6 @@ data/
 frontend.log
 file_resources.json
 config.json
+.DS_Store
+*.pyc
+__pycache__
