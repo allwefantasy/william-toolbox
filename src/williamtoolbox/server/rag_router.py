@@ -230,6 +230,11 @@ async def manage_rag(rag_name: str, action: str):
         command += f" --quick"
         command += f" --model {rag_info['model']}"
 
+        if product_type == "lite":
+            command += f" --lite"
+        else:
+            command += f" --pro"
+        
         if rag_info["tokenizer_path"]:
             command += f" --tokenizer_path {rag_info['tokenizer_path']}"
 
