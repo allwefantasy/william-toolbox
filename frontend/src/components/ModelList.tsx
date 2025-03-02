@@ -216,7 +216,6 @@ const ModelList: React.FC<ModelListProps> = ({ refreshTrigger }) => {
             <Button
               icon={<EditOutlined />}
               onClick={() => handleEdit(record)}
-              disabled={record.status === 'running'}
             >
               编辑
             </Button>
@@ -224,7 +223,6 @@ const ModelList: React.FC<ModelListProps> = ({ refreshTrigger }) => {
               type="primary"
               danger
               onClick={() => handleDelete(record.name)}
-              disabled={record.status === 'running'}
             >
               删除
             </Button>

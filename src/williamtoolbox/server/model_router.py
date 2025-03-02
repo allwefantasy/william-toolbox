@@ -150,6 +150,10 @@ async def add_model(model: AddModelRequest):
 
         new_model = {
             "status": "stopped",
+            "product_type": "pro",
+            "is_reasoning": model.is_reasoning or False,
+            "input_price": model.input_price or 0.0,
+            "output_price": model.output_price or 0.0,
             "deploy_command": DeployCommand(
                 pretrained_model_type=model.pretrained_model_type,
                 cpus_per_worker=model.cpus_per_worker,

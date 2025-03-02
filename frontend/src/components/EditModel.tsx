@@ -38,6 +38,9 @@ const EditModel: React.FC<EditModelProps> = ({ visible, modelData, onClose, onUp
   const [pretrainedModelTypes, setPretrainedModelTypes] = useState<Array<{value: string, label: string}>>([]);
   const [productType, setProductType] = useState<ProductType>(ProductType.Lite);
 
+  // Check if the model is running
+  const isModelRunning = modelData?.status === 'running';
+
   useEffect(() => {
     fetchConfig();
   }, []);
@@ -201,7 +204,15 @@ const EditModel: React.FC<EditModelProps> = ({ visible, modelData, onClose, onUp
       onOk={handleOk}
       onCancel={onClose}
       width={700}
+      okButtonProps={{ disabled: isModelRunning }}
+      okText={isModelRunning ? "运行中无法编辑" : "确认"}
     >
+      {isModelRunning && (
+        <div style={{ marginBottom: 16, padding: 8, backgroundColor: '#fffbe6', border: '1px solid #ffe58f', borderRadius: 4 }}>
+          <span style={{ color: '#faad14' }}><strong>提示：</strong>模型正在运行中，请先停止模型后再进行编辑。</span>
+        </div>
+      )}
+      
       <Form form={form} layout="vertical">
         <Form.Item name="product_type" label="产品模式" initialValue={ProductType.Lite}>
           <Select onChange={(value) => handleProductTypeChange(value as ProductType)}>

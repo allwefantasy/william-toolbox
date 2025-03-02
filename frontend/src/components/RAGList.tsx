@@ -360,7 +360,6 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger, onBuildCache }) => {
                 setCurrentRAG(record);
                 setEditModalVisible(true);
               }}
-              disabled={record.status === 'running'}
             >
               编辑
             </Button>

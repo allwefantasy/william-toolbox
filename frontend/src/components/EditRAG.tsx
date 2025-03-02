@@ -94,13 +94,24 @@ const EditRAG: React.FC<EditRAGProps> = ({ visible, ragData, onClose, onUpdate }
     }
   };
 
+  // Check if the RAG is running
+  const isRagRunning = ragData?.status === 'running';
+
   return (
     <Modal
       title="编辑RAG"
       visible={visible}
       onOk={handleOk}
       onCancel={onClose}
+      okButtonProps={{ disabled: isRagRunning }}
+      okText={isRagRunning ? "运行中无法编辑" : "确认"}
     >
+      {isRagRunning && (
+        <div style={{ marginBottom: 16, padding: 8, backgroundColor: '#fffbe6', border: '1px solid #ffe58f', borderRadius: 4 }}>
+          <span style={{ color: '#faad14' }}><strong>提示：</strong>RAG服务正在运行中，请先停止服务后再进行编辑。</span>
+        </div>
+      )}
+      
       <Form form={form} layout="vertical">
         <Form.Item 
           name="product_type" 
