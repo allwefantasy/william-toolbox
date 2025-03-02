@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Layout, Menu, Typography, Space, Button } from 'antd';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { RocketOutlined, AppstoreOutlined, DatabaseOutlined, FolderOutlined, SettingOutlined, MessageOutlined, CodeOutlined, ThunderboltOutlined, LogoutOutlined } from '@ant-design/icons';
 import ModelList from './components/ModelList';
 import CreateModel from './components/CreateModel';
@@ -20,6 +19,7 @@ import FileManagement from './components/FileManagement';
 import AppStore from './components/AppStore';
 import Annotation from './components/Annotation';
 import AutoCoderJsonChatViz from './components/AutoCoderJsonChatViz';
+import BuildCache from './components/BuildCache';
 import './App.css';
 import axios from 'axios';
 
@@ -53,6 +53,10 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
   const [permissions, setPermissions] = useState<string[]>([]);
+  
+  // 用于缓存构建页面的状态管理
+  const [showBuildCache, setShowBuildCache] = useState(false);
+  const [currentRagName, setCurrentRagName] = useState<string | null>(null);
 
   useEffect(() => {
     // 从sessionStorage恢复登录状态
@@ -109,8 +113,26 @@ function App() {
     const requiredPermission = menuKeyToPermission[key];
     return permissions.includes(requiredPermission);
   };
+  
+  // 处理缓存构建页面的导航
+  const handleBuildCacheNavigation = (ragName: string) => {
+    setCurrentRagName(ragName);
+    setShowBuildCache(true);
+  };
+  
+  // 从缓存构建页面返回RAG列表
+  const handleReturnToRAGList = () => {
+    setShowBuildCache(false);
+    setCurrentRagName(null);
+    setSelectedKey('2'); // 确保返回后选中的是RAG管理菜单项
+  };
 
   const renderContent = () => {
+    // 如果正在显示构建缓存页面
+    if (showBuildCache && currentRagName) {
+      return <BuildCache ragName={currentRagName} onReturn={handleReturnToRAGList} />;
+    }
+    
     if (!hasPermission(selectedKey)) {
       return <div>无权访问此页面</div>;
     }
@@ -129,7 +151,10 @@ function App() {
         return (
           <>
             <CreateRAG onRAGAdded={refreshRAGList} />
-            <RAGList refreshTrigger={refreshRAGTrigger} />
+            <RAGList 
+              refreshTrigger={refreshRAGTrigger} 
+              onBuildCache={handleBuildCacheNavigation}
+            />
           </>
         );
       case '3.1':
@@ -171,7 +196,7 @@ function App() {
   }
 
   return (
-      <Layout style={{ minHeight: '100vh' }} className="app-container">
+    <Layout style={{ minHeight: '100vh' }} className="app-container">
       <Sider width={250} style={{ background: '#fff' }}>
         <div className="logo" style={{ height: 64, margin: 16, background: 'rgba(255, 255, 255, 0.2)' }}>
           <div style={{ padding: '20px', color: '#1890ff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -188,7 +213,13 @@ function App() {
           mode="inline"
           defaultSelectedKeys={['1']}
           defaultOpenKeys={['1', '3']}
-          onSelect={({ key }) => setSelectedKey(key)}
+          selectedKeys={[selectedKey]}
+          onSelect={({ key }) => {
+            setSelectedKey(key);
+            // 当从侧边栏菜单选择时，确保关闭构建缓存页面
+            setShowBuildCache(false);
+            setCurrentRagName(null);
+          }}
           style={{ borderRight: 0 }}
         >
           {hasPermission('1.1') && (
@@ -252,8 +283,8 @@ function App() {
         <Content style={{ margin: '24px 16px', padding: 24, background: '#fff', minHeight: 280 }}>
           {renderContent()}
         </Content>
-        </Layout>
-      </Layout>    
+      </Layout>
+    </Layout>
   );
 }
 

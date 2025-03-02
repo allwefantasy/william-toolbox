@@ -11,9 +11,14 @@ import subprocess
 import signal
 import psutil
 import asyncio
+import tempfile
+import uuid
+import time
 
 router = APIRouter()
 
+# 存储构建缓存任务的状态和日志
+cache_build_tasks = {}
 
 @router.get("/rags", response_model=List[Dict[str, Any]])
 async def list_rags():
@@ -463,3 +468,159 @@ async def get_rag_status(rag_name: str) -> Dict[str, Any]:
     # Save updated status
     await save_rags_to_json(rags)
     return rag_info
+
+@router.post("/rags/cache/build/{rag_name}")
+async def build_cache(rag_name: str):
+    """Start building cache (hybrid index) for a RAG service."""
+    rags = await load_rags_from_json()
+    if rag_name not in rags:
+        raise HTTPException(status_code=404, detail=f"RAG {rag_name} not found")
+    
+    rag_info = rags[rag_name]
+    
+    # 验证是否为Pro版本且启用了混合索引
+    if rag_info.get("product_type") != "pro" or not rag_info.get("enable_hybrid_index"):
+        raise HTTPException(
+            status_code=400, 
+            detail="Only Pro version RAGs with hybrid index enabled can build cache"
+        )
+    
+    # 创建临时日志文件
+    log_file = os.path.join("logs", f"cache_build_{rag_name}_{uuid.uuid4()}.log")
+    os.makedirs("logs", exist_ok=True)
+    
+    # 构建命令
+    command = f"auto-coder.rag build_hybrid_index"
+    command += f" --model {rag_info['model']}"
+    command += f" --doc_dir {rag_info['doc_dir']}"
+    
+    if rag_info.get("required_exts"):
+        command += f" --required_exts {rag_info['required_exts']}"
+    
+    command += f" --enable_hybrid_index"        
+    
+    logger.info(f"Starting cache build for {rag_name} with command: {command}")
+    
+    try:
+        # 开始后台任务
+        with open(log_file, "w") as f:
+            f.write(f"Starting cache build for {rag_name}\n")
+            f.write(f"Command: {command}\n\n")
+        
+        task_id = str(uuid.uuid4())
+        cache_build_tasks[task_id] = {
+            "rag_name": rag_name,
+            "command": command,
+            "log_file": log_file,
+            "start_time": time.time(),
+            "completed": False,
+            "success": None,
+            "process": None
+        }
+        
+        # 启动异步任务
+        asyncio.create_task(run_build_task(task_id, command, log_file))
+        
+        # 将任务ID存储在RAG配置中
+        rag_info["cache_build_task_id"] = task_id
+        rags[rag_name] = rag_info
+        await save_rags_to_json(rags)
+        
+        return {
+            "success": True,
+            "message": "Cache build started",
+            "task_id": task_id
+        }
+    except Exception as e:
+        logger.error(f"Failed to start cache build: {str(e)}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Failed to start cache build: {str(e)}")
+
+async def run_build_task(task_id, command, log_file):
+    """Run the build task in background."""
+    task_info = cache_build_tasks[task_id]
+    
+    try:
+        with open(log_file, "a") as f:
+            process = await asyncio.create_subprocess_shell(
+                command,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            
+            task_info["process"] = process
+            
+            # 实时处理输出并写入日志
+            async def read_stream(stream, f):
+                while True:
+                    line = await stream.readline()
+                    if not line:
+                        break
+                    line_str = line.decode('utf-8') if isinstance(line, bytes) else line
+                    f.write(line_str)
+                    f.flush()
+            
+            # 同时处理stdout和stderr
+            await asyncio.gather(
+                read_stream(process.stdout, f),
+                read_stream(process.stderr, f)
+            )
+            
+            # 等待进程完成
+            return_code = await process.wait()
+            
+            # 更新任务状态
+            task_info["completed"] = True
+            task_info["success"] = return_code == 0
+            task_info["return_code"] = return_code
+            
+            # 添加完成信息到日志
+            f.write(f"\nBuild process completed with return code: {return_code}\n")
+            if return_code == 0:
+                f.write("Cache build completed successfully!\n")
+            else:
+                f.write("Cache build failed. See above for errors.\n")
+            
+    except Exception as e:
+        logger.error(f"Error running build task: {str(e)}")
+        with open(log_file, "a") as f:
+            f.write(f"\nError running build task: {str(e)}\n")
+            f.write(traceback.format_exc())
+        
+        task_info["completed"] = True
+        task_info["success"] = False
+        task_info["error"] = str(e)
+
+@router.get("/rags/cache/logs/{rag_name}")
+async def get_build_cache_logs(rag_name: str):
+    """Get logs for the cache build process."""
+    rags = await load_rags_from_json()
+    if rag_name not in rags:
+        raise HTTPException(status_code=404, detail=f"RAG {rag_name} not found")
+    
+    rag_info = rags[rag_name]
+    task_id = rag_info.get("cache_build_task_id")
+    
+    if not task_id or task_id not in cache_build_tasks:
+        raise HTTPException(status_code=404, detail="No active cache build task found")
+    
+    task_info = cache_build_tasks[task_id]
+    log_file = task_info["log_file"]
+    
+    try:
+        if os.path.exists(log_file):
+            async with aiofiles.open(log_file, mode='r') as f:
+                logs = await f.read()
+        else:
+            logs = "Log file not found"
+        
+        return {
+            "logs": logs,
+            "completed": task_info["completed"],
+            "success": task_info["success"],
+            "start_time": task_info["start_time"],
+            "elapsed_time": time.time() - task_info["start_time"]
+        }
+    except Exception as e:
+        logger.error(f"Error reading build logs: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to read build logs: {str(e)}")

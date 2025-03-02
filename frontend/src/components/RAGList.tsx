@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import EditRAG from './EditRAG';
 import axios from 'axios';
 import { Table, Button, message, Card, Typography, Space, Tag, Tooltip, Modal, Select, Input, Empty } from 'antd';
-import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, DatabaseOutlined, FileOutlined, EditOutlined, ExclamationCircleOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
+import { PoweroffOutlined, PauseCircleOutlined, SyncOutlined, DatabaseOutlined, FileOutlined, EditOutlined, ExclamationCircleOutlined, DeleteOutlined, SearchOutlined, BuildOutlined } from '@ant-design/icons';
 
 const { Title, Paragraph } = Typography;
 const { Search } = Input;
@@ -20,13 +20,15 @@ interface RAG {
   host: string;
   port: number;
   product_type: string;
+  enable_hybrid_index?: boolean;
 }
 
 interface RAGListProps {
   refreshTrigger: number;
+  onBuildCache?: (ragName: string) => void;
 }
 
-const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
+const RAGList: React.FC<RAGListProps> = ({ refreshTrigger, onBuildCache }) => {
   const [rags, setRAGs] = useState<RAG[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState<{ [key: string]: boolean }>({});
@@ -218,6 +220,12 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
     }
   };
 
+  const handleBuildCache = (ragName: string) => {
+    if (onBuildCache) {
+      onBuildCache(ragName);
+    }
+  };
+
   const columns = [
     {
       title: 'RAG名称',
@@ -320,6 +328,14 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger }) => {
             >
               标准错误
             </Button>
+            {record.product_type === 'pro' && record.enable_hybrid_index && (
+              <Button
+                icon={<BuildOutlined />}
+                onClick={() => handleBuildCache(record.name)}
+              >
+                构建缓存
+              </Button>
+            )}
           </Space>
           <Space size="small">
             <Button
