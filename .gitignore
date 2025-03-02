@@ -24,3 +24,7 @@ config.json
 **/__pycache__/
 **/*.egg-info
 **/frontend.log
+**/*.log
+williamtoolbox-0.0.49/
+williamtoolbox-0.0.49.tar.gz
+src/*.egg-info
