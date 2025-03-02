@@ -68,6 +68,9 @@ class AddModelRequest(BaseModel):
 class AddRAGRequest(BaseModel):
     name: str
     model: str
+    recall_model: str = Field(default="")
+    chunk_model: str = Field(default="")
+    qa_model: str = Field(default="")
     tokenizer_path: str = Field(default="")
     doc_dir: str
     rag_doc_filter_relevance: float = Field(default=2.0)
