@@ -243,6 +243,16 @@ async def manage_rag(rag_name: str, action: str):
         command += f" --quick"
         command += f" --model {rag_info['model']}"
         
+        # 添加新的模型参数（如果有指定）
+        if rag_info.get("recall_model"):
+            command += f" --recall_model {rag_info['recall_model']}"
+            
+        if rag_info.get("chunk_model"):
+            command += f" --chunk_model {rag_info['chunk_model']}"
+            
+        if rag_info.get("qa_model"):
+            command += f" --qa_model {rag_info['qa_model']}"
+        
         # 只在tokenizer_path有值时添加该参数
         if rag_info.get("tokenizer_path"):
             command += f" --tokenizer_path {rag_info['tokenizer_path']}"

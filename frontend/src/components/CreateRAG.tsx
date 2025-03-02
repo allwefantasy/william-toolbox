@@ -8,6 +8,9 @@ const { Option } = Select;
 interface FormValues {
   name: string;
   model: string;
+  recall_model?: string;
+  chunk_model?: string;
+  qa_model?: string;
   tokenizer_path: string;
   doc_dir: string;
   rag_doc_filter_relevance: number;
@@ -154,13 +157,68 @@ const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
             </Select>
           </Form.Item>
           
-          <Form.Item name="model" label="模型" rules={[{ required: true }]}>
+          <Form.Item name="model" label="主模型" rules={[{ required: true }]}>
             <Select>
               {models.map(model => (
                 <Option key={model.name} value={model.name}>{model.name}</Option>
               ))}
             </Select>
           </Form.Item>
+
+          <Form.Item
+            name="recall_model"
+            label={
+              <span>
+                召回模型
+                <Tooltip title="用于文档检索的模型">
+                  <QuestionCircleOutlined style={{ marginLeft: 8 }} />
+                </Tooltip>
+              </span>
+            }
+          >
+            <Select allowClear placeholder="选择召回模型（可选）">
+              {models.map(model => (
+                <Option key={model.name} value={model.name}>{model.name}</Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            name="chunk_model"
+            label={
+              <span>
+                抽取模型
+                <Tooltip title="用于文本分块的模型">
+                  <QuestionCircleOutlined style={{ marginLeft: 8 }} />
+                </Tooltip>
+              </span>
+            }
+          >
+            <Select allowClear placeholder="选择抽取模型（可选）">
+              {models.map(model => (
+                <Option key={model.name} value={model.name}>{model.name}</Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            name="qa_model"
+            label={
+              <span>
+                回答模型
+                <Tooltip title="用于生成最终回答的模型">
+                  <QuestionCircleOutlined style={{ marginLeft: 8 }} />
+                </Tooltip>
+              </span>
+            }
+          >
+            <Select allowClear placeholder="选择回答模型（可选）">
+              {models.map(model => (
+                <Option key={model.name} value={model.name}>{model.name}</Option>
+              ))}
+            </Select>
+          </Form.Item>
+
           <Form.Item name="tokenizer_path" label="Tokenizer路径">
             {tokenizerPaths.length > 0 ? (
               <AutoComplete
@@ -193,7 +251,6 @@ const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
             label={
               <span>
                 禁用推理增强
-                <Tag color="blue" style={{ marginLeft: '8px' }}>Pro</Tag>
               </span>
             } 
             valuePropName="checked" 
@@ -206,7 +263,6 @@ const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
             label={
               <span>
                 推理深度思考
-                <Tag color="blue" style={{ marginLeft: '8px' }}>Pro</Tag>
               </span>
             } 
             valuePropName="checked" 
@@ -242,7 +298,6 @@ const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
             label={
               <span>
                 禁用上下文
-                <Tag color="blue" style={{ marginLeft: '8px' }}>Pro</Tag>
               </span>
             } 
             valuePropName="checked" 
