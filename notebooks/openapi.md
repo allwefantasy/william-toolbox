@@ -16,7 +16,7 @@ William Toolbox提供了一系列开放API，允许第三方应用程序访问�
    - 描述（可选）：添加描述以便于识别API Key的用途
    - 有效期：设置API Key的有效期（天数），或选择"永不过期"
 5. 点击"确定"创建API Key
-6. 保存生成的API Key，这是唯一一次可以看到完整的API Key
+
 
 ### 通过API创建API Key（需要管理员权限）
 
