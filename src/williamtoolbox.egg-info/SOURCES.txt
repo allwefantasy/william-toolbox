@@ -41,6 +41,6 @@ src/williamtoolbox/web/static/css/main.2b6e1e4c.css
 src/williamtoolbox/web/static/css/main.2b6e1e4c.css.map
 src/williamtoolbox/web/static/js/453.abd36b29.chunk.js
 src/williamtoolbox/web/static/js/453.abd36b29.chunk.js.map
-src/williamtoolbox/web/static/js/main.67d705dd.js
-src/williamtoolbox/web/static/js/main.67d705dd.js.LICENSE.txt
-src/williamtoolbox/web/static/js/main.67d705dd.js.map
+src/williamtoolbox/web/static/js/main.8c477cac.js
+src/williamtoolbox/web/static/js/main.8c477cac.js.LICENSE.txt
+src/williamtoolbox/web/static/js/main.8c477cac.js.map
