@@ -32,6 +32,7 @@ from urllib.parse import unquote
 from .chat_router import router as chat_router
 from .file_router import router as file_router
 from .apps.annotation_router import router as annotation_router
+from .openapi_router import router as openapi_router
 
 app = FastAPI()
 app.include_router(chat_router)
@@ -45,7 +46,7 @@ app.include_router(super_analysis_router)
 app.include_router(byzer_sql_router)
 app.include_router(user_router)
 app.include_router(annotation_router)
-
+app.include_router(openapi_router)
 @app.get("/{full_path:path}")
 async def serve_image(full_path: str, request: Request):
     if "_images" in full_path:

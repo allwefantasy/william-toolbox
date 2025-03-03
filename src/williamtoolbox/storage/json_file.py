@@ -8,7 +8,9 @@ import asyncio
 import aiofiles
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Optional
+from datetime import datetime, timedelta
+import uuid
 
 class AsyncFileLock:
     def __init__(self, lock_file: str):
@@ -236,6 +238,76 @@ async def save_file_resources(resources: Dict[str, Any]) -> None:
         async with aiofiles.open(FILE_RESOURCES_JSON_PATH, "w") as f:
             content = json.dumps(resources, ensure_ascii=False)
             await f.write(content)
+
+
+# API Key related functions
+API_KEYS_JSON_PATH = "api_keys.json"
+
+async def load_api_keys() -> Dict[str, Any]:
+    """Load API keys from JSON file"""
+    async with with_file_lock(API_KEYS_JSON_PATH):
+        if os.path.exists(API_KEYS_JSON_PATH):
+            async with aiofiles.open(API_KEYS_JSON_PATH, "r") as f:
+                content = await f.read()
+                return json.loads(content)
+        return {}
+
+async def save_api_keys(api_keys: Dict[str, Any]) -> None:
+    """Save API keys to JSON file"""
+    async with with_file_lock(API_KEYS_JSON_PATH):
+        async with aiofiles.open(API_KEYS_JSON_PATH, "w") as f:
+            content = json.dumps(api_keys, ensure_ascii=False)
+            await f.write(content)
+
+async def create_api_key(name: str, description: Optional[str] = None, expires_in_days: int = 30) -> Dict[str, Any]:
+    """Create a new API key"""
+    api_keys = await load_api_keys()
+    
+    # Generate a unique API key
+    api_key = f"sk-{uuid.uuid4().hex}"
+    
+    # Create key info
+    created_at = datetime.now().isoformat()
+    expires_at = -1 if expires_in_days == -1 else (datetime.now() + timedelta(days=expires_in_days)).isoformat()
+    api_key_info = {
+        "key": api_key,
+        "name": name,
+        "description": description,
+        "created_at": created_at,
+        "expires_at": expires_at,
+        "is_active": True
+    }    
+    
+    api_keys[api_key] = api_key_info
+    await save_api_keys(api_keys)
+    return api_key_info
+
+async def revoke_api_key(key: str) -> None:
+    """Revoke an API key"""
+    api_keys = await load_api_keys()
+    if key in api_keys:
+        api_keys[key]["is_active"] = False
+        await save_api_keys(api_keys)
+
+async def verify_api_key(api_key: str) -> bool:
+    """Verify if an API key is valid and not expired"""
+    api_keys = await load_api_keys()
+    if api_key not in api_keys:
+        return False
+    
+    key_info = api_keys[api_key]
+    if not key_info["is_active"]:
+        return False
+    
+    # -1 means never expire
+    if key_info["expires_at"] == -1:
+        return True
+        
+    expires_at = datetime.fromisoformat(key_info["expires_at"])
+    if expires_at < datetime.now():
+        return False
+    
+    return True
 
 
 
