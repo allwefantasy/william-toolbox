@@ -28,3 +28,4 @@ config.json
 williamtoolbox-0.0.49/
 williamtoolbox-0.0.49.tar.gz
 src/*.egg-info
+__pycache__/
