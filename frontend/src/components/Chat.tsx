@@ -193,6 +193,28 @@ const [skipCSVCheck, setSkipCSVCheck] = useState(false);
                 })
               );
               currentIndex = event.index + 1;
+            } else if (event.event === "stream_thought") {
+              setMessages(prevMessages =>
+                prevMessages.map(msg => {
+                  if (msg.id === assistant_message_id) {
+                    let currentThoughts = msg.thoughts || [];
+                    if (currentThoughts.length === 0) {
+                      currentThoughts = [event.content];
+                    } else {
+                      currentThoughts = [
+                        currentThoughts[0] + event.content,
+                        ...currentThoughts.slice(1)
+                      ];
+                    }
+                    return {
+                      ...msg,
+                      thoughts: currentThoughts
+                    };
+                  }
+                  return msg;
+                })
+              );
+              currentIndex = event.index + 1;
             }
 
             if (event.event === 'done') {
@@ -618,6 +640,28 @@ const [skipCSVCheck, setSkipCSVCheck] = useState(false);
                       return {
                         ...msg,
                         thoughts: [...currentThoughts, event.content]
+                      };
+                    }
+                    return msg;
+                  })
+                );
+                currentIndex = event.index + 1;
+              } else if (event.event === "stream_thought") {
+                setMessages(prevMessages =>
+                  prevMessages.map(msg => {
+                    if (msg.id === assistant_message_id) {
+                      let currentThoughts = msg.thoughts || [];
+                      if (currentThoughts.length === 0) {
+                        currentThoughts = [event.content];
+                      } else {
+                        currentThoughts = [
+                          currentThoughts[0] + event.content,
+                          ...currentThoughts.slice(1)
+                        ];
+                      }
+                      return {
+                        ...msg,
+                        thoughts: currentThoughts
                       };
                     }
                     return msg;

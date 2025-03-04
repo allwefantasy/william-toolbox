@@ -262,8 +262,22 @@ async def process_message_stream(
                     max_tokens=4096,
                     extra_body={"request_id":request_id},
                 )
+                thinking_gen,content_gen = await separate_stream_thinking_async(response)
+                async for chunk in thinking_gen:
+                    if chunk:
+                        event = {
+                            "index": idx,
+                            "event": "stream_thought",
+                            "content": chunk,
+                            "timestamp": datetime.now().isoformat(),
+                        }
+                        await event_file.write(
+                            json.dumps(event, ensure_ascii=False) + "\n"
+                        )
+                        await event_file.flush()
+                        idx += 1
 
-                async for chunk in stream_with_thinking_async(response):
+                async for chunk in content_gen:
                     if chunk:
                         event = {
                             "index": idx,
@@ -275,7 +289,7 @@ async def process_message_stream(
                             json.dumps(event, ensure_ascii=False) + "\n"
                         )
                         await event_file.flush()
-                        idx += 1
+                        idx += 1        
 
             elif request.list_type == "rags":
                 rags = await load_rags_from_json()
