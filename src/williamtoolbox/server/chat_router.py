@@ -13,7 +13,7 @@ from ..storage.json_file import *
 import aiofiles
 import traceback
 from byzerllm.utils.client import code_utils
-from autocoder.utils.stream_thinking import stream_with_thinking_async
+from autocoder.utils.stream_thinking import stream_with_thinking_async, separate_stream_thinking_async
 
 router = APIRouter()
 
@@ -304,11 +304,26 @@ async def process_message_stream(
                     extra_body={"request_id":request_id},
                 )
                 if not inference_deep_thought:
-                    async for chunk in stream_with_thinking_async(response):
+                    thinking_gen,content_gen = await separate_stream_thinking_async(response)
+                    async for chunk in thinking_gen:
                         if chunk:
                             event = {
                                 "index": idx,
-                                "event": "chunk",
+                                "event": "thought",
+                                "content": chunk,
+                                "timestamp": datetime.now().isoformat(),
+                            }
+                            await event_file.write(
+                                json.dumps(event, ensure_ascii=False) + "\n"
+                            )
+                            await event_file.flush()
+
+                            idx += 1
+                    async for chunk in content_gen:
+                        if chunk:
+                            event = {
+                                "index": idx,
+                                "event": "chunk",                                
                                 "content": chunk,
                                 "timestamp": datetime.now().isoformat(),
                             }
