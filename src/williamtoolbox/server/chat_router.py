@@ -13,6 +13,7 @@ from ..storage.json_file import *
 import aiofiles
 import traceback
 from byzerllm.utils.client import code_utils
+from autocoder.utils.stream_thinking import stream_with_thinking_async
 
 router = APIRouter()
 
@@ -224,12 +225,12 @@ async def process_message_stream(
                     extra_body={"request_id":request_id},
                 )
 
-                async for chunk in response:
-                    if chunk.choices[0].delta.content:
+                async for chunk in stream_with_thinking_async(response):
+                    if chunk:
                         event = {
                             "index": idx,
                             "event": "chunk",
-                            "content": chunk.choices[0].delta.content,
+                            "content": chunk,
                             "timestamp": datetime.now().isoformat(),
                         }
                         await event_file.write(
@@ -262,12 +263,12 @@ async def process_message_stream(
                     extra_body={"request_id":request_id},
                 )
 
-                async for chunk in response:
-                    if chunk.choices[0].delta.content:
+                async for chunk in stream_with_thinking_async(response):
+                    if chunk:
                         event = {
                             "index": idx,
                             "event": "chunk",
-                            "content": chunk.choices[0].delta.content,
+                            "content": chunk,
                             "timestamp": datetime.now().isoformat(),
                         }
                         await event_file.write(
@@ -303,12 +304,12 @@ async def process_message_stream(
                     extra_body={"request_id":request_id},
                 )
                 if not inference_deep_thought:
-                    async for chunk in response:
-                        if chunk.choices[0].delta.content:
+                    async for chunk in stream_with_thinking_async(response):
+                        if chunk:
                             event = {
                                 "index": idx,
                                 "event": "chunk",
-                                "content": chunk.choices[0].delta.content,
+                                "content": chunk,
                                 "timestamp": datetime.now().isoformat(),
                             }
                             await event_file.write(
