@@ -20,6 +20,7 @@ src/williamtoolbox/server/config_router.py
 src/williamtoolbox/server/file_router.py
 src/williamtoolbox/server/model_router.py
 src/williamtoolbox/server/openai_service_router.py
+src/williamtoolbox/server/openapi_router.py
 src/williamtoolbox/server/proxy_server.py
 src/williamtoolbox/server/rag_router.py
 src/williamtoolbox/server/request_types.py
@@ -41,6 +42,6 @@ src/williamtoolbox/web/static/css/main.2b6e1e4c.css
 src/williamtoolbox/web/static/css/main.2b6e1e4c.css.map
 src/williamtoolbox/web/static/js/453.abd36b29.chunk.js
 src/williamtoolbox/web/static/js/453.abd36b29.chunk.js.map
-src/williamtoolbox/web/static/js/main.8c477cac.js
-src/williamtoolbox/web/static/js/main.8c477cac.js.LICENSE.txt
-src/williamtoolbox/web/static/js/main.8c477cac.js.map
+src/williamtoolbox/web/static/js/main.0af4a31a.js
+src/williamtoolbox/web/static/js/main.0af4a31a.js.LICENSE.txt
+src/williamtoolbox/web/static/js/main.0af4a31a.js.map

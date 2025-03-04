@@ -17,7 +17,7 @@ import UserManagement from './components/UserManagement';
 import Login from './components/Login';
 import FileManagement from './components/FileManagement';
 import AppStore from './components/AppStore';
-import Annotation from './components/Annotation';
+// import Annotation from './components/Annotation';
 import AutoCoderJsonChatViz from './components/AutoCoderJsonChatViz';
 import BuildCache from './components/BuildCache';
 import APIKeyManagement from './components/APIKeyManagement';
@@ -183,8 +183,8 @@ function App() {
         return <AppStore onNavigate={setSelectedKey} />;
       case '11':
         return <APIKeyManagement />;
-      case 'annotation':
-        return <Annotation />;
+      // case 'annotation':
+      //   return <Annotation />;
       default:
         return (
           <>
