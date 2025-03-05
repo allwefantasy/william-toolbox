@@ -204,12 +204,17 @@ const EditModel: React.FC<EditModelProps> = ({ visible, modelData, onClose, onUp
       onOk={handleOk}
       onCancel={onClose}
       width={700}
-      okButtonProps={{ disabled: isModelRunning }}
-      okText={isModelRunning ? "运行中无法编辑" : "确认"}
+      okButtonProps={{ disabled: isModelRunning && productType !== "lite" }}
+      okText={isModelRunning && productType !== "lite" ? "运行中无法编辑" : "确认"}
     >
-      {isModelRunning && (
+      {isModelRunning && productType !== "lite" && (
         <div style={{ marginBottom: 16, padding: 8, backgroundColor: '#fffbe6', border: '1px solid #ffe58f', borderRadius: 4 }}>
           <span style={{ color: '#faad14' }}><strong>提示：</strong>模型正在运行中，请先停止模型后再进行编辑。</span>
+        </div>
+      )}
+      {isModelRunning && productType === "lite" && (
+        <div style={{ marginBottom: 16, padding: 8, backgroundColor: '#e6f7ff', border: '1px solid #91d5ff', borderRadius: 4 }}>
+          <span style={{ color: '#1890ff' }}><strong>提示：</strong>轻量版模式下，可以在模型运行时进行编辑。</span>
         </div>
       )}
       
