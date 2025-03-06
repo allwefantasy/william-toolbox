@@ -328,7 +328,7 @@ const RAGList: React.FC<RAGListProps> = ({ refreshTrigger, onBuildCache }) => {
             >
               标准错误
             </Button>
-            {record.product_type === 'pro' && record.enable_hybrid_index && (
+            {record.enable_hybrid_index && (
               <Button
                 icon={<BuildOutlined />}
                 onClick={() => handleBuildCache(record.name)}

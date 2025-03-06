@@ -76,7 +76,7 @@ const Chat: React.FC = () => {
   const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
   const [columns, setColumns] = useState<CSVColumn[]>([]);
   const [pendingMessage, setPendingMessage] = useState('');
-const [skipCSVCheck, setSkipCSVCheck] = useState(false);
+  const [skipCSVCheck, setSkipCSVCheck] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -116,7 +116,8 @@ const [skipCSVCheck, setSkipCSVCheck] = useState(false);
 
     try {
       const username = sessionStorage.getItem('username') || '';
-      
+      let qaModelThinkingDetected = false;
+
       // 使用 messages/stream 接口重新生成响应
       const streamResponse = await axios.post(
         `/chat/conversations/${currentConversationId}/messages/stream?username=${encodeURIComponent(username)}`,
@@ -180,9 +181,31 @@ const [skipCSVCheck, setSkipCSVCheck] = useState(false);
               );
               currentIndex = event.index + 1;
             } else if (event.event === "thought") {
-              setMessages(prevMessages =>
-                prevMessages.map(msg => {
-                  if (msg.id === assistant_message_id) {
+              if (qaModelThinkingDetected) {
+                setMessages(prevMessages =>
+                  prevMessages.map(msg => {
+                    if (msg.id === assistant_message_id) {
+                      let currentThoughts = msg.thoughts || [];
+                      if (currentThoughts.length === 0) {
+                        // 如果没有thoughts，创建一个新的
+                        currentThoughts = [event.content];
+                      } else {
+                        // 直接追加到最后一条thought
+                        currentThoughts[currentThoughts.length-1] += event.content;
+                      }
+                      return {
+                        ...msg,
+                        thoughts: currentThoughts
+                      };
+                    }
+                    return msg;
+                  })
+                );
+                currentIndex = event.index + 1;  
+              }else{
+                setMessages(prevMessages =>
+                  prevMessages.map(msg => {
+                    if (msg.id === assistant_message_id) {
                     const currentThoughts = msg.thoughts || [];
                     return {
                       ...msg,
@@ -193,6 +216,11 @@ const [skipCSVCheck, setSkipCSVCheck] = useState(false);
                 })
               );
               currentIndex = event.index + 1;
+              }
+
+              if (event.content.includes("qa_model_thinking")) {                
+                qaModelThinkingDetected = true;
+              }
             } else if (event.event === "stream_thought") {
               setMessages(prevMessages =>
                 prevMessages.map(msg => {
@@ -310,11 +338,11 @@ const [skipCSVCheck, setSkipCSVCheck] = useState(false);
         // 获取用户模型权限
         const userResponse = await axios.get(`/api/users/${username}`);
         const modelPermissions = userResponse.data.model_permissions || [];
-        
+
         response = await axios.get('/models');
         const runningModels = response.data
-          .filter((model: any) => model.status === 'running' && 
-                  (modelPermissions.includes('*') || modelPermissions.includes(model.name)))
+          .filter((model: any) => model.status === 'running' &&
+            (modelPermissions.includes('*') || modelPermissions.includes(model.name)))
           .map((model: any) => model.name);
         setItemList(runningModels);
         if (runningModels.length > 0 && !selectedItem) {
@@ -324,11 +352,11 @@ const [skipCSVCheck, setSkipCSVCheck] = useState(false);
         // 获取用户RAG权限
         const userResponse = await axios.get(`/api/users/${username}`);
         const ragPermissions = userResponse.data.rag_permissions || [];
-        
+
         response = await axios.get('/rags');
         const runningRags = response.data
-          .filter((rag: any) => rag.status === 'running' && 
-                  (ragPermissions.includes('*') || ragPermissions.includes(rag.name)))
+          .filter((rag: any) => rag.status === 'running' &&
+            (ragPermissions.includes('*') || ragPermissions.includes(rag.name)))
           .map((rag: any) => rag.name);
         setItemList(runningRags);
         if (runningRags.length > 0 && !selectedItem) {
@@ -595,6 +623,8 @@ const [skipCSVCheck, setSkipCSVCheck] = useState(false);
           const tempMessage = { id: assistant_message_id, role: 'assistant' as const, content: '', timestamp: new Date().toISOString() };
           setMessages(prevMessages => [...prevMessages, tempMessage]);
 
+          let qaModelThinkingDetected = false;
+
           while (true) {
             const eventsResponse = await axios.get(`/chat/conversations/events/${requestId}/${currentIndex}`);
             const events = eventsResponse.data.events;
@@ -632,20 +662,47 @@ const [skipCSVCheck, setSkipCSVCheck] = useState(false);
                   })
                 );
                 currentIndex = event.index + 1;
-              } else if (event.event === "thought") {
-                setMessages(prevMessages =>
-                  prevMessages.map(msg => {
-                    if (msg.id === assistant_message_id) {
-                      const currentThoughts = msg.thoughts || [];
-                      return {
-                        ...msg,
-                        thoughts: [...currentThoughts, event.content]
-                      };
-                    }
-                    return msg;
-                  })
-                );
-                currentIndex = event.index + 1;
+              } else if (event.event === "thought") {                
+                if (qaModelThinkingDetected) {                  
+                  setMessages(prevMessages =>
+                    prevMessages.map(msg => {
+                      if (msg.id === assistant_message_id) {
+                        let currentThoughts = msg.thoughts || [];
+                        if (currentThoughts.length === 0) {
+                          // 如果没有thoughts，创建一个新的
+                          currentThoughts = [event.content];
+                        } else {
+                          // 直接追加到最后一条thought
+                          currentThoughts[currentThoughts.length-1] += event.content;
+                        }
+                        return {
+                          ...msg,
+                          thoughts: currentThoughts
+                        };
+                      }
+                      return msg;
+                    })
+                  );
+                  currentIndex = event.index + 1;
+                } else {
+                  setMessages(prevMessages =>
+                    prevMessages.map(msg => {
+                      if (msg.id === assistant_message_id) {
+                        const currentThoughts = msg.thoughts || [];
+                        return {
+                          ...msg,
+                          thoughts: [...currentThoughts, event.content]
+                        };
+                      }
+                      return msg;
+                    })
+                  );
+                  currentIndex = event.index + 1;
+                }
+                if (event.content.includes("qa_model_thinking")) {
+                  console.log('Found qa_model_thinking in content:', event.content);
+                  qaModelThinkingDetected = true;
+                }
               } else if (event.event === "stream_thought") {
                 setMessages(prevMessages =>
                   prevMessages.map(msg => {
@@ -847,10 +904,10 @@ const [skipCSVCheck, setSkipCSVCheck] = useState(false);
               columns={columns.map(col => ({
                 ...col,
                 render: (text: string) => (
-                  <div style={{ 
-                    maxWidth: '100%', 
-                    overflow: 'hidden', 
-                    textOverflow: 'ellipsis', 
+                  <div style={{
+                    maxWidth: '100%',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
                     width: 'fit-content'
                   }}>
@@ -911,18 +968,18 @@ const [skipCSVCheck, setSkipCSVCheck] = useState(false);
         >
           新的聊天
         </Button>
-        
+
         <Input.Search
           placeholder="搜索会话"
           allowClear
           onChange={(e) => setSearchQuery(e.target.value)}
-          style={{ 
-            marginBottom: 16, 
+          style={{
+            marginBottom: 16,
             borderRadius: '8px',
           }}
           size="middle"
         />
-        
+
         {conversations
           .filter(conv => conv.title.toLowerCase().includes(searchQuery.toLowerCase()))
           .map((conv) => (
@@ -1147,17 +1204,17 @@ const [skipCSVCheck, setSkipCSVCheck] = useState(false);
                 ))}
               </Select>
               <Space>
-                <Button 
-                  type="primary" 
-                  icon={<SendOutlined />} 
-                  onClick={handleSendMessage} 
+                <Button
+                  type="primary"
+                  icon={<SendOutlined />}
+                  onClick={handleSendMessage}
                   disabled={isLoading || isCancelling}
                 >
                   发送
                 </Button>
                 {isLoading && cancelTokenSource && (
-                  <Button 
-                    danger 
+                  <Button
+                    danger
                     icon={<DeleteOutlined />}
                     onClick={() => {
                       setIsCancelling(true);

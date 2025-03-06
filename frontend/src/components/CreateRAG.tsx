@@ -21,6 +21,7 @@ interface FormValues {
   inference_deep_thought: boolean;
   enable_hybrid_index: boolean;  
   hybrid_index_max_output_tokens: number;
+  emb_model?: string;
   without_contexts: boolean;
   product_type: string;
   infer_params?: { key: string; value: string }[] | { [key: string]: string };
@@ -110,6 +111,12 @@ const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
         });
         values.infer_params = params;        
       }
+      
+      // If hybrid index is not enabled, remove the emb_model field
+      if (!values.enable_hybrid_index) {
+        delete values.emb_model;
+      }
+      
       await axios.post('/rags/add', values);
       setIsModalVisible(false);
       form.resetFields();
@@ -292,7 +299,25 @@ const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
           >
             <InputNumber min={1} max={10000000} />
           </Form.Item>
-
+          <Form.Item
+            noStyle
+            shouldUpdate={(prevValues, currentValues) => prevValues.enable_hybrid_index !== currentValues.enable_hybrid_index}
+          >
+            {({ getFieldValue }) =>
+              getFieldValue('enable_hybrid_index') === true ? (
+                <Form.Item
+                  name="emb_model"
+                  label="向量模型"
+                  rules={[{ required: true, message: '请选择向量模型!' }]}
+                >
+                  <Select
+                    placeholder="请选择向量模型"
+                    options={models.map(model => ({ label: model.name, value: model.name }))}
+                  />
+                </Form.Item>
+              ) : null
+            }
+          </Form.Item>
           <Form.Item 
             name="without_contexts" 
             label={

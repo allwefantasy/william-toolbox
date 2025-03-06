@@ -12,6 +12,7 @@ interface RAGInfo {
   required_exts?: string;
   product_type: string;
   enable_hybrid_index: boolean;
+  emb_model?: string;
   // 其他可能的属性
 }
 
@@ -37,7 +38,7 @@ const BuildCache: React.FC<BuildCacheProps> = ({ ragName, onReturn }) => {
         const response = await axios.get(`/rags/${encodeURIComponent(ragName)}`);
         
         // 验证是否为Pro版本且启用了混合索引
-        if (response.data.product_type !== 'pro' || !response.data.enable_hybrid_index) {
+        if (!response.data.enable_hybrid_index) {
           setError('此RAG实例不支持构建缓存功能。只有Pro版本且启用了混合索引的实例才能构建缓存。');
         }
         
@@ -59,8 +60,16 @@ const BuildCache: React.FC<BuildCacheProps> = ({ ragName, onReturn }) => {
       setBuilding(true);
       setLogs('');
       
+      // 构建请求参数，包含emb_model(如果存在)
+      const params: any = {};
+      if (ragInfo?.emb_model) {
+        params.emb_model = ragInfo.emb_model;
+      }
+      
       // Update API URL from /rags/{ragName}/build_cache to /rags/cache/build/{ragName}
-      const response = await axios.post(`/rags/cache/build/${encodeURIComponent(ragName)}`);
+      const response = await axios.post(
+        `/rags/cache/build/${encodeURIComponent(ragName)}`        
+      );
       
       if (response.data.success) {
         notification.success({
@@ -168,6 +177,9 @@ const BuildCache: React.FC<BuildCacheProps> = ({ ragName, onReturn }) => {
         <Descriptions title="RAG实例信息" bordered>
           <Descriptions.Item label="名称" span={3}>{ragInfo?.name}</Descriptions.Item>
           <Descriptions.Item label="模型" span={3}>{ragInfo?.model}</Descriptions.Item>
+          {ragInfo?.emb_model && (
+            <Descriptions.Item label="向量模型" span={3}>{ragInfo.emb_model}</Descriptions.Item>
+          )}
           <Descriptions.Item label="文档目录" span={3}>{ragInfo?.doc_dir}</Descriptions.Item>
           <Descriptions.Item label="文件类型" span={3}>{ragInfo?.required_exts || '.md,.rst,.txt'}</Descriptions.Item>
         </Descriptions>
@@ -182,7 +194,7 @@ const BuildCache: React.FC<BuildCacheProps> = ({ ragName, onReturn }) => {
                 具体取决于文档数量和复杂度。
               </Paragraph>
               <Paragraph>
-                将执行的命令: <Text code>{`auto-coder.rag build_hybrid_index --model ${ragInfo?.model} --doc_dir ${ragInfo?.doc_dir} ${ragInfo?.required_exts ? `--required_exts ${ragInfo.required_exts}` : ''} --enable_hybrid_index`}</Text>
+                将执行的命令: <Text code>{`auto-coder.rag build_hybrid_index --model ${ragInfo?.model} ${ragInfo?.emb_model ? `--emb_model ${ragInfo.emb_model}` : ''} --doc_dir ${ragInfo?.doc_dir} ${ragInfo?.required_exts ? `--required_exts ${ragInfo.required_exts}` : ''} --enable_hybrid_index`}</Text>
               </Paragraph>
             </div>
           }

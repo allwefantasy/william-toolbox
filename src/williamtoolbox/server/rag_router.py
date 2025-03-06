@@ -280,6 +280,10 @@ async def manage_rag(rag_name: str, action: str):
             
         if "enable_hybrid_index" in rag_info and rag_info["enable_hybrid_index"]:
             command += f" --enable_hybrid_index"
+            
+            if "emb_model" in rag_info:
+                command += f" --emb_model {rag_info['emb_model']}"
+
             if "hybrid_index_max_output_tokens" in rag_info:
                 command += f" --hybrid_index_max_output_tokens {rag_info['hybrid_index_max_output_tokens']}"
 
@@ -489,7 +493,7 @@ async def build_cache(rag_name: str):
     rag_info = rags[rag_name]
     
     # 验证是否为Pro版本且启用了混合索引
-    if rag_info.get("product_type") != "pro" or not rag_info.get("enable_hybrid_index"):
+    if not rag_info.get("enable_hybrid_index"):
         raise HTTPException(
             status_code=400, 
             detail="Only Pro version RAGs with hybrid index enabled can build cache"
@@ -503,6 +507,9 @@ async def build_cache(rag_name: str):
     command = f"auto-coder.rag build_hybrid_index"
     command += f" --model {rag_info['model']}"
     command += f" --doc_dir {rag_info['doc_dir']}"
+    
+    if "emb_model" in rag_info:
+        command += f" --emb_model {rag_info['emb_model']}"
     
     if rag_info.get("required_exts"):
         command += f" --required_exts {rag_info['required_exts']}"

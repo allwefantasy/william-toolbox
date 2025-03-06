@@ -39,6 +39,7 @@ const EditRAG: React.FC<EditRAGProps> = ({ visible, ragData, onClose, onUpdate }
         inference_deep_thought: ragData.inference_deep_thought,
         enable_hybrid_index: ragData.enable_hybrid_index,
         hybrid_index_max_output_tokens: ragData.hybrid_index_max_output_tokens,
+        emb_model: ragData.emb_model,
         without_contexts: ragData.without_contexts,
         product_type: ragData.product_type || 'lite',
         infer_params: ragData.infer_params ? Object.entries(ragData.infer_params).map(([key, value]) => ({
@@ -83,6 +84,11 @@ const EditRAG: React.FC<EditRAGProps> = ({ visible, ragData, onClose, onUpdate }
           params[param.key] = param.value;
         });
         values.infer_params = params;        
+      }
+
+      // If hybrid index is not enabled, remove the emb_model field
+      if (!values.enable_hybrid_index) {
+        delete values.emb_model;
       }
 
       values.name = ragData.name;
@@ -261,6 +267,27 @@ const EditRAG: React.FC<EditRAGProps> = ({ visible, ragData, onClose, onUpdate }
           initialValue={1000000}
         >
           <InputNumber min={1} max={10000000} />
+        </Form.Item>
+
+        <Form.Item
+          noStyle
+          shouldUpdate={(prevValues, currentValues) => prevValues.enable_hybrid_index !== currentValues.enable_hybrid_index}
+        >
+          {({ getFieldValue }) =>
+            getFieldValue('enable_hybrid_index') === true ? (
+              <Form.Item
+                name="emb_model"
+                label="向量模型"
+                rules={[{ required: true, message: '请选择向量模型!' }]}
+              >
+                <Select
+                  placeholder="请选择向量模型"
+                  options={models                    
+                    .map(model => ({ label: model.name, value: model.name }))}
+                />
+              </Form.Item>
+            ) : null
+          }
         </Form.Item>
 
         <Form.Item 

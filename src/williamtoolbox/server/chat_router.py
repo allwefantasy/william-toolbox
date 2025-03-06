@@ -332,7 +332,7 @@ async def process_message_stream(
                     max_tokens=8096,
                     extra_body={"request_id":request_id},
                 )
-                if not inference_deep_thought:
+                if not inference_deep_thought:                    
                     thinking_gen,content_gen = await separate_stream_thinking_async(response)
                     async for chunk in thinking_gen:
                         if chunk:
@@ -380,7 +380,7 @@ async def process_message_stream(
                                 }
                             ],
                             stream=True,
-                            max_tokens=4096                            
+                            max_tokens=8096                            
                         )
                         result = ""
                         async for chunk in round_response:
