@@ -195,10 +195,10 @@ async def update_model(model_name: str, request: AddModelRequest):
             status_code=404, detail=f"Model {model_name} not found")
 
     model_info = models[model_name]
-    if model_info['status'] == 'running':
+    if request.product_type == ProductType.pro and model_info['status'] == 'running':
         raise HTTPException(
             status_code=400,
-            detail="Cannot update a running model. Please stop it first."
+            detail="Cannot update a running model in pro mode. Please stop it first."
         )
 
     if request.product_type == ProductType.lite:

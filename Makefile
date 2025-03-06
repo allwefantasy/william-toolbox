@@ -1,4 +1,5 @@
-build: ## Build and package web assets	
+.PHONY: build
+build: 
 	rm -rf build && mkdir -p build
 	rm -rf dist && mkdir -p dist
 	cd frontend && npm install && npm run build
