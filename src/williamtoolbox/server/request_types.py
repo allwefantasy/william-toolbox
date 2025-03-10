@@ -42,6 +42,7 @@ class AddMessageRequest(BaseModel):
     messages: List[Message]  # Change to accept full message history
     list_type: str
     selected_item: str
+    extra_metadata: Optional[Dict[str, Any]] = Field(default_factory=dict)
 
 from enum import Enum
 

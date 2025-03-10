@@ -322,6 +322,15 @@ async def process_message_stream(
                 ) in ["True", "true", True]
 
                 client = AsyncOpenAI(base_url=base_url, api_key="xxxx")
+                
+                extra_body = {}
+                if "only_contexts" in request.extra_metadata and request.extra_metadata["only_contexts"]:
+                    extra_body = {
+                        "extra_body": {
+                            "only_contexts": True
+                        }
+                    }
+
                 response = await client.chat.completions.create(
                     model=rag_info.get("model", "deepseek_chat"),
                     messages=[
@@ -330,7 +339,9 @@ async def process_message_stream(
                     ],
                     stream=True,
                     max_tokens=8096,
-                    extra_body={"request_id":request_id},
+                    extra_body={
+                        **extra_body
+                    },
                 )
                 if not inference_deep_thought:                    
                     thinking_gen,content_gen = await separate_stream_thinking_async(response)

@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Layout, Menu, Typography, Space, Button } from 'antd';
-import { RocketOutlined, AppstoreOutlined, DatabaseOutlined, FolderOutlined, SettingOutlined, MessageOutlined, CodeOutlined, ThunderboltOutlined, LogoutOutlined, KeyOutlined } from '@ant-design/icons';
+import { RocketOutlined, AppstoreOutlined, DatabaseOutlined, FolderOutlined, SettingOutlined, MessageOutlined, CodeOutlined, ThunderboltOutlined, LogoutOutlined, KeyOutlined, SearchOutlined } from '@ant-design/icons';
 import ModelList from './components/ModelList';
 import CreateModel from './components/CreateModel';
 import RAGList from './components/RAGList';
@@ -21,6 +21,7 @@ import AppStore from './components/AppStore';
 import AutoCoderJsonChatViz from './components/AutoCoderJsonChatViz';
 import BuildCache from './components/BuildCache';
 import APIKeyManagement from './components/APIKeyManagement';
+import Search from './components/Search';
 import './App.css';
 import axios from 'axios';
 
@@ -44,7 +45,10 @@ const menuKeyToPermission: { [key: string]: string } = {
   '8': '用户管理',
   '9': '文件管理',
   '10': '应用广场',
-  '11': 'API Key管理'
+  '11': 'API Key管理',
+  '12': '搜索',
+  '12.1': '搜索首页',
+  '12.2': '搜索结果',
 };
 
 function App() {
@@ -183,6 +187,8 @@ function App() {
         return <AppStore onNavigate={setSelectedKey} />;
       case '11':
         return <APIKeyManagement />;
+      case '12':
+        return <Search />;
       // case 'annotation':
       //   return <Annotation />;
       default:
@@ -216,7 +222,7 @@ function App() {
         <Menu
           mode="inline"
           defaultSelectedKeys={['1']}
-          defaultOpenKeys={['1', '3']}
+          defaultOpenKeys={['1', '3', '12']}
           selectedKeys={[selectedKey]}
           onSelect={({ key }) => {
             setSelectedKey(key);
@@ -283,6 +289,11 @@ function App() {
           {hasPermission('11') && (
             <Menu.Item key="11" icon={<KeyOutlined />}>
               API Key管理
+            </Menu.Item>
+          )}
+          {hasPermission('12') && (
+            <Menu.Item key="12" icon={<SearchOutlined />}>
+              搜索
             </Menu.Item>
           )}
         </Menu>
