@@ -24,6 +24,11 @@ const EditRAG: React.FC<EditRAGProps> = ({ visible, ragData, onClose, onUpdate }
 
   useEffect(() => {
     if (visible && ragData) {
+      // 如果 required_exts 是逗号分隔的字符串，将其转换为数组以适应 Select tags 模式
+      const requiredExts = ragData.required_exts ? 
+        ragData.required_exts.split(',').filter((ext: string) => ext.trim() !== '') : 
+        [];
+      
       form.setFieldsValue({        
         model: ragData.model,
         recall_model: ragData.recall_model,
@@ -34,7 +39,7 @@ const EditRAG: React.FC<EditRAGProps> = ({ visible, ragData, onClose, onUpdate }
         rag_doc_filter_relevance: ragData.rag_doc_filter_relevance,
         host: ragData.host,
         port: ragData.port,
-        required_exts: ragData.required_exts,
+        required_exts: requiredExts,
         disable_inference_enhance: ragData.disable_inference_enhance,
         inference_deep_thought: ragData.inference_deep_thought,
         enable_hybrid_index: ragData.enable_hybrid_index,
@@ -84,6 +89,11 @@ const EditRAG: React.FC<EditRAGProps> = ({ visible, ragData, onClose, onUpdate }
           params[param.key] = param.value;
         });
         values.infer_params = params;        
+      }
+
+      // Convert required_exts array to comma-separated string if it's an array
+      if (Array.isArray(values.required_exts)) {
+        values.required_exts = values.required_exts.join(',');
       }
 
       // If hybrid index is not enabled, remove the emb_model field
@@ -219,8 +229,24 @@ const EditRAG: React.FC<EditRAGProps> = ({ visible, ragData, onClose, onUpdate }
         <Form.Item name="port" label="端口" initialValue={8000}>
           <InputNumber min={1024} max={65535} />
         </Form.Item>
-        <Form.Item name="required_exts" label="必需的扩展名" initialValue="">
-          <Input placeholder="用逗号分隔，例如: .txt,.pdf" />
+        <Form.Item name="required_exts" label="必需的扩展名">
+          <Select
+            mode="tags"
+            style={{ width: '100%' }}
+            placeholder="输入扩展名并按回车或空格添加 (例如: .txt .pdf)"
+            tokenSeparators={[' ', ',']}
+            open={false}
+            onChange={(value) => {
+              // 检查新添加的扩展名是否以.开头
+              if (Array.isArray(value) && value.length > 0) {
+                const lastItem = value[value.length - 1];
+                if (lastItem && !lastItem.startsWith('.')) {
+                  message.warning(`扩展名 "${lastItem}" 应该以 .开头，例如: .txt 或 .pdf`);                  
+                }
+              }
+              form.setFieldsValue({ required_exts: value });
+            }}
+          />
         </Form.Item>
         <Form.Item 
           name="disable_inference_enhance" 

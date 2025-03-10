@@ -112,6 +112,11 @@ const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
         values.infer_params = params;        
       }
       
+      // Convert required_exts array to comma-separated string if it's an array
+      if (Array.isArray(values.required_exts)) {
+        values.required_exts = values.required_exts.join(',');
+      }
+      
       // If hybrid index is not enabled, remove the emb_model field
       if (!values.enable_hybrid_index) {
         delete values.emb_model;
@@ -250,8 +255,24 @@ const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
           <Form.Item name="port" label="端口" initialValue={8000}>
             <InputNumber min={1024} max={65535} />
           </Form.Item>
-          <Form.Item name="required_exts" label="必需的扩展名" initialValue="">
-            <Input placeholder="用逗号分隔，例如: .txt,.pdf" />
+          <Form.Item name="required_exts" label="必需的扩展名">
+            <Select
+              mode="tags"
+              style={{ width: '100%' }}
+              placeholder="输入扩展名并按回车或空格添加 (例如: .txt .pdf)"
+              tokenSeparators={[' ', ',']}
+              open={false}
+              onChange={(value) => {
+                // 检查新添加的扩展名是否以.开头
+                if (Array.isArray(value) && value.length > 0) {
+                  const lastItem = value[value.length - 1];
+                  if (lastItem && !lastItem.startsWith('.')) {
+                    message.warning(`扩展名 "${lastItem}" 应该以 . 开头，例如: .txt 或 .pdf`);                    
+                  }
+                }
+                form.setFieldsValue({ required_exts: value });
+              }}
+            />
           </Form.Item>
           <Form.Item 
             name="disable_inference_enhance" 

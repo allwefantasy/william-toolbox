@@ -207,7 +207,7 @@ async def update_model(model_name: str, request: AddModelRequest):
             autocoder_models.update_model(model_name, {
                 "name": model_name,
                 "description": f"Updated by William Toolbox",
-                "model_name": model_name,
+                "model_name": request.infer_params.get("saas.model", ""),
                 "model_type": request.pretrained_model_type,
                 "base_url": request.infer_params.get("saas.base_url", ""),
                 "api_key": request.infer_params.get("saas.api_key", ""),
@@ -215,10 +215,27 @@ async def update_model(model_name: str, request: AddModelRequest):
                 "input_price": request.input_price or 0.0,
                 "output_price": request.output_price or 0.0
             })
-            
-            # Update product_type in model_info
-            model_info['product_type'] = ProductType.lite
-            models[model_name] = model_info
+
+            models = await load_models_from_json() or supported_models
+            models[model_name] = {
+                "status": "running",  # lite 模式下默认为运行状态
+                "product_type": ProductType.lite,
+                "is_reasoning": request.is_reasoning or False,
+                "input_price": request.input_price or 0.0,
+                "output_price": request.output_price or 0.0,
+                "deploy_command": DeployCommand(
+                    pretrained_model_type=request.pretrained_model_type,
+                    cpus_per_worker=request.cpus_per_worker,
+                    gpus_per_worker=request.gpus_per_worker,
+                    num_workers=request.num_workers,
+                    worker_concurrency=request.worker_concurrency,
+                    infer_params=request.infer_params,
+                    model=request.name,
+                    model_path=request.model_path,
+                    infer_backend=request.infer_backend,
+                ).model_dump(),
+                "undeploy_command": f"byzerllm undeploy --model {request.name} --force",
+            }                                                
             await save_models_to_json(models)
             
             return {"message": f"Model {model_name} updated successfully in Lite mode"}
