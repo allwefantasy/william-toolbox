@@ -46,6 +46,7 @@ const EditRAG: React.FC<EditRAGProps> = ({ visible, ragData, onClose, onUpdate }
         hybrid_index_max_output_tokens: ragData.hybrid_index_max_output_tokens,
         emb_model: ragData.emb_model,
         without_contexts: ragData.without_contexts,
+        enable_local_image_host: ragData.enable_local_image_host,
         product_type: ragData.product_type || 'lite',
         infer_params: ragData.infer_params ? Object.entries(ragData.infer_params).map(([key, value]) => ({
           key,
@@ -321,6 +322,22 @@ const EditRAG: React.FC<EditRAGProps> = ({ visible, ragData, onClose, onUpdate }
           label={
             <span>
               禁用上下文
+            </span>
+          } 
+          valuePropName="checked" 
+          initialValue={false}
+        >
+          <Switch />
+        </Form.Item>
+        
+        <Form.Item 
+          name="enable_local_image_host" 
+          label={
+            <span>
+              启用本地图片托管
+              <Tooltip title="允许RAG引擎访问和展示本地文档中的图片">
+                <QuestionCircleOutlined style={{ marginLeft: 8 }} />
+              </Tooltip>
             </span>
           } 
           valuePropName="checked" 

@@ -24,6 +24,7 @@ interface FormValues {
   emb_model?: string;
   without_contexts: boolean;
   product_type: string;
+  enable_local_image_host: boolean;
   infer_params?: { key: string; value: string }[] | { [key: string]: string };
 }
 
@@ -95,6 +96,7 @@ const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
       enable_hybrid_index: false,
       hybrid_index_max_output_tokens: 1000000,
       without_contexts: false,
+      enable_local_image_host: false,
       product_type: 'lite'
     });
   };
@@ -344,6 +346,21 @@ const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
             label={
               <span>
                 禁用上下文
+              </span>
+            } 
+            valuePropName="checked" 
+            initialValue={false}
+          >
+            <Switch />
+          </Form.Item>
+          <Form.Item 
+            name="enable_local_image_host" 
+            label={
+              <span>
+                启用本地图片托管
+                <Tooltip title="允许RAG引擎访问和展示本地文档中的图片">
+                  <QuestionCircleOutlined style={{ marginLeft: 8 }} />
+                </Tooltip>
               </span>
             } 
             valuePropName="checked" 

@@ -21,6 +21,7 @@ interface RAG {
   port: number;
   product_type: string;
   enable_hybrid_index?: boolean;
+  enable_local_image_host?: boolean;
 }
 
 interface RAGListProps {

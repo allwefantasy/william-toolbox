@@ -286,6 +286,10 @@ async def manage_rag(rag_name: str, action: str):
 
             if "hybrid_index_max_output_tokens" in rag_info:
                 command += f" --hybrid_index_max_output_tokens {rag_info['hybrid_index_max_output_tokens']}"
+        
+        # 添加本地图片托管参数
+        if "enable_local_image_host" in rag_info and rag_info["enable_local_image_host"]:
+            command += f" --enable_local_image_host"
 
         if "infer_params" in rag_info:
             for key, value in rag_info["infer_params"].items():

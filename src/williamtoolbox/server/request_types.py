@@ -74,6 +74,7 @@ class AddRAGRequest(BaseModel):
     qa_model: str = Field(default="")
     emb_model: str = Field(default="")
     tokenizer_path: str = Field(default="")
+    enable_local_image_host: bool = Field(default=False)
     doc_dir: str
     rag_doc_filter_relevance: float = Field(default=2.0)
     host: str = Field(default="0.0.0.0")
