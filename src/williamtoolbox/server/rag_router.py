@@ -518,6 +518,9 @@ async def build_cache(rag_name: str):
     
     if "emb_model" in rag_info:
         command += f" --emb_model {rag_info['emb_model']}"
+
+    if "rag_storage_type" in rag_info:
+        command += f" --rag_storage_type {rag_info['rag_storage_type']}"
     
     if rag_info.get("required_exts"):
         command += f" --required_exts {rag_info['required_exts']}"

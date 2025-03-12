@@ -13,6 +13,7 @@ interface RAGInfo {
   product_type: string;
   enable_hybrid_index: boolean;
   emb_model?: string;
+  rag_storage_type?: string;
   // 其他可能的属性
 }
 
@@ -180,6 +181,11 @@ const BuildCache: React.FC<BuildCacheProps> = ({ ragName, onReturn }) => {
           {ragInfo?.emb_model && (
             <Descriptions.Item label="向量模型" span={3}>{ragInfo.emb_model}</Descriptions.Item>
           )}
+          {ragInfo?.rag_storage_type && (
+            <Descriptions.Item label="存储引擎" span={3}>
+              {ragInfo.rag_storage_type === 'duckdb' ? 'DuckDB' : 'Byzer Storage'}
+            </Descriptions.Item>
+          )}
           <Descriptions.Item label="文档目录" span={3}>{ragInfo?.doc_dir}</Descriptions.Item>
           <Descriptions.Item label="文件类型" span={3}>{ragInfo?.required_exts || '.md,.rst,.txt'}</Descriptions.Item>
         </Descriptions>
@@ -194,7 +200,7 @@ const BuildCache: React.FC<BuildCacheProps> = ({ ragName, onReturn }) => {
                 具体取决于文档数量和复杂度。
               </Paragraph>
               <Paragraph>
-                将执行的命令: <Text code>{`auto-coder.rag build_hybrid_index --model ${ragInfo?.model} ${ragInfo?.emb_model ? `--emb_model ${ragInfo.emb_model}` : ''} --doc_dir ${ragInfo?.doc_dir} ${ragInfo?.required_exts ? `--required_exts ${ragInfo.required_exts}` : ''} --enable_hybrid_index`}</Text>
+                将执行的命令: <Text code>{`auto-coder.rag build_hybrid_index --model ${ragInfo?.model} ${ragInfo?.emb_model ? `--emb_model ${ragInfo.emb_model}` : ''} --doc_dir ${ragInfo?.doc_dir} ${ragInfo?.required_exts ? `--required_exts ${ragInfo.required_exts}` : ''} ${ragInfo?.rag_storage_type ? `--rag_storage_type ${ragInfo.rag_storage_type}` : ''} --enable_hybrid_index`}</Text>
               </Paragraph>
             </div>
           }
