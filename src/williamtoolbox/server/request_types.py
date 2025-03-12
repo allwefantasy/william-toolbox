@@ -83,6 +83,7 @@ class AddRAGRequest(BaseModel):
     disable_inference_enhance: bool = Field(default=False)
     inference_deep_thought: bool = Field(default=False)
     enable_hybrid_index: bool = Field(default=False)
+    rag_storage_type: str = Field(default="duckdb")
     hybrid_index_max_output_tokens: int = Field(default=1000000)
     without_contexts: bool = Field(default=False)
     product_type: ProductType = Field(default=ProductType.lite)

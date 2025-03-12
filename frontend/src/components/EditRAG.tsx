@@ -51,7 +51,8 @@ const EditRAG: React.FC<EditRAGProps> = ({ visible, ragData, onClose, onUpdate }
         infer_params: ragData.infer_params ? Object.entries(ragData.infer_params).map(([key, value]) => ({
           key,
           value
-        })) : []
+        })) : [],
+        rag_storage_type: ragData.rag_storage_type || 'duckdb'
       });
     }
   }, [visible, ragData, form]);
@@ -302,17 +303,37 @@ const EditRAG: React.FC<EditRAGProps> = ({ visible, ragData, onClose, onUpdate }
         >
           {({ getFieldValue }) =>
             getFieldValue('enable_hybrid_index') === true ? (
-              <Form.Item
-                name="emb_model"
-                label="向量模型"
-                rules={[{ required: true, message: '请选择向量模型!' }]}
-              >
-                <Select
-                  placeholder="请选择向量模型"
-                  options={models                    
-                    .map(model => ({ label: model.name, value: model.name }))}
-                />
-              </Form.Item>
+              <>
+                <Form.Item
+                  name="emb_model"
+                  label="向量模型"
+                  rules={[{ required: true, message: '请选择向量模型!' }]}
+                >
+                  <Select
+                    placeholder="请选择向量模型"
+                    options={models                    
+                      .map(model => ({ label: model.name, value: model.name }))}
+                  />
+                </Form.Item>
+                
+                <Form.Item
+                  name="rag_storage_type"
+                  label={
+                    <span>
+                      存储引擎类型
+                      <Tooltip title="byzer-storage 需要先安装 Byzer 存储引擎">
+                        <QuestionCircleOutlined style={{ marginLeft: 8 }} />
+                      </Tooltip>
+                    </span>
+                  }
+                  initialValue="duckdb"
+                >
+                  <Select>
+                    <Option value="duckdb">DuckDB (默认)</Option>
+                    <Option value="byzer-storage">Byzer Storage</Option>
+                  </Select>
+                </Form.Item>
+              </>
             ) : null
           }
         </Form.Item>

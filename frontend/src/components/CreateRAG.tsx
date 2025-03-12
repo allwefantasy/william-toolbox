@@ -26,6 +26,7 @@ interface FormValues {
   product_type: string;
   enable_local_image_host: boolean;
   infer_params?: { key: string; value: string }[] | { [key: string]: string };
+  rag_storage_type: string;
 }
 
 interface Model {
@@ -95,6 +96,7 @@ const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
       inference_deep_thought: false,
       enable_hybrid_index: false,
       hybrid_index_max_output_tokens: 1000000,
+      rag_storage_type: 'duckdb',
       without_contexts: false,
       enable_local_image_host: false,
       product_type: 'lite'
@@ -328,16 +330,36 @@ const CreateRAG: React.FC<CreateRAGProps> = ({ onRAGAdded }) => {
           >
             {({ getFieldValue }) =>
               getFieldValue('enable_hybrid_index') === true ? (
-                <Form.Item
-                  name="emb_model"
-                  label="向量模型"
-                  rules={[{ required: true, message: '请选择向量模型!' }]}
-                >
-                  <Select
-                    placeholder="请选择向量模型"
-                    options={models.map(model => ({ label: model.name, value: model.name }))}
-                  />
-                </Form.Item>
+                <>
+                  <Form.Item
+                    name="emb_model"
+                    label="向量模型"
+                    rules={[{ required: true, message: '请选择向量模型!' }]}
+                  >
+                    <Select
+                      placeholder="请选择向量模型"
+                      options={models.map(model => ({ label: model.name, value: model.name }))}
+                    />
+                  </Form.Item>
+                  
+                  <Form.Item
+                    name="rag_storage_type"
+                    label={
+                      <span>
+                        存储引擎类型
+                        <Tooltip title="byzer-storage 需要先安装 Byzer 存储引擎">
+                          <QuestionCircleOutlined style={{ marginLeft: 8 }} />
+                        </Tooltip>
+                      </span>
+                    }
+                    initialValue="duckdb"
+                  >
+                    <Select>
+                      <Option value="duckdb">DuckDB (默认)</Option>
+                      <Option value="byzer-storage">Byzer Storage</Option>
+                    </Select>
+                  </Form.Item>
+                </>
               ) : null
             }
           </Form.Item>
