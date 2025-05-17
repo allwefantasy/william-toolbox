@@ -2,6 +2,7 @@
 build: 
 	rm -rf build && mkdir -p build
 	rm -rf dist && mkdir -p dist
+	rm -rf frontend/build
 	cd frontend && npm install && npm run build
 	tar -czf web.static.tar.gz -C frontend/build .
 	rm -rf src/williamtoolbox/web && mkdir -p src/williamtoolbox/web		
